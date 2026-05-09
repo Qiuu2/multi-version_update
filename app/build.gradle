@@ -13,7 +13,13 @@ android {
         versionName "3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk {
-            abiFilters = ["armeabi-v7a"]
+            // armeabi-v7a is the htapplib.aar's only ABI (voice intercom native libs).
+            // arm64-v8a is added so the APK can install on 64-bit-only devices
+            // (Pixel 7+, modern emulators) for UI/non-voice testing during the
+            // multi-version upgrade. Voice intercom will not work on arm64 until
+            // the aar vendor ships 64-bit native libs (Layer 3).
+            // Baidu Map SDK already ships .so for both ABIs in app/libs/.
+            abiFilters = ["armeabi-v7a", "arm64-v8a"]
         }
         //添加此行
         multiDexEnabled true
