@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorBuleDark">#3986f9</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="colorRed">#FF4040</color>
+    <color name="colorWhite2">#FFFFFF</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorBarBottom">#dddddd</color>
+    <color name="colorBlue">#0FFFFF</color>
+    <color name="colorYellw">#FFFF00</color>
+    <color name="colorBule2">#E0FFFF</color>
+    <color name="colorGreen">#00FF00</color>
+    <color name="LightGrey">#D3D3D3</color>
+    <color name="ColorGrey">#eeeeee</color>
+    <color name="Agrey">#aaaaaa</color>
+    <color name="LightGrey2">#f9f5f5</color>
+    <color name="LightBlack">#3C3C3C</color>
+    <color name="unslected">#89898a</color>
+    <color name="transparent">#00000000</color>
+    <color name="nitewritepen">#70FFFF00</color>
+    <color name="side_side_text">#2bfbef</color>
+    <color name="side_tile_text">#00a0e9</color>
+
+    <color name="black">#000000</color>
+    <color name="blackd">#333333</color>
+    <color name="blackdd">#666666</color>
+    <color name="grey">#eeeeee</color>
+    <color name="grey2">#cccccc</color>
+    <color name="grey3">#aaaaaa</color>
+    <color name="button_back">#00b7ee</color>
+    <color name="red">#ff0000</color>
+    <color name="colorControlHighlight">#00c2d2</color>
+    <color name="side_title_text">#00a0e9</color>
+    <color name="side_title_back">#005982</color>
+    <color name="dialog_back">#012e40</color>
+    <color name="tip">#e6f720</color>
+    <color name="mianback">#173c56</color>
+
+    <color name="date_picker_text_light">#59B29C</color>
+    <color name="date_picker_text_dark">#333333</color>
+</resources>

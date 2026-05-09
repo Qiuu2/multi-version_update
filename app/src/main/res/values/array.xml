@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="version_array">
+        <item>V2.2</item>
+        <item>V2.3</item>
+        <item>V2.4</item>
+    </string-array>
+    <string-array name="function_array">
+        <item>全部</item>
+        <item>寻呼</item>
+        <item>对讲</item>
+        <item>点播</item>
+    </string-array>
+    <string-array name="wait_time">
+        <item>30s</item>
+        <item>60s</item>
+        <item>90s</item>
+        <item>120s</item>
+        <item>150s</item>
+        <item>180s</item>
+    </string-array>
+    <string-array name="sound_name">
+        <item>铃声a</item>
+        <item>铃声b</item>
+        <item>铃声c</item>
+        <item>铃声d</item>
+        <item>铃声e</item>
+    </string-array>
+    <string-array name="auto_time">
+        <item>10s</item>
+        <item>15s</item>
+        <item>20s</item>
+        <item>25s</item>
+        <item>30s</item>
+    </string-array>
+    <string-array name="send_mode">
+        <item>单播</item>
+        <item>组播</item>
+    </string-array>
+    <string-array name="bitrate">
+        <item>8Kbp/s</item>
+        <item>16Kbp/s</item>
+        <item>32Kbp/s</item>
+        <item>64Kbp/s</item>
+    </string-array>
+    <string-array name="channel">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="sound_mode">
+        <item>男声模式</item>
+        <item>女声模式</item>
+        <item>英语男声</item>
+        <item>英语女声</item>
+    </string-array>
+    <string-array name="simplerate">
+        <item>8000Hz</item>
+        <item>11025Hz</item>
+        <item>16000Hz</item>
+        <item>44100Hz</item>
+        <item>48000Hz</item>
+        <item>64000Hz</item>
+        <item>88200Hz</item>
+        <item>96000Hz</item>
+        <item></item>
+    </string-array>
+    <string-array name="priority">
+
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+        <item>24</item>
+        <item>25</item>
+        <item>26</item>
+        <item>27</item>
+        <item>28</item>
+        <item>29</item>
+        <item>30</item>
+        <item>31</item>
+        <item>32</item>
+        <item>33</item>
+        <item>34</item>
+        <item>35</item>
+        <item>36</item>
+        <item>37</item>
+        <item>38</item>
+        <item>39</item>
+    </string-array><string-array name="num">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+        <item>24</item>
+        <item>25</item>
+        <item>26</item>
+        <item>27</item>
+        <item>28</item>
+        <item>29</item>
+        <item>30</item>
+        <item>31</item>
+        <item>32</item>
+        <item>33</item>
+        <item>34</item>
+        <item>35</item>
+        <item>36</item>
+        <item>37</item>
+        <item>38</item>
+        <item>39</item>
+    </string-array>
+    <string-array name="play_mode">
+        <item>普通模式</item>
+        <item>间隔模式</item>
+    </string-array>
+    <string-array name="exec_mode">
+        <item>每天</item>
+        <item>每周</item>
+        <item>手动</item>
+    </string-array>
+    <string-array name="gender">
+        <item>男声</item>
+        <item>女声</item>
+        <!--<item>英语男声</item>
+        <item>英语女声</item>-->
+    </string-array>
+    <string-array name="cycle">
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
+    <item>4</item>
+    <item>5</item>
+    <item>6</item>
+    <item>7</item>
+    <item>8</item>
+    <item>9</item>
+    <item>10</item>
+    </string-array>
+    <string-array name="preopen">
+        <item>0</item>
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+        <item>55</item>
+        <item>60</item>
+    </string-array>
+</resources>

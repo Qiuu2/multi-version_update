@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorWhite2"
+    android:fastScrollEnabled="true"
+    android:orientation="vertical"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+    android:scrollbarStyle="outsideOverlay">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="18dp"
+            android:paddingTop="18dp">
+
+            <ImageView
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="@null"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/me_icon_qq"/>
+
+            <TextView
+                android:id="@+id/version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="v2.0.1"
+                android:textColor="#999999"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <include
+            android:id="@+id/item_guide"
+            layout="@layout/view_image_text_rigntbt"/>
+
+        <!--  <include
+             android:id="@+id/pasd_manage"
+             layout="@layout/v_settings_common_item" /> -->
+
+
+        <include
+            android:id="@+id/about_introduce"
+            layout="@layout/view_image_text_rigntbt" />
+
+
+        <include
+            android:id="@+id/item_feedback"
+            layout="@layout/view_image_text_rigntbt"/>
+
+
+        <include
+            android:id="@+id/item_declaration"
+            layout="@layout/view_image_text_rigntbt"/>
+
+
+        <include
+            android:id="@+id/item_version"
+            layout="@layout/view_image_text_rigntbt"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="20dp"/>
+
+        <include
+            android:id="@+id/item_qq"
+            layout="@layout/view_image_text_rigntbt"/>
+
+
+        <include
+            android:id="@+id/item_service"
+            layout="@layout/view_image_text_rigntbt"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginTop="60dp"
+            android:gravity="center"
+            android:text="中国航天广电 技术支持"
+            android:textColor="#585d7a"
+            android:textSize="18dp"/>
+    </LinearLayout>
+
+</ScrollView>

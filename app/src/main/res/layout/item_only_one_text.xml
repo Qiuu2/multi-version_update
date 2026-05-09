@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:gravity="center"
+    android:padding="5dp"
+    android:background="@color/LightGrey2"
+    android:id="@+id/item_all"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:src="@mipmap/machine_all_image"
+        android:id="@+id/item_gridview_image"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        />
+
+    <TextView
+        android:id="@+id/item_gridview_text"
+        android:layout_marginTop="2dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorBuleDark"
+        android:scrollbars="horizontal"
+        android:text="文字"
+        android:minLines="2"
+        android:gravity="center"/>
+</LinearLayout>

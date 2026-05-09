@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/backgroud_all">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@mipmap/backgroud_all">
+
+        <include
+            android:id="@+id/login_tile"
+            layout="@layout/title_bar"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="60px"
+            android:text="扫一扫"
+            android:visibility="invisible"/>
+
+        <Button
+            android:id="@+id/down_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="60dp"
+            android:text="@string/downlocalmap"
+            android:visibility="invisible"/>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/login_tile">
+
+            <Button
+                android:id="@+id/set_ip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="30px"
+                android:layout_marginTop="60px"
+                android:text="@string/settingIp"
+                android:visibility="invisible"/>
+
+            <Spinner
+                android:id="@+id/version_choose"
+                android:layout_width="@dimen/spinner_width"
+                android:layout_height="@dimen/image_width"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="@dimen/left_dimen"
+                android:layout_marginTop="@dimen/left_dimen"
+                android:background="@mipmap/spriner_bg_1"
+                android:entries="@array/version_array"
+                style="@style/spinner_style"
+                android:theme="@style/spinner_style"></Spinner>
+
+            <LinearLayout
+                android:layout_width="1200px"
+                android:layout_height="2000px"
+                android:layout_below="@id/version_choose"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="60px"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="30px">
+
+                    <ImageView
+                        android:layout_width="@dimen/image_width"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginLeft="60px"
+                        android:background="@mipmap/login_right_usr" />
+
+                    <EditText
+                        android:id="@+id/login_uername"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginRight="60px"
+                        android:background="@mipmap/login_left"
+                        android:hint="用户名"
+                        android:paddingLeft="30px"
+                        android:singleLine="true"
+                        android:textSize="@dimen/text_normal" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="30px">
+
+                    <ImageView
+                        android:layout_width="@dimen/image_width"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginLeft="60px"
+                        android:background="@mipmap/login_right_pwd" />
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginRight="60px"
+                        android:background="@mipmap/login_left">
+
+                        <EditText
+                            android:id="@+id/login_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="150px"
+                            android:layout_marginRight="60px"
+                            android:background="@null"
+                            android:hint="密码"
+                            android:paddingLeft="30px"
+                            android:singleLine="true"
+                            android:textSize="@dimen/text_normal"/>
+
+                        <ImageView
+                            android:id="@+id/see"
+                            android:layout_width="@dimen/image_width"
+                            android:layout_height="@dimen/image_width"
+                            android:layout_alignParentRight="true"
+                            android:layout_centerVertical="true"
+                            android:layout_marginRight="@dimen/left_dimen"
+                            android:background="@mipmap/open_eye" />
+                    </RelativeLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="30px">
+
+                    <ImageView
+                        android:layout_width="@dimen/image_width"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginLeft="60px"
+                        android:background="@mipmap/login_right_ip" />
+
+                    <EditText
+                        android:id="@+id/login_ip"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginRight="60px"
+                        android:background="@mipmap/login_left"
+                        android:hint="IP地址"
+                        android:paddingLeft="30px"
+                        android:singleLine="true"
+                        android:textSize="@dimen/text_normal"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="30px">
+
+                    <ImageView
+                        android:layout_width="@dimen/image_width"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginLeft="60px"
+                        android:background="@mipmap/login_right_no" />
+
+                    <EditText
+                        android:id="@+id/login_ip_nomber"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/image_width"
+                        android:layout_marginRight="60px"
+                        android:background="@mipmap/login_left"
+                        android:inputType="number"
+                        android:paddingLeft="30px"
+                        android:singleLine="true"
+                        android:text="99"
+                        android:textSize="@dimen/text_normal"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/bt_login"
+                    android:layout_width="match_parent"
+                    android:layout_height="150px"
+                    android:layout_marginLeft="@dimen/left_dimen"
+                    android:layout_marginRight="@dimen/left_dimen"
+                    android:layout_marginTop="60px"
+                    android:background="@drawable/login_bt_style"
+                    android:padding="30px"
+                    android:text="登      陆"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="@dimen/text_normal" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60px"
+                    android:layout_marginLeft="60px"
+                    android:layout_marginRight="60px"
+                    android:layout_marginTop="30px"
+                    android:gravity="center_horizontal"
+                    android:orientation="horizontal"
+                    android:visibility="invisible">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="请点击"
+                        android:textSize="15dp" />
+
+                    <TextView
+                        android:id="@+id/install"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="5dp"
+                        android:text="安装讯飞引擎"
+                        android:textSize="15dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="或"
+                        android:textSize="15dp" />
+
+                    <TextView
+                        android:id="@+id/set_machine"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginRight="5dp"
+                        android:text="设置默认为讯飞引擎"
+                        android:textSize="15dp"
+                        android:visibility="invisible"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tts_tip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginLeft="60px"
+                    android:layout_marginRight="60px"
+                    android:layout_marginTop="30px"
+                    android:text="@string/set_machine"
+                    android:textSize="15dp"
+                    android:visibility="invisible"/>
+            </LinearLayout>
+        </RelativeLayout>
+    </RelativeLayout>
+</ScrollView>

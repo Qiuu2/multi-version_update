@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/up"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dp"
+
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <include
+                android:id="@+id/top_title"
+                layout="@layout/title_bar"></include>
+        </RelativeLayout>
+
+        <include
+            android:id="@+id/temp_list"
+            layout="@layout/temp_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_weight="1" />
+
+
+    </LinearLayout>
+    <include
+        layout="@layout/recording_pop" />
+    <ProgressBar
+        android:id="@+id/dang"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/change_rl"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+         >
+
+        <Button
+            android:id="@+id/speak_or_text"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="@dimen/dp_20"
+            android:layout_gravity="center_vertical"
+            android:background="@mipmap/edit_m" />
+
+        <LinearLayout
+            android:id="@+id/record_module"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/left_dimen"
+            android:layout_marginRight="10dp"
+            android:visibility="visible"
+            android:layout_toRightOf="@+id/speak_or_text"
+            android:gravity="center_vertical">
+
+            <RelativeLayout
+                android:id="@+id/btn_speak"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="@dimen/distance"
+                android:layout_marginLeft="@dimen/text_small"
+                android:layout_marginTop="@dimen/distance"
+                android:layout_weight="1"
+                 >
+
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dp_50"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="@dimen/dp_60"
+                    android:layout_marginRight="@dimen/dp_60"
+                    android:clickable="false"
+                    android:gravity="center"
+                    android:text="按住说话"
+                    android:background="@drawable/login_bt_style"
+                    android:textColor="@color/black"
+                    android:textSize="@dimen/text_big" />
+
+            </RelativeLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/edit_module"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/add_tts_et"
+                android:layout_width="260dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginLeft="@dimen/left_dimen"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/et_back"
+                android:hint="输入你想播报的七字以上内容" />
+
+            <TextView
+                android:id="@+id/upfile"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="@dimen/left_dimen"
+                android:gravity="center"
+                android:text="上传"
+                android:textColor="@color/colorBuleDark"
+                android:textSize="18dp"  />
+        </LinearLayout>
+
+    </LinearLayout>
+</RelativeLayout>

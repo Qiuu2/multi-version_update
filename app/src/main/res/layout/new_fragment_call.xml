@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+
+
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="120dp"
+        android:orientation="vertical"
+        android:layout_marginLeft="@dimen/dp_10"
+         >
+
+    <include
+            android:id="@+id/progress"
+            layout="@layout/other_progressbar" />
+        <include
+            android:id="@+id/empty"
+            layout="@layout/other_dataempty" />
+    </LinearLayout>
+
+    <include
+        layout="@layout/founction_three_button"
+        android:id="@+id/threerv"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="60dp"
+        />
+</RelativeLayout>

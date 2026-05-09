@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <!--音量控制组件-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/left_voice_image"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@mipmap/voice_low" />
+
+        <SeekBar
+            android:id="@+id/volume_bar"
+            android:layout_width="200dp"
+            android:layout_height="40dp" />
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@mipmap/voice_loud" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <TextView
+            android:id="@+id/volumestyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="right"
+            android:text="音量："
+            android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/volume_tv"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:gravity="left"
+            android:text="80"
+            android:textSize="20dp" />
+    </LinearLayout>
+</LinearLayout>

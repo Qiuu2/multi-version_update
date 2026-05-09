@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:layout_weight="1"
+    android:gravity="center_vertical">
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/dp_60"
+        android:layout_centerVertical="true"
+        android:text="@string/preopen"
+        android:textColor="@color/black"
+        android:textSize="@dimen/text_small" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="200dp"
+        android:layout_height="@dimen/dp_40"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="@dimen/dp_60"
+        android:gravity="center_vertical"
+        android:textSize="@dimen/text_small"
+        android:paddingLeft="20dp"
+        android:textColor="@color/blackd"
+        android:background="@drawable/white_roundrectangle" />
+    <Button
+        android:id="@+id/btn_to_tv"
+        android:layout_width="30dp"
+        android:layout_height="@dimen/dp_40"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="@dimen/dp_60"
+        android:gravity="center"
+        android:textSize="@dimen/text_small"
+        android:paddingLeft="20dp"
+        android:clickable="false"
+        android:background="@mipmap/set_more_nor"
+        />
+</RelativeLayout>

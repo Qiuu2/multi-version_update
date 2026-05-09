@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="220dp"
+    android:layout_height="440dp"
+    android:background="@color/side_title_text"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/pop_title"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="@dimen/distance"
+            android:layout_marginTop="@dimen/dp_10"
+            android:layout_marginRight="@dimen/distance"
+            android:background="@color/side_title_back"
+            android:gravity="center"
+            android:text="@string/week_select"
+            android:textColor="@color/side_title_text"
+            android:textSize="@dimen/text_big" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/monday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/monday"
+
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/tuesday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/tuesday"
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/wednesday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/wednesday"
+
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/thursday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/thursday"
+
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/friday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/friday"
+
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/saturday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/saturday"
+                android:textSize="@dimen/dp_20" />
+
+            <CheckBox
+                android:id="@+id/sunday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:text="@string/sunday"
+                android:textSize="@dimen/dp_20" />
+
+            <Button
+                android:id="@+id/confirm"
+                android:layout_width="80dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="@dimen/dp_40"
+                android:background="@drawable/white_roundrectangle"
+                android:text="@string/confirm"
+                android:textSize="@dimen/dp_30" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

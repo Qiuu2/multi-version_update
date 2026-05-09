@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:background="@android:color/transparent"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="10dp">
+    <TextView
+        android:id="@+id/terminal_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/grey"
+        android:layout_gravity="center_horizontal"
+        android:textColor="@color/colorBuleDark"
+        android:textSize="15sp" />
+
+    <ImageView
+        android:id="@+id/map_icon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_horizontal"
+        android:padding="5dip"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/map_online" />
+</LinearLayout>

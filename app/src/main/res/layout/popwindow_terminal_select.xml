@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:id="@+id/zonenamelist"
+            android:background="@color/side_title_text"
+            android:orientation="vertical"
+            android:padding="@dimen/distance">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="60dp"
+                android:background="@color/side_title_back"
+                android:gravity="center"
+                android:text="@string/terminalzone"
+                android:textColor="@color/side_title_text"
+                android:textSize="@dimen/text_small" />
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ListView
+                    android:id="@+id/zone_list"
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="@dimen/distance"
+
+                    android:scrollbars="none"></ListView>
+
+
+            </RelativeLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/text_small"
+            android:layout_marginTop="@dimen/text_small"
+            android:background="@color/black" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/side_title_text"
+            android:orientation="vertical"
+            android:padding="@dimen/distance">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:background="@color/side_title_back"
+                android:gravity="center"
+                android:text="@string/terminallist"
+                android:textColor="@color/side_title_text"
+                android:textSize="@dimen/text_small" />
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ListView
+                    android:id="@+id/terminal_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="40dp"
+                    android:background="@color/transparent"
+                    android:scrollbars="none"></ListView>
+
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_alignParentBottom="true"
+                    android:gravity="center" >
+
+                    <include
+                        layout="@layout/four_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </RelativeLayout>
+            </RelativeLayout>
+
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

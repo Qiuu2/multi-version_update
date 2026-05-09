@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="@mipmap/add"
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:gravity="center"
+    android:layout_weight="1.0"
+    android:layout_height="120dp">
+    <ImageView
+        android:src="@mipmap/add"
+        android:id="@+id/add"
+        android:layout_width="60dp"
+        android:layout_height="60dp" />
+
+</LinearLayout>

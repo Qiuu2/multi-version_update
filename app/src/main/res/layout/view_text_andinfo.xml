@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:background="@color/colorWhite"
+    android:gravity="center"
+    android:layout_weight="1.0"
+    android:weightSum="2.0"
+    android:layout_height="40dp">
+    <TextView
+        android:id="@+id/text_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18dp"
+        android:layout_weight="1.1"
+        android:gravity="center"
+        android:textColor="@color/colorBlack"
+        android:text="开始时间"/>
+    <TextView
+        android:layout_width="10dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
+        android:text=":"
+        />
+    <TextView
+        android:id="@+id/text_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18dp"
+        android:layout_weight="0.9"
+        android:gravity="center"
+        android:textColor="@color/colorBuleDark"
+        android:text="2017-8-1"/>
+
+</LinearLayout>

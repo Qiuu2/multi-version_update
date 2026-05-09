@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="30dp">
+ <View
+     android:layout_width="3dp"
+     android:layout_height="20dp"
+     android:layout_gravity="center_vertical"
+     android:background="@color/colorBuleDark"
+     android:layout_marginLeft="20dp"/>
+    <TextView
+        android:id="@+id/l_little_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="音乐"
+        android:textColor="@color/colorBuleDark"
+        android:textSize="16dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="8dp"/>
+
+</LinearLayout>

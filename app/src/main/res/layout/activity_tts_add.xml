@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dp"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <include
+                android:id="@+id/top_title"
+                layout="@layout/title_bar"></include>
+        </RelativeLayout>
+
+
+
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/change_rl"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_above="@+id/add"
+        android:layout_alignParentBottom="true"
+        android:background="#d7d7d7">
+
+        <LinearLayout
+            android:id="@+id/lattr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/terminal"
+                android:layout_width="30dp"
+                android:layout_height="40dp"
+                   android:visibility="gone"
+                android:background="@mipmap/machine_all_image"
+                android:textSize="15dp" />
+
+            <Button
+                android:id="@+id/add_cti"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="5dp"
+                android:background="@mipmap/icon_attr"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/add_tts_et"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginRight="50dp"
+            android:background="@drawable/et_back"
+            android:layout_toRightOf="@+id/lattr"
+            android:hint="输入你想播报的四字以上内容" />
+
+        <TextView
+            android:id="@+id/upfile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="5dp"
+            android:textColor="@color/colorBuleDark"
+            android:text="上传"
+            android:textSize="18dp"
+
+            android:visibility="visible" />
+
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

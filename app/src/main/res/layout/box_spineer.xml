@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dp_50"
+    android:layout_weight="1"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="@dimen/dp_60"
+        android:text="@string/preopen"
+        android:textColor="@color/black"
+        android:textSize="@dimen/text_small" />
+
+    <Spinner
+        android:id="@+id/preopen_spinner"
+        android:layout_width="200dp"
+        android:layout_height="@dimen/dp_45"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="@dimen/dp_60"
+        android:background="@mipmap/setting_spinner_back"
+        android:entries="@array/preopen"
+        android:gravity="left" />
+
+
+    <TextView
+        android:id="@+id/spinner_Right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+       android:layout_toRightOf="@+id/name"
+        android:layout_marginLeft="60dp"
+        android:textColor="@color/blackd"
+        android:textSize="@dimen/text_small"
+        android:text="sdsdsd"
+        android:visibility="gone"
+        android:layout_centerVertical="true"/>
+</RelativeLayout>

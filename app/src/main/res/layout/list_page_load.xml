@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingBottom="5dp">
+
+    <Button
+        android:id="@+id/search_more"
+        android:layout_width="fill_parent"
+        android:layout_height="32dp"
+        android:background="@mipmap/add_attr"/>
+
+    <LinearLayout
+        android:id="@+id/load_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/colorBlue"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="?android:attr/progressBarStyleSmall"
+            android:indeterminateDrawable="@mipmap/add_attr"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_marginLeft="10dp"
+            android:gravity="center_vertical"
+            android:text="正在加载..."
+            android:textSize="12dp" />
+    </LinearLayout>
+
+</LinearLayout>

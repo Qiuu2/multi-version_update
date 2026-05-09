@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/t_name"
+        android:layout_width="302dp"
+        android:layout_height="45dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/splite"
+        android:background="@color/side_title_back"
+        android:gravity="center"
+        android:text="编辑标签"
+        android:textColor="@color/side_title_text"
+        android:textSize="@dimen/text_normal" />
+    <RelativeLayout
+        android:id="@+id/bb"
+        android:layout_width="302dp"
+        android:layout_height="2dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/splite"
+        android:background="@color/side_title_back"
+        android:gravity="center"  />
+</LinearLayout>

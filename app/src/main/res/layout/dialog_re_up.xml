@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+<RelativeLayout
+    android:layout_width="220dp"
+    android:layout_height="160dp"
+    android:background="@drawable/re_up_background">
+    <TextView
+        android:id="@+id/tips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="是否重新发送"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:textSize="18dp"
+        android:textColor="@color/Agrey"/>
+
+    <LinearLayout
+        android:layout_width="120dp"
+        android:layout_height="30dp"
+        android:orientation="horizontal"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="5dp"
+        android:layout_marginRight="10dp"
+        android:layout_below="@+id/tips"
+        android:layout_marginTop="50dp"
+        >
+
+        <TextView
+            android:id="@+id/cancel_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textSize="15dp"/>
+
+        <TextView
+            android:id="@+id/re_up_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="40dp"
+            android:textSize="15dp"
+            android:text="重发"
+            android:textColor="@color/colorBuleDark"/>
+    </LinearLayout>
+</RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_all"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:background="@color/colorWhite"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/item_big_image"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginLeft="20dp"
+        android:layout_gravity="center_vertical"
+        android:background="@mipmap/music_image"
+        android:padding="5dp" />
+        <TextView
+            android:id="@+id/item_music_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:scrollbars="horizontal"
+            android:text="三年二班--周杰伦555555555555555555555555555555555555"
+            android:textSize="16dp"
+            android:textColor="@color/colorBuleDark"/>
+
+</LinearLayout>

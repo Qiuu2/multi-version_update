@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="text_big">70px</dimen>
+    <dimen name="text_normal">60px</dimen>
+    <dimen name="text_small">50px</dimen>
+    <dimen  name="text_large">80px</dimen>
+    <dimen  name="text_larger">90px</dimen>
+    <dimen  name="text_bigger">35dp</dimen>
+    <dimen name="small_music_list">300dp</dimen>
+    <dimen name="distance">10dp</dimen>
+    <dimen name="dp_10">10dp</dimen>
+    <dimen name="splite">2dp</dimen>
+    <dimen name="dp_4">4dp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen  name="dp_20">20dp</dimen>
+    <dimen  name="dp_30">30dp</dimen>
+    <dimen  name="dp_40">40dp</dimen>
+    <dimen  name="dp_45">45dp</dimen>
+    <dimen  name="dp_50">50dp</dimen>
+    <dimen  name="dp_60">60dp</dimen>
+    <dimen  name="dp_65">65dp</dimen>
+    <dimen  name="dp_70">70dp</dimen>
+    <dimen name="small_phote">48dp</dimen>
+    <dimen name="big_phote">56dp</dimen>
+
+    <dimen name="dp_15">15dp</dimen>
+
+
+
+    <dimen name="left_dimen">10dp</dimen>
+    <dimen name="top_dimen">5dp</dimen>
+    <dimen name="image_width">120px</dimen>
+    <dimen name="spinner_width">480px</dimen>
+    <dimen name="edit_width">1000px</dimen>
+
+    <dimen name="big_item_height">200px</dimen>
+    <dimen name="line">2px</dimen>
+    <dimen name="machine_item_h">150dp</dimen>
+</resources>

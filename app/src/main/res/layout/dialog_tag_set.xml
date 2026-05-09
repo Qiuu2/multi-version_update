@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="320dp"
+    android:layout_height="240dp"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:background="@color/side_title_text">
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="302dp"
+        android:layout_height="45dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/splite"
+        android:background="@color/side_title_back"
+        android:gravity="center"
+        android:text="编辑标签"
+        android:textColor="@color/side_title_text"
+        android:textSize="@dimen/text_normal" />
+
+    <EditText
+        android:id="@+id/tag_et"
+        android:layout_width="300dp"
+        android:layout_height="125dp"
+        android:layout_marginTop="@dimen/distance"
+        android:textColor="@color/black"
+        android:background="@color/white"/>
+    <include
+        layout="@layout/two_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/distance"
+        android:layout_marginBottom="@dimen/distance" />
+   <!-- <Button
+        android:id="@+id/positiveButton"
+        android:layout_width="match_parent"
+        android:layout_height="50.0dip"
+        android:gravity="center"
+        android:layout_marginTop="@dimen/distance"
+        android:text="@string/confirm" />-->
+</LinearLayout>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable-v24/speak_btn_back.xml" value="0.16666666666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable-v24/white_roundrectangle.xml" value="0.2484375" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/add_style.xml" value="0.24322916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/attr_style.xml" value="0.36574074074074076" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/bt_setting_style.xml" value="0.15572916666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/change_style.xml" value="0.22135416666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/checkbox_login_style.xml" value="0.24322916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/checkbox_style.xml" value="0.24322916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/corners_bg.xml" value="0.22916666666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/delete_style.xml" value="0.22135416666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/detail_style.xml" value="0.20833333333333334" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/et_back.xml" value="0.36923076923076925" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/et_back_sel.xml" value="0.36574074074074076" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/go_back_style.xml" value="0.25104166666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/progressbarstyle.xml" value="0.2484375" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/speak_btn_back.xml" value="0.16666666666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/drawable/white_roundrectangle.xml" value="0.2484375" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_caibo.xml" value="0.17" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_content.xml" value="0.17864583333333334" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_filebroad.xml" value="0.22" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_scheme_all.xml" value="0.25052083333333336" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_terminalamplifier.xml" value="0.25" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_wenziyuyin.xml" value="0.19479166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_add_zone.xml" value="0.2421875" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_locationinmap.xml" value="0.20208333333333334" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_locationinmaps.xml" value="0.23697916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_login_new.xml" value="0.1515625" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_main.xml" value="0.18177083333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_music_list.xml" value="0.22135416666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_scheme_detail.xml" value="0.21041666666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_scheme_info.xml" value="0.290625" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_setting.xml" value="0.35885416666666664" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_sign.xml" value="0.1796875" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_task.xml" value="0.32727272727272727" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_task_detail.xml" value="0.35885416666666664" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_temptts.xml" value="0.15052083333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/activity_zone_detail.xml" value="0.11" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/box_button.xml" value="0.23229166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/box_edit.xml" value="0.23229166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/box_spineer.xml" value="0.33" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_attr_set.xml" value="0.35885416666666664" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_tag_set.xml" value="0.225" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_terminal.xml" value="0.35885416666666664" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_tip.xml" value="0.2520833333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_two_button.xml" value="0.35885416666666664" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/dialog_volume.xml" value="0.3046875" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/founction_three_button.xml" value="0.21302083333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/four_button.xml" value="0.1796875" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/fragment_setting.xml" value="0.25052083333333336" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_machine.xml" value="0.228125" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_scheme_task.xml" value="0.25" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_task_zuoxi_list.xml" value="0.22135416666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_text.xml" value="0.21197916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_zone.xml" value="0.25" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_zone_on_map.xml" value="0.33" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/item_zuoxi_task.xml" value="0.33" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/map_bitmap.xml" value="0.2328125" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/music_item.xml" value="0.21197916666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/music_order.xml" value="0.13333333333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/new_fragment_call.xml" value="0.21302083333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/popwindow_terminal_onmap.xml" value="0.15885416666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/popwindow_terminal_select.xml" value="0.23177083333333334" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/radiogroup_two.xml" value="0.15104166666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/simple_spinner_item.xml" value="0.23229166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/spinner_setting.xml" value="0.23385416666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/temp_list.xml" value="0.17291666666666666" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/text_bubble.xml" value="0.203125" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/title_bar.xml" value="0.13958333333333334" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/two_button.xml" value="0.2520833333333333" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/view_image_text_rigntbt.xml" value="0.25052083333333336" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/view_task_info.xml" value="0.225" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/view_text_andinfo.xml" value="0.17604166666666668" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/week_select.xml" value="0.23229166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/weight_task_volume.xml" value="0.23229166666666667" />
+        <entry key="..\:/a9000BroadcastAssistance/trunk/AeroRadioControl/app/src/main/res/layout/zone_popwindow.xml" value="0.17291666666666666" />
+      </map>
+    </option>
+  </component>
+  <component name="NullableNotNullManager">
+    <option name="myDefaultNullable" value="android.support.annotation.Nullable" />
+    <option name="myDefaultNotNull" value="android.support.annotation.NonNull" />
+    <option name="myNullables">
+      <value>
+        <list size="15">
+          <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.Nullable" />
+          <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nullable" />
+          <item index="2" class="java.lang.String" itemvalue="javax.annotation.CheckForNull" />
+          <item index="3" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.Nullable" />
+          <item index="4" class="java.lang.String" itemvalue="android.support.annotation.Nullable" />
+          <item index="5" class="java.lang.String" itemvalue="androidx.annotation.Nullable" />
+          <item index="6" class="java.lang.String" itemvalue="androidx.annotation.RecentlyNullable" />
+          <item index="7" class="java.lang.String" itemvalue="com.android.annotations.Nullable" />
+          <item index="8" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.qual.Nullable" />
+          <item index="9" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NullableDecl" />
+          <item index="10" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NullableType" />
+          <item index="11" class="java.lang.String" itemvalue="org.eclipse.jdt.annotation.Nullable" />
+          <item index="12" class="java.lang.String" itemvalue="io.reactivex.annotations.Nullable" />
+          <item index="13" class="java.lang.String" itemvalue="io.reactivex.rxjava3.annotations.Nullable" />
+          <item index="14" class="java.lang.String" itemvalue="android.annotation.Nullable" />
+        </list>
+      </value>
+    </option>
+    <option name="myNotNulls">
+      <value>
+        <list size="15">
+          <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.NotNull" />
+          <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nonnull" />
+          <item index="2" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.NonNull" />
+          <item index="3" class="java.lang.String" itemvalue="android.support.annotation.NonNull" />
+          <item index="4" class="java.lang.String" itemvalue="androidx.annotation.NonNull" />
+          <item index="5" class="java.lang.String" itemvalue="androidx.annotation.RecentlyNonNull" />
+          <item index="6" class="java.lang.String" itemvalue="com.android.annotations.NonNull" />
+          <item index="7" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.qual.NonNull" />
+          <item index="8" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NonNullDecl" />
+          <item index="9" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NonNullType" />
+          <item index="10" class="java.lang.String" itemvalue="org.eclipse.jdt.annotation.NonNull" />
+          <item index="11" class="java.lang.String" itemvalue="io.reactivex.annotations.NonNull" />
+          <item index="12" class="java.lang.String" itemvalue="io.reactivex.rxjava3.annotations.NonNull" />
+          <item index="13" class="java.lang.String" itemvalue="lombok.NonNull" />
+          <item index="14" class="java.lang.String" itemvalue="android.annotation.NonNull" />
+        </list>
+      </value>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="jbr-17" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

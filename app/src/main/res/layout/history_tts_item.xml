@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/all"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:orientation="vertical"
+    android:background="@color/grey">
+
+    <TextView
+        android:id="@+id/time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dp"
+        android:background="@null"
+        android:text="dsdawdwdwed"
+        android:textColor="@color/side_tile_text"
+        android:textSize="16dp" />
+
+
+    <RelativeLayout
+        android:id="@+id/left"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+        <!--播放时的动态图标-->
+        <ImageView
+            android:id="@+id/play"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:src="@mipmap/man" />
+        <!--标签-->
+        <TextView
+            android:id="@+id/tag"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:gravity="center_vertical"
+            android:textColor="@color/colorBlack"
+            android:layout_marginTop="15dp"
+            android:layout_below="@id/play"
+            android:textSize="15sp"/>
+        <!--文字条-->
+        <TextView
+            android:id="@+id/tts_part"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@+id/play"
+            android:descendantFocusability="blocksDescendants"
+            android:focusable="false"
+            android:gravity="center_vertical"
+            android:lineSpacingExtra="3dp"
+            android:lines="2"
+            android:maxWidth="1080dp"
+            android:maxHeight="220dp"
+            android:paddingBottom="@dimen/distance"
+            android:paddingLeft="30dp"
+            android:paddingRight="10dp"
+            android:paddingTop="0dp"
+            android:text="dsdsssssssssw"
+            android:textColor="@color/colorBlack" />
+
+        <LinearLayout
+            android:id="@+id/singer"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="100dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <LinearLayout
+                android:layout_width="40dp"
+                android:layout_height="@dimen/small_phote"
+                android:id="@+id/singers"
+                android:orientation="horizontal"
+                android:background="@drawable/anim_yuyin_sign"></LinearLayout>
+
+            <TextView
+                android:id="@+id/time_length"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/distance"
+                android:text="2"
+                android:textColor="@color/colorBlack" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/tts_part"
+            android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/erro"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@mipmap/error"
+                android:layout_gravity="center_vertical"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:id="@+id/all_view_bg"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="horizontal"
+                android:weightSum="3.0">
+
+                <TextView
+                    android:id="@+id/fast_xunhu_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:textSize="25dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:text="@string/convenientcall" />
+
+                <TextView
+                    android:id="@+id/fast_xunhu_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:layout_marginRight="10dp"
+                    android:textSize="25dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:text="@string/convenientcall" />
+
+                <TextView
+                    android:id="@+id/fast_xunhu_3"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:textSize="25dp"
+                    android:layout_weight="1.0"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:weightSum="3.0">
+
+                <TextView
+                    android:id="@+id/fast_xunhu_4"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:textSize="25dp"
+                    android:text="@string/convenientcall"/>
+
+                <TextView
+                    android:id="@+id/fast_xunhu_5"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:layout_marginRight="10dp"
+                    android:textSize="25dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+
+                <TextView
+                    android:id="@+id/fast_xunhu_6"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_marginRight="10dp"
+                    android:textSize="25dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_weight="1.0"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:weightSum="3.0">
+
+                <TextView
+                    android:id="@+id/fast_xunhu_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:textSize="25dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+
+                <TextView
+                    android:id="@+id/fast_xunhu_8"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_weight="1.0"
+                    android:layout_marginRight="10dp"
+                    android:textSize="25dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+
+                <TextView
+                    android:id="@+id/fast_xunhu_9"
+                    android:background="@drawable/style_coners_grey_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_marginRight="10dp"
+                    android:textSize="25dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_weight="1.0"
+                    android:gravity="center"
+                    android:text="@string/convenientcall"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+</RelativeLayout>

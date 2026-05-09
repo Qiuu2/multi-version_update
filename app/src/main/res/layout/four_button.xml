@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dp_40"
+    android:orientation="horizontal"
+    android:id="@+id/four_button">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_40"
+        android:orientation="horizontal"
+        android:weightSum="4">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/start"
+                android:layout_width="100dp"
+                android:layout_height="35dp"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="开始"
+                android:textSize="@dimen/text_normal"
+                android:textColor="@color/white"
+                 android:background="@drawable/login_bt_style" />
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/all"
+                android:layout_width="100dp"
+                android:layout_height="35dp"
+                android:layout_centerInParent="true"
+                android:text="全选"
+                android:gravity="center"
+                android:textSize="@dimen/text_normal"
+                android:textColor="@color/white"
+                android:background="@drawable/login_bt_style"/>
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/cancle"
+                android:layout_width="100dp"
+                android:layout_height="35dp"
+                android:layout_centerInParent="true"
+                android:text="取消"
+                android:gravity="center"
+                android:textSize="@dimen/text_normal"
+                android:textColor="@color/white"
+                android:background="@drawable/login_bt_style"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/has"
+                android:layout_width="100dp"
+                android:layout_height="35dp"
+                android:layout_centerInParent="true"
+                android:text="已选"
+                android:gravity="center"
+                android:textSize="@dimen/text_normal"
+                android:textColor="@color/white"
+                android:background="@drawable/login_bt_style"/>
+
+            <TextView
+                android:id="@+id/select_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_normal"
+                android:layout_marginRight="20dp" />
+        </RelativeLayout>
+    </LinearLayout>
+</LinearLayout>

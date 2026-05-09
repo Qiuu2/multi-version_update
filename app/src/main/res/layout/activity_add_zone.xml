@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.htgd.radiocontrol.aeroradiocontrol.widget.view.TitleLayout
+        android:id="@+id/title_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_50"/>
+    <com.htgd.radiocontrol.aeroradiocontrol.widget.view.Editbox
+        android:id="@+id/zonename"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center_vertical"  />
+
+    <com.htgd.radiocontrol.aeroradiocontrol.widget.view.Editbox
+        android:id="@+id/descraption"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center_vertical"  />
+    <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+        android:id="@+id/terminal"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center_vertical"  />
+
+</LinearLayout>

@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <com.baidu.mapapi.map.MapView
+        android:id="@+id/bmapViews"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true" />
+
+    <LinearLayout
+        android:id="@+id/four_state"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/dp_20"
+        android:layout_marginTop="@dimen/dp_40"
+        android:background="#60ffffff"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/zonename"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/zonenames"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/online"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/onlineter"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/busyinline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/busylineter"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/outofline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/offlineter"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/choose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/selectedter"
+            android:textColor="@color/black" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_latlng"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="@dimen/dp_20"
+        android:layout_marginTop="140dp"
+        android:background="#60ffffff"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/latlng"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/dp_40"
+            android:text="经纬度"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/copy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/copy"
+            android:textColor="@color/black" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/showorhide"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/dp_40"
+        android:layout_marginTop="@dimen/dp_10"
+        android:background="@drawable/login_bt_style"
+        android:text="@string/show"
+        android:textColor="@color/black" />
+
+    <RelativeLayout
+        android:id="@+id/operation"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/showorhide"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="@dimen/dp_10"
+        android:layout_marginRight="@dimen/dp_40">
+
+        <Button
+            android:id="@+id/state"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/state"
+            android:textColor="@color/black" />
+
+        <LinearLayout
+            android:id="@+id/edit_lats"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_below="@+id/state"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/pick"
+                android:textColor="@color/black" />
+
+            <Switch
+                android:id="@+id/edit_lat"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        <!--<Switch
+            android:id="@+id/edit_lat"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/state"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:textColor="@color/black"
+            android:textOff="Off"
+
+            android:textOn="@string/pick" />-->
+
+        <Button
+            android:id="@+id/edit"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/edit_lats"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/edit"
+            android:textColor="@color/black"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/zone"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/edit"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/zone"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/select"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/zone"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/zoneselect"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/clear_select"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/select"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/clearselect"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/call"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/clear_select"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/call"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/speach"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/call"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/speak"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/play"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/speach"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/play"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/resets"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/play"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/resets"
+            android:textColor="@color/black" />
+
+        <Button
+            android:id="@+id/back"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/play"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/login_bt_style"
+            android:text="@string/back"
+            android:textColor="@color/black" />
+    </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/up_wait"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
+</RelativeLayout>

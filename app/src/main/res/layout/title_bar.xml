@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/colorBuleDark">
+
+            <Button
+                android:id="@+id/title_go_back"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/go_back_style"
+                android:visibility="gone"></Button>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/baidumap"
+                android:text="@string/local"
+                 android:layout_marginLeft="10dp"
+                 android:visibility="gone"
+                android:layout_toRightOf="@+id/title_go_back"
+                />
+            <TextView
+                android:id="@+id/title_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:padding="10dp"
+                android:text="@string/task"
+                android:textColor="@color/colorWhite"
+                android:textSize="20dp" />
+
+
+            <Button
+                android:id="@+id/title_button"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="10dp"
+                android:textColor="@color/white"
+                android:background="@drawable/add_style"
+                android:visibility="gone" />
+
+
+        </RelativeLayout>
+
+        <!--<TextView
+            android:id="@+id/connect_toast"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:background="@color/colorYellw"
+            android:gravity="center_vertical"
+            android:text="网络连接错误"
+            android:textColor="@color/colorBlack"
+            android:textSize="15sp" />-->
+
+
+    </LinearLayout>

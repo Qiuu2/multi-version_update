@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/top_title"
+        layout="@layout/title_bar"></include>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+
+        <ScrollView
+            android:id="@+id/task_detail_sv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite"
+            android:layout_marginBottom="50dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/task_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:gravity="center"
+                    android:text="采播任务1"
+                    android:textColor="@color/colorBlack"
+                    android:textSize="20dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2.0">
+
+                    <include
+                        android:id="@+id/start_time"
+                        layout="@layout/view_text_andinfo"></include>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_gravity="center"
+                        android:layout_weight="1.0">
+
+                        <TextView
+                            android:id="@+id/text_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="启用状态"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="18dp" />
+
+                        <TextView
+                            android:layout_width="10dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center_vertical"
+                            android:gravity="center"
+                            android:text=":" />
+                         <RelativeLayout
+                             android:layout_width="match_parent"
+                             android:layout_height="wrap_content"
+                             android:layout_weight="1"
+                             android:layout_gravity="center">
+                        <Switch
+                            android:id="@+id/use_or_stop"
+                            android:layout_width="wrap_content"
+                            android:switchMinWidth="40dp"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:showText="false"
+                            android:thumb="@drawable/thumb"
+                            android:track="@drawable/track" />
+                         </RelativeLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2.0">
+
+                    <include
+                        android:id="@+id/end_time"
+                        layout="@layout/view_text_andinfo"></include>
+
+                    <include
+                        android:id="@+id/run_time"
+                        layout="@layout/view_text_andinfo"></include>
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2.0">
+
+                    <include
+                        android:id="@+id/play_time"
+                        layout="@layout/view_text_andinfo"></include>
+
+                    <include
+                        android:id="@+id/level_no"
+                        layout="@layout/view_text_andinfo"></include>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2.0">
+
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.8"
+                        android:orientation="horizontal">
+                         <ImageView
+                             android:layout_width="25dp"
+                             android:layout_height="25dp"
+                             android:layout_marginLeft="20dp"
+
+                             android:layout_gravity="center"
+                             android:background="@mipmap/voice_small_image"/>
+                        <Button
+                            android:id="@+id/button_turn_dowm"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="20dp"
+                            android:text="-" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center">
+
+                            <TextView
+                                android:id="@+id/task_voice"
+                                android:layout_width="40dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="center_vertical"
+                                android:gravity="center"
+                                android:text="80"
+                                android:textColor="@color/colorBuleDark"
+                                android:textSize="18dp" />
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/button_turn_up"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:layout_gravity="center_vertical"
+                            android:text="+" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"></LinearLayout>
+                </LinearLayout>
+
+
+                <include
+                    layout="@layout/layout_view_oneweek"
+                    android:visibility="gone"></include>
+
+                <LinearLayout
+                    android:id="@+id/machine_lv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="15dp"
+                            android:background="@color/colorBlack" />
+
+                        <TextView
+                            android:id="@+id/l_little_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="8dp"
+                            android:text="设备"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="16dp" />
+                    </LinearLayout>
+
+                    <radiocontrol.htgd.com.aeroradiocontrol.widget.MyGridView
+                        android:id="@+id/machine_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@color/colorWhite"
+                        android:columnWidth="100dp"
+                        android:horizontalSpacing="5dp"
+                        android:numColumns="auto_fit"
+                        android:stretchMode="columnWidth"
+                        android:verticalSpacing="5dp"></radiocontrol.htgd.com.aeroradiocontrol.widget.MyGridView>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/ColorGrey"
+                        android:layout_marginTop="5dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/music_lv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="5dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="15dp"
+                            android:background="@color/colorBlack" />
+
+                        <TextView
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="8dp"
+                            android:text="音乐"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="16dp" />
+                    </LinearLayout>
+
+                    <radiocontrol.htgd.com.aeroradiocontrol.widget.MyListView
+                        android:id="@+id/music_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        ></radiocontrol.htgd.com.aeroradiocontrol.widget.MyListView>
+
+
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/content_lv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="5dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="3dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="15dp"
+                            android:background="@color/colorBlack" />
+
+                        <TextView
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginLeft="8dp"
+                            android:text="文字内容"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="16dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="@dimen/dp_20">
+                    </TextView>
+
+
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:weightSum="2.0">
+
+            <Button
+                android:id="@+id/run_or_stop"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1.0"
+                android:text="执行当前任务" />
+        </LinearLayout>
+
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_view_oneweeks"
+    android:layout_width="match_parent"
+    android:layout_height="80dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="3dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="15dp"
+            android:background="@color/colorBlack" />
+
+        <TextView
+            android:id="@+id/l_little_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="8dp"
+            android:text="星期"
+            android:textColor="@color/colorBlack"
+            android:textSize="16dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="5dp"
+        android:background="@color/colorWhite"
+        android:orientation="horizontal"
+        android:weightSum="7.0">
+
+        <ImageView
+            android:id="@+id/day1"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day7_true" />
+
+        <ImageView
+            android:id="@+id/day2"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day1_true" />
+
+        <ImageView
+            android:id="@+id/day3"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+
+            android:src="@mipmap/week_day2_true" />
+
+        <ImageView
+            android:id="@+id/day4"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day3_true" />
+
+        <ImageView
+            android:id="@+id/day5"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day4_true" />
+
+        <ImageView
+            android:id="@+id/day6"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day5_true" />
+
+        <ImageView
+            android:id="@+id/day7"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1.0"
+            android:src="@mipmap/week_day6_true" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="5dp"
+        android:background="@color/LightGrey" />
+</LinearLayout>

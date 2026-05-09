@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="@color/colorWhite"
+    android:id="@+id/view_task_info_all"
+    android:layout_height="match_parent">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:weightSum="2.0">
+
+                <include
+                    android:id="@+id/broadcast_zuoxi"
+                    layout="@layout/view_task_info">
+                </include>
+
+                <include
+                    android:id="@+id/broadcast_wenjian"
+                    layout="@layout/view_task_info">
+                </include>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:weightSum="2.0"
+                >
+                <include
+                    android:id="@+id/broadcast_caibo"
+                    layout="@layout/view_task_info"
+                    >
+                </include>
+
+                <include
+                    android:id="@+id/broadcast_gongfang"
+                    layout="@layout/view_task_info">
+                </include>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp"
+                android:weightSum="2.0"
+                >
+                <include
+                    android:id="@+id/broadcast_yuyin"
+                    layout="@layout/view_task_info">
+                </include>
+
+                <include
+                    android:id="@+id/broadcast_add"
+                    layout="@layout/view_task_info_add">
+                </include>
+            </LinearLayout>
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

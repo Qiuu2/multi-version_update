@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/machine_item_h"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="100dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="5dp"
+        android:id="@+id/iv_user">
+
+        <ImageView
+            android:id="@+id/machine"
+            android:layout_width="80dp"
+            android:layout_height="60dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:src="@mipmap/terminal"/>
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/machine"
+            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"
+            android:maxEms="5"
+            android:maxLines="2"
+            android:text="枫"
+            android:textColor="@color/black"
+            android:textSize="@dimen/text_small"
+            android:gravity="center"/>
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.TitleLayout
+            android:id="@+id/title_layout"
+            android:layout_width="match_parent"
+            android:layout_height="60dp" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.Editbox
+            android:id="@+id/taskname"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical"></com.htgd.radiocontrol.aeroradiocontrol.widget.view.Editbox>
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/preopen"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/caibo_preopen"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/priority"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/exec_mode"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/bitrate"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/channel"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:gravity="center_vertical" />
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/hostlist"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:gravity="center_vertical" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+            android:id="@+id/play_time"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+            android:id="@+id/start_date"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+            android:id="@+id/end_date"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+            android:id="@+id/play_time_length"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
+            android:id="@+id/cycle_times"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical"
+            android:visibility="gone" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.ButtonBox
+            android:id="@+id/terminal"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+
+            android:gravity="center_vertical" />
+
+
+        <com.htgd.radiocontrol.aeroradiocontrol.widget.view.VolumeView
+            android:id="@+id/volume_view"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:layout_marginBottom="30dp">
+
+        </com.htgd.radiocontrol.aeroradiocontrol.widget.view.VolumeView>
+
+    </LinearLayout>
+</ScrollView>

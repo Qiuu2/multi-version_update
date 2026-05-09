@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="170dp"
+    android:layout_height="73dp"
+    android:gravity="center_vertical"
+    android:background="@mipmap/temp_pop_back">
+      <Button
+          android:id="@+id/listen"
+          android:layout_width="60dp"
+          android:layout_height="40dp"
+          android:text="执行"
+          android:textSize="25dp"
+          android:layout_marginLeft="@dimen/text_small"
+          android:textColor="@color/side_title_back"
+          android:background="@null"/>
+
+    <Button
+        android:id="@+id/tag"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
+        android:text="标签"
+        android:textColor="@color/side_title_back"
+        android:layout_marginLeft="@dimen/distance"
+        android:textSize="25dp"
+        android:background="@null"/>
+
+</LinearLayout>
