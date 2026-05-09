@@ -25,6 +25,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Android 14+ requires a typed foreground-service permission matching foregroundServiceType. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
     <uses-permission
         android:name="android.permission.WRITE_MEDIA_STORAGE"
@@ -238,6 +240,23 @@
         <service android:name=".service.TalkService" />
         <service android:name=".service.UpFileService" />
         <service android:name=".service.ReUpFileService" />
+
+        <!--
+            Android 14+ (targetSdk 34+) crashes any foreground service that does not
+            declare foregroundServiceType. The htapplib.aar declares EncodeService and
+            DecodeService for voice intercom but does not set the type. We override
+            the merged manifest entries here without touching the aar binary.
+            tools:node="merge" preserves the aar's existing attributes (exported,
+            intent-filter) and only adds foregroundServiceType.
+        -->
+        <service
+            android:name="com.example.htapplib.EncodeService"
+            android:foregroundServiceType="microphone"
+            tools:node="merge" />
+        <service
+            android:name="com.example.htapplib.DecodeService"
+            android:foregroundServiceType="microphone"
+            tools:node="merge" />
 
         <service
             android:name=".service.MyAccessibilityService"
