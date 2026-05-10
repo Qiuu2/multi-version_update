@@ -8,7 +8,7 @@ android {
     defaultConfig {
         applicationId "com.htgd.radiocontrol.aeroradiocontrol"
         minSdkVersion 19
-        targetSdkVersion 33
+        targetSdkVersion 35
         versionCode 3
         versionName "3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
