@@ -114,9 +114,9 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener/
 
         LogUtils.setLog(mTag,"WaitingActivity to LoginActivity");
         PermissionUtils  permissionUtils= new PermissionUtils(this);
-        permissionUtils.judgePermission("android.permission.READ_PRIVILEGED_PHONE_STATE ");
-        permissionUtils.judgePermission("android.permission.WRITE_EXTERNAL_STORAGE ");
-        permissionUtils.judgePermission("android.permission.READ_EXTERNAL_STORAGE");
+        permissionUtils.judgePermission(Manifest.permission.READ_PHONE_STATE);
+        permissionUtils.judgePermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        permissionUtils.judgePermission(Manifest.permission.READ_EXTERNAL_STORAGE);
       //  getThePermission();
         initView();
         LogUtils.setLog(mTag,   ScreenUtils.getScreenPixelWidth(this) + "屏幕宽高" + ScreenUtils.getScreenPixelheight(this) + "屏幕宽度dp" + getResources().getDisplayMetrics().xdpi);

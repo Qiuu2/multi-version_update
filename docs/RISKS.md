@@ -95,32 +95,21 @@
 
 ---
 
-## R-004 ★ LoginActivity 权限请求字符串有空格和系统级权限名
+## R-004 ★ ~~LoginActivity 权限请求字符串有空格和系统级权限名~~ [RESOLVED]
 
-**严重度:** ★ (静默失败,不崩,但权限永远拿不到)
+**已解决** ✅ commit B1
 
-**事实:** `app/src/main/java/.../activity/LoginActivity.java:117-118`
+**原始问题:** `LoginActivity.initSubViews()` 用字面字符串调用 `judgePermission`,
+其中两处末尾带空格 + 一处用了普通应用永远拿不到的 `READ_PRIVILEGED_PHONE_STATE`,
+导致这些权限请求被 Android 静默忽略。
 
-```java
-permissionUtils.judgePermission("android.permission.READ_PRIVILEGED_PHONE_STATE ");
-permissionUtils.judgePermission("android.permission.WRITE_EXTERNAL_STORAGE ");
-```
+**修复方式:** 改用 `Manifest.permission.*` 常量(IDE 会校验拼写),并将
+`READ_PRIVILEGED_PHONE_STATE` 替换为 `READ_PHONE_STATE`(普通 dangerous 权限)。
 
-两处问题:
-1. 字符串末尾有空格,Android 按字面字符串匹配,带空格的权限名找不到任何
-   已知权限,系统静默忽略
-2. `READ_PRIVILEGED_PHONE_STATE` 是 `signature|privileged` 权限,普通应用
-   不可能被授予。可能本意是写 `READ_PHONE_STATE`
-
-**影响:** 这两次调用永远不会成功授权,但也不会崩溃 —— 因为系统无视未知/不可
-得的权限。LoginActivity 即使不持有这两个权限也照常运行,说明业务逻辑实际上不
-依赖它们(否则早就出问题了)。
-
-**缓解:** 暂未处理。修复时:
-- 删除字符串末尾空格
-- `READ_PRIVILEGED_PHONE_STATE` 改成 `READ_PHONE_STATE`(若确需)或直接删除调用
-
-不在 Layer 2 范围,因为修复需要确认业务是否真的需要电话状态权限。
+**遗留:** LoginActivity 这种"在初始化时调用一连串 judgePermission"的模式本身
+是过时的霰弹枪做法,理想应跟 SignActivity 一样按版本动态构建。但 SignActivity
+启动时已经请求了大部分权限,LoginActivity 的调用现在只会在用户拒绝过的情况下
+重新弹一次,行为可接受。深度重构留给未来。
 
 ---
 
