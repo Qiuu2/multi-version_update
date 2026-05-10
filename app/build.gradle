@@ -68,6 +68,18 @@ android {
     namespace 'com.htgd.radiocontrol.aeroradiocontrol'
 }
 
+// Force a single Kotlin stdlib version across the dependency graph.
+// AppCompat 1.7.x pulls kotlin-stdlib 1.8+, which absorbed the contents of
+// the old kotlin-stdlib-jdk7 / kotlin-stdlib-jdk8 split artifacts. Some older
+// transitive dependencies in this project still pin the legacy jdk8 artifact
+// at 1.6.21, producing duplicate-class errors on classes like
+// kotlin.collections.jdk8.CollectionsJDK8Kt. Excluding the legacy split is
+// safe because all of its symbols now live in kotlin-stdlib.
+configurations.all {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(path: ':screanadaption')
