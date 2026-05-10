@@ -23,6 +23,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.model.EventBusCode;
 import com.htgd.radiocontrol.aeroradiocontrol.model.requestModel.GetTokenModel;
 import com.htgd.radiocontrol.aeroradiocontrol.model.responseModel.TokenModel;
 import com.htgd.radiocontrol.aeroradiocontrol.model.responseModel.TokenModelRsp;
+import com.htgd.radiocontrol.aeroradiocontrol.utils.AndroidVersion;
 import com.htgd.radiocontrol.aeroradiocontrol.utils.JsonUtil;
 import com.htgd.radiocontrol.aeroradiocontrol.utils.LogUtils;
 import com.htgd.radiocontrol.aeroradiocontrol.utils.PreferencesUtil;
@@ -51,6 +52,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
     protected void onCreate(Bundle savedInstanceState) {
         // TODO Auto-generated method stub
         super.onCreate(savedInstanceState);
+        applyEdgeToEdgeOptOut();
         setContentView(getLayoutId());
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
@@ -61,8 +63,25 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomAd
         MyApplication.getInstances().addActivity(this);
     }
 
-
-
+    /**
+     * Restore the pre-Android-15 "fit system windows" behavior.
+     *
+     * Apps targeting SDK 35+ on Android 15+ get edge-to-edge enabled by
+     * default — content is drawn behind the status and navigation bars.
+     * The legacy layouts in this app were designed for the older inset
+     * model and would have their top/bottom regions clipped by the
+     * system bars. Calling setDecorFitsSystemWindows(true) opts back
+     * into the classic behavior for every BaseActivity subclass.
+     *
+     * Long-term, individual screens should be migrated to handle
+     * WindowInsets explicitly so they can take advantage of edge-to-edge.
+     * That migration is out of scope for the multi-version upgrade.
+     */
+    private void applyEdgeToEdgeOptOut() {
+        if (AndroidVersion.defaultsToEdgeToEdge()) {
+            getWindow().setDecorFitsSystemWindows(true);
+        }
+    }
 
 
     @Override
