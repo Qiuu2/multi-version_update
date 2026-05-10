@@ -60,6 +60,32 @@
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!--
+        Permissions added for Android 12 / 13 / 14 compatibility.
+        These do nothing on lower Android versions (the system ignores them),
+        so they can be declared unconditionally. Runtime requests for the
+        dangerous ones are version-gated in code using AndroidVersion.
+    -->
+
+    <!-- Android 13+ (API 33): runtime permission required to post notifications. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Android 12+ (API 31): split BLUETOOTH into purpose-specific permissions.
+         BLUETOOTH_CONNECT covers device pairing/communication,
+         BLUETOOTH_SCAN covers nearby device discovery.
+         The legacy BLUETOOTH permission above still applies on API <= 30. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+    <!-- Android 13+ (API 33): READ_EXTERNAL_STORAGE is replaced by
+         per-media-type permissions. The legacy permission above still
+         applies on API <= 32. We declare audio + images + video because
+         the app handles all three (TTS audio, screenshots/QR, broadcast files). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
