@@ -1,0 +1,104 @@
+# 多版本升级风险登记册
+
+记录升级过程中发现的、当前未解决但已知的风险。每项风险标注严重度、阻塞范围、当前
+缓解措施、根治路径。
+
+---
+
+## R-001 ★★★ htapplib.aar 仅 32 位 ARM,无源码
+
+**严重度:** ★★★ (阻塞 Android 14+ 上线)
+
+**事实:**
+- `app/libs/htapplib.aar` 的 native 库 `libmp3lame.so` / `libaudioplay.so` /
+  `liblog.so` **只有 armeabi-v7a 版本**
+- 该 aar 由公司内部已离职员工于约 2014 年编写,源码不在当前仓库
+- 详细分析见 `docs/htapplib-internals.md`
+
+**触发场景:**
+- 在仅支持 64 位的设备上运行时,Android 选择 arm64-v8a ABI 加载,
+  `MediaCodec` 类的 static 初始化调用 `System.loadLibrary("mp3lame")`
+  抛出 `UnsatisfiedLinkError`,app 在启动早期闪退
+- 受影响设备:Pixel 7 及之后所有 Pixel、大多数 64-bit-only 模拟器(包括
+  Pixel 10 Pro AVD)、部分 2023+ 高端 Android 设备
+
+**当前缓解(临时):**
+- `app/build.gradle` 的 `abiFilters` 加入 `arm64-v8a`,使 APK **能装上** 64 位
+  设备(否则连安装都被拒绝)
+- 但运行到 htapplib 初始化时仍会崩
+- 在仍支持 32 位的设备(国产手机大部分、Pixel 6 及之前)上运行不受影响
+
+**根治路径(三选一,优先级从高到低):**
+
+1. **找回源码并重新编译为 multi-ABI**(首选)
+   - 公司 Gitlab/SVN 搜索 `htapplib`、`EncodeService`、`HTIntf` 等关键字
+   - 联系 IT 找回离职作者的工作机硬盘
+   - 公司技术群内部询问
+   - 一旦拿到源码,重新编译时在 `Application.mk` / `build.gradle` 中加入 64 位 ABI 即可
+
+2. **反编译混淆 Java 类 + 重写 native 部分**(次选)
+   - Java 部分用 CFR / Procyon 反编译,大部分逻辑可读
+   - native 部分:
+     - `libmp3lame.so` → 替换为开源 LAME 64 位 prebuilt(GitHub 可找)
+     - `libaudioplay.so` → 用 Android `AudioTrack` 重写(Java 层即可,无需 JNI)
+     - `liblog.so` → 替换为 `android.util.Log`
+   - 重新打包为新的 multi-ABI aar
+   - 工作量:高,但不依赖外部
+
+3. **整体替换为现代音频方案**(远期)
+   - 用 Android 内置 `android.media.MediaCodec` 替代 LAME
+   - 用 WebRTC 或 RTP 协议栈替代私有协议
+   - 工作量:极高,需要对接服务器协议改造
+   - 价值:彻底摆脱遗留 SDK,跨平台迁移时复用度高
+
+**当前不变性边界(改造时必须保留的契约):**
+
+详见 `docs/htapplib-internals.md` 第 5 节。简述:
+- 包名 `com.example.htapplib`
+- `HTIntf` 所有 public static 方法签名
+- `CallBackIntf` 所有方法
+- `EncodeService` / `DecodeService` 的 manifest 注册名和 intent-filter action
+
+---
+
+## R-002 ★★ 内网服务器依赖,模拟器/家庭网络无法端到端测试
+
+**严重度:** ★★ (阻塞最终验收,不阻塞代码改造)
+
+**事实:** App 登录依赖局域网内的服务器,在公司外网环境无法连接,导致模拟器无法
+完成完整业务流程测试。
+
+**当前缓解:**
+- 代码改造期间**仅依赖 Build 通过 + manifest/APK 静态检查**,不要求设备运行通过
+- UI 渲染层验证可在 32 位兼容设备上做(见 R-001 缓解)
+- 完整业务验收推迟到上线前,在公司内网 + 物理手机环境完成
+
+**根治路径:** 不需要根治,这是部署形态决定的。如有必要可考虑搭建 mock 服务器
+用于离网开发,但 ROI 低。
+
+---
+
+## R-003 ★ targetSdk 仍为 33,未真正经历 Android 14+ 强制策略
+
+**严重度:** ★ (当前不影响,Layer 2 后会改变)
+
+**事实:** `app/build.gradle` 中 `targetSdkVersion 33`,Android 14+ 的多项强制
+检查(前台服务类型、通知权限、隐式 PendingIntent 等)对本应用处于"宽松模式",
+未真正发生。
+
+**当前缓解:** Layer 1 已经为前台服务类型问题做好 manifest 准备。
+
+**根治路径:** Layer 2 升 targetSdk 到 34 或 35,同步配套权限申请代码。但完整
+验证仍受 R-001 阻塞(没有 64 位 aar 就跑不起来对讲)。
+
+---
+
+## 风险登记规范
+
+新增风险时,请按上面格式编号(R-NNN),包含:
+- 严重度(★ / ★★ / ★★★)
+- 事实(可观察、可验证)
+- 触发场景
+- 当前缓解
+- 根治路径
+- (可选)不变性边界
