@@ -7,7 +7,7 @@ android {
 //    aaptOptions.useNewCruncher = false
     defaultConfig {
         applicationId "com.htgd.radiocontrol.aeroradiocontrol"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 35
         versionCode 3
         versionName "3.0"
