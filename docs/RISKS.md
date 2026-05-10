@@ -124,6 +124,30 @@ permissionUtils.judgePermission("android.permission.WRITE_EXTERNAL_STORAGE ");
 
 ---
 
+## R-005 ★ SignActivity 不等权限授权就跳页
+
+**严重度:** ★ (UX 问题,不崩)
+
+**事实:** `SignActivity.initSubViews()` 里依次调用:
+
+```java
+getThePermission();    // 弹权限对话框(异步,不阻塞)
+setgifs();             // 启动 400ms 定时器,到点跳 LoginActivity
+```
+
+定时器在用户点"允许"之前就到点跳页了。`onRequestPermissionsResult`
+回调到达时 SignActivity 已经销毁,grant 状态没人接收。
+
+**影响:** 权限对话框会"飘"到 LoginActivity 上面,用户体验上能用但不优雅。
+功能不受影响,因为 LoginActivity 自己也再次检查权限。
+
+**缓解:** 暂未处理。
+
+**根治:** 重构 SignActivity 让跳页等待 onRequestPermissionsResult,或者把
+权限请求挪到 LoginActivity 内部。涉及启动流程改动,Layer 2 不处理。
+
+---
+
 ## 风险登记规范
 
 新增风险时,请按上面格式编号(R-NNN),包含:
