@@ -11,6 +11,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.htgd.radiocontrol.aeroradiocontrol.R;
 import com.htgd.radiocontrol.aeroradiocontrol.base.BaseActivity;
+import com.htgd.radiocontrol.aeroradiocontrol.utils.AndroidVersion;
 import com.htgd.radiocontrol.aeroradiocontrol.utils.LogUtils;
 import com.htgd.radiocontrol.aeroradiocontrol.utils.SocketClient;
 
@@ -18,6 +19,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by wzq on 2017/9/28.
@@ -72,32 +75,53 @@ public class SignActivity  extends BaseActivity {
        //
     }
 
-    //获取权限
+    /**
+     * Build the runtime-permission request list dynamically.
+     *
+     * Only "dangerous" permissions need a runtime request — install-time perms
+     * (INTERNET, WAKE_LOCK, ACCESS_WIFI_STATE etc.) are granted automatically
+     * once they appear in the manifest. Signature/system perms (WRITE_APN_SETTINGS,
+     * BIND_ACCESSIBILITY_SERVICE, MOUNT_UNMOUNT_FILESYSTEMS) can never be
+     * granted to a normal app and are silently ignored if requested.
+     *
+     * Storage and Bluetooth permissions changed shape across Android versions, so
+     * we branch on the running OS to ask for the right ones.
+     */
     private void getThePermission() {
-        String[] permissionStr = new String[]{
-                Manifest.permission.RECORD_AUDIO,
-                Manifest.permission.MODIFY_AUDIO_SETTINGS,
-                Manifest.permission.INTERNET,
-                Manifest.permission.WRITE_APN_SETTINGS,
-                Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.WRITE_APN_SETTINGS,
-                Manifest.permission.WAKE_LOCK,
-                Manifest.permission.READ_PHONE_STATE,
-                Manifest.permission.RECEIVE_BOOT_COMPLETED,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.DISABLE_KEYGUARD,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.BIND_ACCESSIBILITY_SERVICE,
-                Manifest.permission.ACCESS_FINE_LOCATION,
+        List<String> permissions = new ArrayList<>();
 
-        };
-        ActivityCompat.requestPermissions(this, permissionStr, 6);
-        for (int i = 0; i < permissionStr.length; i++) {
-            boolean flag = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+        permissions.add(Manifest.permission.READ_PHONE_STATE);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if (AndroidVersion.requiresGranularMediaPermissions()) {
+            // Android 13+: READ_EXTERNAL_STORAGE no longer grants media access;
+            // ask for the per-media-type permissions instead. WRITE_EXTERNAL_STORAGE
+            // is a no-op on API 30+ so we skip it on this branch.
+            permissions.add(Manifest.permission.READ_MEDIA_AUDIO);
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+        } else {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        if (AndroidVersion.requiresNewBluetoothPermissions()) {
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+        }
+
+        if (AndroidVersion.requiresNotificationPermission()) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+        }
+
+        String[] permissionArray = permissions.toArray(new String[0]);
+        ActivityCompat.requestPermissions(this, permissionArray, 6);
+
+        for (String permission : permissionArray) {
+            boolean granted = ContextCompat.checkSelfPermission(this, permission)
                     == PackageManager.PERMISSION_GRANTED;
-            LogUtils.setLog(permissionStr[i] + "is have" + flag);
+            LogUtils.setLog(mTag, permission + " granted=" + granted);
         }
     }
 
