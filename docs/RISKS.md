@@ -93,6 +93,37 @@
 
 ---
 
+---
+
+## R-004 ★ LoginActivity 权限请求字符串有空格和系统级权限名
+
+**严重度:** ★ (静默失败,不崩,但权限永远拿不到)
+
+**事实:** `app/src/main/java/.../activity/LoginActivity.java:117-118`
+
+```java
+permissionUtils.judgePermission("android.permission.READ_PRIVILEGED_PHONE_STATE ");
+permissionUtils.judgePermission("android.permission.WRITE_EXTERNAL_STORAGE ");
+```
+
+两处问题:
+1. 字符串末尾有空格,Android 按字面字符串匹配,带空格的权限名找不到任何
+   已知权限,系统静默忽略
+2. `READ_PRIVILEGED_PHONE_STATE` 是 `signature|privileged` 权限,普通应用
+   不可能被授予。可能本意是写 `READ_PHONE_STATE`
+
+**影响:** 这两次调用永远不会成功授权,但也不会崩溃 —— 因为系统无视未知/不可
+得的权限。LoginActivity 即使不持有这两个权限也照常运行,说明业务逻辑实际上不
+依赖它们(否则早就出问题了)。
+
+**缓解:** 暂未处理。修复时:
+- 删除字符串末尾空格
+- `READ_PRIVILEGED_PHONE_STATE` 改成 `READ_PHONE_STATE`(若确需)或直接删除调用
+
+不在 Layer 2 范围,因为修复需要确认业务是否真的需要电话状态权限。
+
+---
+
 ## 风险登记规范
 
 新增风险时,请按上面格式编号(R-NNN),包含:

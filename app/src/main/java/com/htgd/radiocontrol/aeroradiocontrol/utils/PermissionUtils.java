@@ -32,7 +32,7 @@ public class PermissionUtils {
     public void judgePermission(String s){
 
         boolean permission = (PackageManager.PERMISSION_GRANTED ==
-                pm.checkPermission(s, "packageName"));
+                pm.checkPermission(s, mContext.getPackageName()));
         if (!permission) {
             LogUtils.setLog(mTag,"请求权限");
              requestPermission(  s  /*Manifest.permission.WRITE_EXTERNAL_STORAGE*/);
