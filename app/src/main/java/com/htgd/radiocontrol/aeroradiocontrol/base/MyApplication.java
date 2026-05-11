@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
 
+import com.baidu.location.LocationClient;
 import com.baidu.mapapi.CoordType;
 import com.baidu.mapapi.SDKInitializer;
 import com.htgd.radiocontrol.aeroradiocontrol.R;
@@ -87,6 +88,14 @@ public class MyApplication extends Application {
     private void initBaiduMap() {
 
         LogUtils.setLog(mTag,"百度地图初始化成功00");
+
+        // Baidu Map SDK v8.0+ and Location SDK v9.6+ enforce China PIPL
+        // privacy-compliance: the app must explicitly declare it has obtained
+        // user consent BEFORE SDKInitializer.initialize() or
+        // any LocationClient is constructed. Skipping this throws at runtime.
+        SDKInitializer.setAgreePrivacy(this, true);
+        LocationClient.setAgreePrivacy(true);
+
         //在使用SDK各组件之前初始化context信息，传入ApplicationContext
         SDKInitializer.initialize(this);
         //自4.3.0起，百度地图SDK所有接口均支持百度坐标和国测局坐标，用此方法设置您使用的坐标类型.

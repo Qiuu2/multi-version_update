@@ -247,7 +247,16 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
 
     private void createLocalLocation() {
         // 创建定位客户端
-          mClient = new LocationClient(this);
+        // Baidu Location SDK v9.6+ declares throws on the LocationClient constructor
+        // to force the caller to handle the case where setAgreePrivacy has not been
+        // called. We set agree privacy in MyApplication.initBaiduMap(), so this
+        // catch is defensive — log and bail rather than crash if it ever throws.
+        try {
+            mClient = new LocationClient(this);
+        } catch (Exception e) {
+            LogUtils.setLog(mTag, "LocationClient init failed: " + e.getMessage());
+            return;
+        }
           myLocationListener = new MyLocationListener();
         // 注册定位监听
         mClient.registerLocationListener(myLocationListener);
@@ -924,8 +933,13 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
         mBaiduMap.setMyLocationEnabled(true);
         // 初始化搜索模块，注册事件监听
         mSearch = GeoCoder.newInstance();
-        // 定位初始化
-        mLocClient = new LocationClient(this);
+        // 定位初始化 (see createLocalLocation for why this is wrapped)
+        try {
+            mLocClient = new LocationClient(this);
+        } catch (Exception e) {
+            LogUtils.setLog(mTag, "LocationClient init failed: " + e.getMessage());
+            return;
+        }
         //mLocClient.registerLocationListener(myListener);
         LocationClientOption option = new LocationClientOption();
         option.setOpenGps(true);// 打开gps
