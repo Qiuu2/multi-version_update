@@ -100,7 +100,7 @@ dependencies {
     implementation files('libs/okio-1.13.0.jar')
     implementation files('libs/okhttp-3.2.0.jar')
     //百度sdk
-    implementation files('libs/BaiduLBS_Android.jar')
+    implementation files('libs/BaiduLBS_Android.aar')
     implementation 'cat.ereza:customactivityoncrash:2.4.0'
     //添加此行
     implementation 'androidx.multidex:multidex:2.0.1'
