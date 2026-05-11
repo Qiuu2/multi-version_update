@@ -5,62 +5,48 @@
 
 ---
 
-## R-001 ★★★ htapplib.aar 仅 32 位 ARM,无源码
+## R-001 ★★ ~~htapplib.aar 仅 32 位 ARM,无源码~~ [RESOLVED (with caveat)]
 
-**严重度:** ★★★ (阻塞 Android 14+ 上线)
+**已解决** ✅ — htapplib 64-bit version received from 陶工 on 2026-05-11,
+committed as `Layer 3: Replace htapplib.aar with 64-bit ported version`.
+Verified working on Pixel 10 Pro emulator (API 37).
 
-**事实:**
-- `app/libs/htapplib.aar` 的 native 库 `libmp3lame.so` / `libaudioplay.so` /
-  `liblog.so` **只有 armeabi-v7a 版本**
-- 该 aar 由公司内部已离职员工于约 2014 年编写,源码不在当前仓库
-- 详细分析见 `docs/htapplib-internals.md`
+**注意事项(剩余尾巴):**
+陶工的 64-bit 版本编译时**没加 `-Wl,-z,max-page-size=16384` flag**,
+所以 .so 不是 16 KB page aligned。当前能在 Pixel 10 Pro 模拟器跑通,
+是因为模拟器有 Berberis(ARM-to-x86 翻译层)对 4 KB 对齐宽容。
 
-**触发场景:**
-- 在仅支持 64 位的设备上运行时,Android 选择 arm64-v8a ABI 加载,
-  `MediaCodec` 类的 static 初始化调用 `System.loadLibrary("mp3lame")`
-  抛出 `UnsatisfiedLinkError`,app 在启动早期闪退
-- 受影响设备:Pixel 7 及之后所有 Pixel、大多数 64-bit-only 模拟器(包括
-  Pixel 10 Pro AVD)、部分 2023+ 高端 Android 设备
+**在物理 Pixel 7+ 设备上,htapplib 可能仍报 16 KB alignment 错误**
+(同 R-006 处理百度时遇到的问题)。陶工答应稍后重编 16 KB 对齐版本,
+拿到后直接替换 `app/libs/htapplib.aar` 即可,无需改代码。
 
-**当前缓解(临时):**
-- `app/build.gradle` 的 `abiFilters` 加入 `arm64-v8a`,使 APK **能装上** 64 位
-  设备(否则连安装都被拒绝)
-- 但运行到 htapplib 初始化时仍会崩
-- 在仍支持 32 位的设备(国产手机大部分、Pixel 6 及之前)上运行不受影响
-
-**根治路径(三选一,优先级从高到低):**
-
-1. **找回源码并重新编译为 multi-ABI**(首选)
-   - 公司 Gitlab/SVN 搜索 `htapplib`、`EncodeService`、`HTIntf` 等关键字
-   - 联系 IT 找回离职作者的工作机硬盘
-   - 公司技术群内部询问
-   - 一旦拿到源码,重新编译时在 `Application.mk` / `build.gradle` 中加入 64 位 ABI 即可
-
-2. **反编译混淆 Java 类 + 重写 native 部分**(次选)
-   - Java 部分用 CFR / Procyon 反编译,大部分逻辑可读
-   - native 部分:
-     - `libmp3lame.so` → 替换为开源 LAME 64 位 prebuilt(GitHub 可找)
-     - `libaudioplay.so` → 用 Android `AudioTrack` 重写(Java 层即可,无需 JNI)
-     - `liblog.so` → 替换为 `android.util.Log`
-   - 重新打包为新的 multi-ABI aar
-   - 工作量:高,但不依赖外部
-
-3. **整体替换为现代音频方案**(远期)
-   - 用 Android 内置 `android.media.MediaCodec` 替代 LAME
-   - 用 WebRTC 或 RTP 协议栈替代私有协议
-   - 工作量:极高,需要对接服务器协议改造
-   - 价值:彻底摆脱遗留 SDK,跨平台迁移时复用度高
-
-**当前不变性边界(改造时必须保留的契约):**
-
-详见 `docs/htapplib-internals.md` 第 5 节。简述:
-- 包名 `com.example.htapplib`
-- `HTIntf` 所有 public static 方法签名
-- `CallBackIntf` 所有方法
-- `EncodeService` / `DecodeService` 的 manifest 注册名和 intent-filter action
+如果暂时只在模拟器 / Pixel 6 及之前的物理设备 / 国产机部署,**此风险不
+阻塞**。如果要部署到 Pixel 7+ 物理设备,**等待陶工 16 KB 版本**。
 
 ---
 
+## R-006 ★★ ~~百度地图 SDK 不兼容 16 KB 内存页~~ [RESOLVED]
+
+**已解决** ✅ — 百度地图 SDK 从 v7.4.0 (2019) 升级到 v8.0.0 + Location SDK
+v9.6.8 (2024+),新版 .so 已经按 16 KB page 对齐编译,完全兼容
+Android 15+ / Pixel 7+ 设备。
+
+**升级动作总结(2026-05-11):**
+- `app/libs/BaiduLBS_Android.jar` → `BaiduLBS_Android.aar`
+- 全部 .so 文件升级:
+  - `BaiduMapSDK_*_v7_4_0.so` → `*_v8_0_0.so`
+  - `liblocSDK8a.so` → `liblocSDK8b.so`
+  - `libgnustl_shared.so` → `libc++_shared.so` (现代 STL)
+  - 新增 `libindoor.so`、`libtiny_magic.so`
+- 代码适配:
+  - `MyApplication.initBaiduMap()` 新增 PIPL 隐私合规调用
+    (`SDKInitializer.setAgreePrivacy` + `LocationClient.setAgreePrivacy`)
+  - `LocationInMapActivity` 两处 `new LocationClient(this)` 加 try/catch
+    (新 SDK 构造函数声明 throws Exception)
+
+涉及 commits:`Layer 4` 系列(b9a76fe、7a8d153、0563044)。
+
+---
 ## R-002 ★★ 内网服务器依赖,模拟器/家庭网络无法端到端测试
 
 **严重度:** ★★ (阻塞最终验收,不阻塞代码改造)
@@ -78,20 +64,11 @@
 
 ---
 
-## R-003 ★ targetSdk 仍为 33,未真正经历 Android 14+ 强制策略
+## R-003 ★ ~~targetSdk 仍为 33,未真正经历 Android 14+ 强制策略~~ [RESOLVED]
 
-**严重度:** ★ (当前不影响,Layer 2 后会改变)
-
-**事实:** `app/build.gradle` 中 `targetSdkVersion 33`,Android 14+ 的多项强制
-检查(前台服务类型、通知权限、隐式 PendingIntent 等)对本应用处于"宽松模式",
-未真正发生。
-
-**当前缓解:** Layer 1 已经为前台服务类型问题做好 manifest 准备。
-
-**根治路径:** Layer 2 升 targetSdk 到 34 或 35,同步配套权限申请代码。但完整
-验证仍受 R-001 阻塞(没有 64 位 aar 就跑不起来对讲)。
-
----
+**已解决** ✅ Layer 2-5 commit `Bump targetSdk 33 -> 35`。targetSdk 现在
+是 35,Android 14 / 15 / 16 的全部强制规则已经在 Layer 1+2 的改动中提前
+适配完成,运行验证已通过(Pixel 10 Pro 模拟器跑通到登录页)。
 
 ---
 
