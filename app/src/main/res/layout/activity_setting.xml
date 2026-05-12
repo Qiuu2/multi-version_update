@@ -59,15 +59,16 @@
             android:visibility="gone"
             android:gravity="center_vertical"  />
 
-        <!-- 替代行：静态显示 app 版本号 + 构建日期 -->
+        <!-- 替代行：静态显示 app 版本号 + 构建日期。
+             左右各 50dp padding 让"版本号"和值往中间缩，跟下方"接听时间"等行视觉更对齐。 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:background="#FFFFFF"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingLeft="15dp"
-            android:paddingRight="15dp">
+            android:paddingLeft="50dp"
+            android:paddingRight="50dp">
 
             <TextView
                 android:layout_width="wrap_content"
