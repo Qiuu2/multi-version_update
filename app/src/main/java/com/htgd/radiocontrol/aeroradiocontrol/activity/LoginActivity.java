@@ -273,18 +273,13 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener/
     private void setEditDefault() {//填充输入框
         if (PreferencesUtil.getInstance().getField(Constring.versionsp, mContext) != null &&
                 PreferencesUtil.getInstance().getField(Constring.versionsp, mContext) != "" ) {
-            // 不再恢复用户上次选择的协议版本 —— 协议版本由下方代码强制锁定为 V2.4。
+            vHolder.version_sp.setSelection(Integer.parseInt(
+                    PreferencesUtil.getInstance().getField(Constring.versionsp, mContext)));
             vHolder.ed_id_address.setText(PreferencesUtil.getInstance().getField(Constring.ipaddress, mContext));
             vHolder.ed_ip_nomber.setText(PreferencesUtil.getInstance().getField(Constring.ipnumber, mContext));
             vHolder.ed_username.setText(PreferencesUtil.getInstance().getField(Constant.key_terminalName, mContext));
             vHolder.ed_password.setText(PreferencesUtil.getInstance().getField(Constring.password, mContext));
         }
-        // 强制锁定协议版本为 V2.3 (Spinner position=1, 对应 htIntf.setserverversion 的 byte=2)。
-        // 经过 B6(V2.4)/B8(V2.2) 两次现场验证均失败，剩下唯一未尝试的就是 V2.3，
-        // 且用户基于现场经验也判断应为 V2.3 —— 现网服务器实际跑的协议版本。
-        // 触发上方 OnItemSelectedListener，由其负责 setserverversion + 写入 SharedPreferences。
-        // Spinner 本身 UI 已在 layout 中隐藏 (android:visibility="gone")，用户无法切换。
-        vHolder.version_sp.setSelection(1);
     }
 
     @Override

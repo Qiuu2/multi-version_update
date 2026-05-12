@@ -48,8 +48,12 @@
                 android:text="@string/settingIp"
                 android:visibility="invisible"/>
 
-            <!-- 版本选择器：UI 隐藏（visibility=gone），协议版本由代码强制锁定为 V2.4。
-                 view 本体保留是为了不破坏下方 LinearLayout 的 layout_below="@id/version_choose" 引用。 -->
+            <!-- 版本选择器：UI 用 invisible 隐藏（不画但仍参与布局），用户看不到也无法点击。
+                 关键：必须 invisible 而非 gone —— gone 时 Spinner 不参与布局，
+                 onItemSelected 监听器初始化时不会触发，导致 htIntf.setserverversion()
+                 不被调用，SDK 用错误的默认音频协议 → 现场会出现杂音。
+                 invisible 保证 view 参与布局，初始 fire 正常发生，
+                 setserverversion 按 SharedPreferences 里的值或默认 V2.2 被正确调用。 -->
             <Spinner
                 android:id="@+id/version_choose"
                 android:layout_width="@dimen/spinner_width"
@@ -59,7 +63,7 @@
                 android:layout_marginTop="@dimen/left_dimen"
                 android:background="@mipmap/spriner_bg_1"
                 android:entries="@array/version_array"
-                android:visibility="gone"
+                android:visibility="invisible"
                 style="@style/spinner_style"
                 android:theme="@style/spinner_style"></Spinner>
 
