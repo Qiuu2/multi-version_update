@@ -48,12 +48,12 @@
                 android:text="@string/settingIp"
                 android:visibility="invisible"/>
 
-            <!-- 版本选择器：UI 用 invisible 隐藏（不画但仍参与布局），用户看不到也无法点击。
-                 关键：必须 invisible 而非 gone —— gone 时 Spinner 不参与布局，
-                 onItemSelected 监听器初始化时不会触发，导致 htIntf.setserverversion()
-                 不被调用，SDK 用错误的默认音频协议 → 现场会出现杂音。
-                 invisible 保证 view 参与布局，初始 fire 正常发生，
-                 setserverversion 按 SharedPreferences 里的值或默认 V2.2 被正确调用。 -->
+            <!-- 版本选择器：UI 用 gone 彻底隐藏（不占布局、不画、不可交互）。
+                 之前 B10 用 invisible 是为了让 layout 触发 Spinner 的 onItemSelected 初始 fire，
+                 但现场验证 invisible 也不可靠 —— 监听器仍可能不 fire。
+                 B11 把"调 setserverversion 的兜底"放到 LoginActivity.setEditDefault 里直接调用，
+                 不再依赖 Spinner 监听器，所以这里 gone 没有副作用，UI 反而更干净。
+                 view 本体保留（不删除）是为了 layout_below="@id/version_choose" 引用仍然有效。 -->
             <Spinner
                 android:id="@+id/version_choose"
                 android:layout_width="@dimen/spinner_width"
@@ -63,7 +63,7 @@
                 android:layout_marginTop="@dimen/left_dimen"
                 android:background="@mipmap/spriner_bg_1"
                 android:entries="@array/version_array"
-                android:visibility="invisible"
+                android:visibility="gone"
                 style="@style/spinner_style"
                 android:theme="@style/spinner_style"></Spinner>
 

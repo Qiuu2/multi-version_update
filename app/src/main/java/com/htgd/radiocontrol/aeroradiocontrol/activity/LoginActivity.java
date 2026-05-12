@@ -273,13 +273,30 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener/
     private void setEditDefault() {//填充输入框
         if (PreferencesUtil.getInstance().getField(Constring.versionsp, mContext) != null &&
                 PreferencesUtil.getInstance().getField(Constring.versionsp, mContext) != "" ) {
-            vHolder.version_sp.setSelection(Integer.parseInt(
-                    PreferencesUtil.getInstance().getField(Constring.versionsp, mContext)));
+            // 不再依赖 SharedPreferences 里的版本号（B6-B10 测试期间可能写入了错误值）。
+            // 协议版本下方强制锁定为 V2.4，prefs 也会被覆盖写为 "2"。
             vHolder.ed_id_address.setText(PreferencesUtil.getInstance().getField(Constring.ipaddress, mContext));
             vHolder.ed_ip_nomber.setText(PreferencesUtil.getInstance().getField(Constring.ipnumber, mContext));
             vHolder.ed_username.setText(PreferencesUtil.getInstance().getField(Constant.key_terminalName, mContext));
             vHolder.ed_password.setText(PreferencesUtil.getInstance().getField(Constring.password, mContext));
         }
+
+        // ====== 协议版本锁定为 V2.4 (Spinner position=2, byte=3) ======
+        // 现网服务器跑 V2.4 协议，已经过现场验证（原始代码 + 手动选 V2.4 工作正常）。
+        //
+        // ★ 关键：直接调用 htIntf.setserverversion，不依赖 Spinner 的 onItemSelected 监听器。
+        // 因为 Spinner UI 被隐藏后（visibility=gone 或 invisible），监听器初始 fire 不可靠，
+        // 经 B6/B8/B9/B10 现场反复验证：靠 setSelection 触发 listener 的方式会失败，
+        // 导致 setserverversion 没被调用 → SDK 用内部默认音频协议 → 与服务器不匹配 → 杂音。
+        //
+        // 这里改为：
+        //   1. setSelection(2)   仅维持 Spinner 内部 state 跟 prefs 一致（防止 SettingActivity
+        //                        进入时计算错误的显示值）；listener 不 fire 也没关系。
+        //   2. setserverversion  直接调用，确保协议字节一定被写入 htIntf。
+        //   3. keepField         显式持久化，下次启动从 prefs 读到正确值。
+        vHolder.version_sp.setSelection(2);
+        htIntf.setserverversion((byte) 3);
+        PreferencesUtil.getInstance().keepField(Constring.versionsp, "2", mContext);
     }
 
     @Override
