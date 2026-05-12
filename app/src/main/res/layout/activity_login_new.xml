@@ -48,6 +48,8 @@
                 android:text="@string/settingIp"
                 android:visibility="invisible"/>
 
+            <!-- 版本选择器：UI 隐藏（visibility=gone），协议版本由代码强制锁定为 V2.4。
+                 view 本体保留是为了不破坏下方 LinearLayout 的 layout_below="@id/version_choose" 引用。 -->
             <Spinner
                 android:id="@+id/version_choose"
                 android:layout_width="@dimen/spinner_width"
@@ -57,6 +59,7 @@
                 android:layout_marginTop="@dimen/left_dimen"
                 android:background="@mipmap/spriner_bg_1"
                 android:entries="@array/version_array"
+                android:visibility="gone"
                 style="@style/spinner_style"
                 android:theme="@style/spinner_style"></Spinner>
 
