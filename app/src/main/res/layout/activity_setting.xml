@@ -47,11 +47,44 @@
             android:layout_height="60dp"
             android:gravity="center_vertical" />-->
 
+        <!-- 原协议版本选择器（V2.2/V2.3/V2.4）已隐藏：
+             - 用户切换协议版本会导致登录失败，UI 不再暴露
+             - SpinnerBox view 保留 (visibility=gone) 是为了让 SettingActivity.java 中
+               item_version = findViewById(...) 等调用仍能找到该 view，不抛 NPE
+             - 服务器协议版本由 LoginActivity 强制锁定为 V2.4（B6 改动） -->
         <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
             android:id="@+id/item_version"
             android:layout_width="match_parent"
             android:layout_height="60dp"
+            android:visibility="gone"
             android:gravity="center_vertical"  />
+
+        <!-- 替代行：静态显示 app 版本号 + 构建日期 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#FFFFFF"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="版本号"
+                android:textColor="#000000"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/app_version_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="TW_V1.0.0.0:May 12 2026"
+                android:textColor="#666666"
+                android:textSize="14sp" />
+        </LinearLayout>
 
 
         <com.htgd.radiocontrol.aeroradiocontrol.widget.view.SpinnerBox
