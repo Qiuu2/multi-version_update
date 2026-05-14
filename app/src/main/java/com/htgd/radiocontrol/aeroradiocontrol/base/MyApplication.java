@@ -57,7 +57,13 @@ import static com.htgd.radiocontrol.aeroradiocontrol.constant.Cons.tokenUpdatabl
  * 时间：2020/8/3:18:47
  * 邮箱：535708929
  * 说明：
+ *
+ * Phase 0-2: Annotated with @HiltAndroidApp so Hilt can generate the
+ * application-scoped dependency graph. This is the only entry point Hilt needs
+ * — every @Inject point in the rest of the app resolves through here.
+ * The existing initialization logic in onCreate() is unchanged.
  */
+@dagger.hilt.android.HiltAndroidApp
 public class MyApplication extends Application {
     public static Stack<Activity> activityStack;
     private static MyApplication instances;
