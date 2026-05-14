@@ -103,11 +103,19 @@ configurations.all {
 }
 
 dependencies {
-    // Auto-pick local jars from libs/, except gson-2.7.jar which is replaced
-    // by the modern Gson 2.10.1 (pulled transitively by Retrofit's
-    // converter-gson). Gson 2.7 → 2.10.1 is fully API-compatible; legacy code
-    // that used JsonObject / Gson / TypeAdapter continues to compile.
-    implementation fileTree(include: ['*.jar'], exclude: ['gson-2.7.jar'], dir: 'libs')
+    // Auto-pick local jars from libs/, except those replaced by modern Maven
+    // dependencies in Phase 0:
+    //   - gson-2.7.jar          → 'com.google.code.gson:gson:2.10.1'
+    //   - okio-1.13.0.jar       → transitive from okhttp 4.12.0 (okio 3.x)
+    //   - okhttp-3.2.0.jar      → 'com.squareup.okhttp3:okhttp:4.12.0'
+    // OkHttp 4 keeps the same okhttp3.* package name as OkHttp 3.x and was
+    // designed as a drop-in replacement, so the legacy RequestManger code
+    // continues to compile and run against it.
+    implementation fileTree(
+        include: ['*.jar'],
+        exclude: ['gson-2.7.jar', 'okio-1.13.0.jar', 'okhttp-3.2.0.jar'],
+        dir: 'libs'
+    )
     implementation project(path: ':screanadaption')
     testImplementation 'junit:junit:4.13.2'
     implementation files('libs/eventbus-3.0.0.jar')
@@ -124,8 +132,10 @@ dependencies {
     implementation 'com.wang.avi:library:1.0.0'
     //二维码扫描
     implementation 'com.acker:simplezxing:1.5'
-    implementation files('libs/okio-1.13.0.jar')
-    implementation files('libs/okhttp-3.2.0.jar')
+    // okhttp + okio: provided via Phase 0 Maven deps further below (4.12.0 + 3.x).
+    // The legacy libs/okhttp-3.2.0.jar and libs/okio-1.13.0.jar are excluded
+    // from the fileTree at the top of this block; they stay on disk for now
+    // but are not on the classpath.
     //百度sdk
     implementation files('libs/BaiduLBS_Android.aar')
     implementation 'cat.ereza:customactivityoncrash:2.4.0'
