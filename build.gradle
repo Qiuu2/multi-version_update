@@ -1,7 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
+    // Single source of truth for Kotlin / Hilt versions used across modules.
+    ext.kotlin_version = '1.9.25'
+    ext.hilt_version = '2.51.1'
+
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public/' }
         mavenLocal()
@@ -11,7 +14,9 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.7.3'
-        
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
+
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
