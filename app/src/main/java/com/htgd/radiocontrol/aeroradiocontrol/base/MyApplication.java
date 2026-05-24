@@ -46,6 +46,7 @@ import java.util.TimerTask;
 
 import androidx.multidex.MultiDex;
 import cat.ereza.customactivityoncrash.activity.DefaultErrorActivity;
+import dagger.hilt.android.HiltAndroidApp;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 
@@ -57,6 +58,7 @@ import static com.htgd.radiocontrol.aeroradiocontrol.constant.Cons.tokenUpdatabl
  * 邮箱：535708929
  * 说明：
  */
+@HiltAndroidApp
 public class MyApplication extends Application {
     public static Stack<Activity> activityStack;
     private static MyApplication instances;

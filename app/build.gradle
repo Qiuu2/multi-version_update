@@ -1,13 +1,16 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 35
     // 取消掉系统对.9图片的检查
 //    aaptOptions.cruncherEnabled = false
 //    aaptOptions.useNewCruncher = false
     defaultConfig {
         applicationId "com.htgd.radiocontrol.aeroradiocontrol"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
         versionCode 3
         versionName "3.0"
@@ -59,6 +62,25 @@ android {
             //disable automatic ndk-build
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.15'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
     namespace 'com.htgd.radiocontrol.aeroradiocontrol'
 }
 
@@ -95,4 +117,29 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation  'com.contrarywind:Android-PickerView:4.1.9'
 
+    // ---- v4 UI: Kotlin + Jetpack Compose foundation (Phase B) ----
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.25'
+
+    def composeBom = platform('androidx.compose:compose-bom:2024.10.01')
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
+    implementation 'androidx.navigation:navigation-compose:2.8.4'
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.52'
+    kapt 'com.google.dagger:hilt-android-compiler:2.52'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
 }
