@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AeroRadioControl · v4 终端为中心</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+<link rel="stylesheet" href="modern.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f0eee9; }
+  body { font-family: 'Noto Sans SC', sans-serif; }
+  #root { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="android-frame.jsx"></script>
+<script type="text/babel" src="m-components.jsx"></script>
+<script type="text/babel" src="m-screens-1.jsx"></script>
+<script type="text/babel" src="m-screens-2.jsx"></script>
+<script type="text/babel" src="m-screens-ai.jsx"></script>
+<script type="text/babel" src="m-screens-aftersales.jsx"></script>
+<script type="text/babel" src="m-screens-v4.jsx"></script>
+<script type="text/babel" src="m-screens-v4-task.jsx"></script>
+<script type="text/babel" src="m-screens-v4-zone.jsx"></script>
+
+<script type="text/babel">
+function Phone({ children, dark = false }) {
+  return (
+    <AndroidDevice width={412} height={892} dark={dark}>
+      <div style={{ height: '100%', overflow: 'hidden' }}>{children}</div>
+    </AndroidDevice>
+  );
+}
+
+function Tablet({ children }) {
+  // simple tablet bezel — landscape 1280×800
+  return (
+    <div style={{
+      width: 1280 + 24, height: 800 + 24,
+      background: '#1a1a1a',
+      borderRadius: 36, padding: 12,
+      boxShadow: '0 24px 56px rgba(13,17,23,0.18)',
+      boxSizing: 'border-box',
+    }}>
+      <div style={{
+        width:'100%', height:'100%', borderRadius:24, overflow:'hidden',
+        background:'#fff',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const ART_W = 412 + 16;
+const ART_H = 892 + 16;
+const SEL = new Set(['操场北侧','教学楼A-101','图书馆']);
+
+function App() {
+  return (
+    <DesignCanvas>
+      {/* COVER · IA SPEC */}
+      <DCSection id="cover" title="AeroRadioControl · v4"
+        subtitle="新方案：以「终端」为中心 · 5 屏核心 + 平板 + 2 占位">
+        <DCArtboard id="cover-ia" label="信息架构总览" width={780} height={ART_H}>
+          <div style={{padding:'40px 36px', height:'100%', boxSizing:'border-box',
+            background:'#fff', display:'flex', flexDirection:'column',
+            fontFamily:'Noto Sans SC', overflow:'auto'}}>
+            <div style={{display:'flex', alignItems:'center', gap:16, marginBottom:6}}>
+              <div style={{
+                width:56, height:56, borderRadius:16,
+                background:'linear-gradient(135deg,#0e7c70 0%,#14b8a6 60%,#06b6d4 100%)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                boxShadow:'0 8px 24px rgba(14,124,112,0.32)',
+              }}>
+                <span className="mi filled" style={{color:'#fff', fontSize:30}}>dvr</span>
+              </div>
+              <div>
+                <div style={{fontSize:13, color:'#8a929f', fontFamily:'JetBrains Mono', letterSpacing:0.3}}>
+                  v4 · INFORMATION ARCHITECTURE
+                </div>
+                <div style={{fontSize:28, fontWeight:600, color:'#0d1117', letterSpacing:-0.4}}>
+                  终端为中心
+                </div>
+              </div>
+            </div>
+
+            <div style={{fontSize:13, color:'#4a5260', lineHeight:1.7, marginBottom:20}}>
+              原版 IA 把<b style={{color:'#0d1117'}}>动作</b>（寻呼/对讲/点播/任务/快捷）做 Tab，
+              用户每次都得重新选终端。v4 把<b style={{color:'#0e7c70'}}>终端</b>提为主入口，
+              <b style={{color:'#0e7c70'}}>广播</b>聚合三种动作，
+              形成「找 → 做 → 自动 → 兜底」的清晰心智。
+            </div>
+
+            {/* IA comparison */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20}}>
+              <div style={{padding:14, borderRadius:14, background:'#f8fafb',
+                border:'1px solid #e8ebef'}}>
+                <div style={{fontSize:11, color:'#8a929f', fontFamily:'JetBrains Mono',
+                  letterSpacing:0.6, marginBottom:8}}>BEFORE · 旧版</div>
+                <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
+                  {[['寻呼','#ea580c'],['对讲','#2563eb'],['点播','#0e7c70'],['任务','#7c3aed'],['快捷','#8a929f']].map(([l,c]) => (
+                    <span key={l} style={{padding:'5px 10px', borderRadius:999,
+                      background:'#fff', border:'1px solid #e8ebef',
+                      color:c, fontSize:12, fontWeight:500}}>{l}</span>
+                  ))}
+                </div>
+                <div style={{fontSize:11, color:'#8a929f', marginTop:10, lineHeight:1.5}}>
+                  · 全是动作，找终端要重复多次<br/>
+                  · 「快捷」使用率低<br/>
+                  · 「对讲」频次低却占主导航
+                </div>
+              </div>
+              <div style={{padding:14, borderRadius:14,
+                background:'linear-gradient(135deg,#e6f4f2,#fff)',
+                border:'1.5px solid #0e7c70'}}>
+                <div style={{fontSize:11, color:'#095c54', fontFamily:'JetBrains Mono',
+                  letterSpacing:0.6, marginBottom:8}}>AFTER · v4</div>
+                <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
+                  {[
+                    ['终端','#0e7c70','dvr'],
+                    ['广播','#ea580c','campaign'],
+                    ['AI','#14b8a6','auto_awesome'],
+                    ['任务','#7c3aed','event_available'],
+                    ['服务','#2563eb','support_agent'],
+                  ].map(([l,c,ico]) => (
+                    <span key={l} style={{padding:'5px 10px', borderRadius:999,
+                      background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,0.06)',
+                      color:c, fontSize:12, fontWeight:600,
+                      display:'inline-flex', alignItems:'center', gap:4}}>
+                      <span className="mi" style={{fontSize:12, color:c}}>{ico}</span>
+                      {l}
+                    </span>
+                  ))}
+                </div>
+                <div style={{fontSize:11, color:'#095c54', marginTop:10, lineHeight:1.5}}>
+                  · 终端是一等公民 (entity-first)<br/>
+                  · 广播 = 寻呼+对讲+点播 三档切换<br/>
+                  · AI 中心抬起 · 服务兜底
+                </div>
+              </div>
+            </div>
+
+            {/* Flow */}
+            <div style={{fontSize:11, color:'#8a929f', fontFamily:'JetBrains Mono',
+              letterSpacing:0.6, marginBottom:10}}>用户心智流</div>
+            <div style={{display:'flex', alignItems:'center', gap:6, fontSize:13, marginBottom:24,
+              flexWrap:'wrap'}}>
+              {[['找','#0e7c70','终端'],['做','#ea580c','广播'],['自动','#7c3aed','任务'],['兜底','#2563eb','服务']].map(([v,c,t],i,a) => (
+                <React.Fragment key={t}>
+                  <div style={{padding:'8px 14px', borderRadius:12, background:'#fff',
+                    border:`1.5px solid ${c}`, color:c, fontWeight:600,
+                    display:'inline-flex',alignItems:'baseline',gap:6}}>
+                    <span style={{fontSize:10, color:'#8a929f',
+                      fontFamily:'JetBrains Mono'}}>{v}</span>
+                    {t}
+                  </div>
+                  {i < a.length-1 && <span style={{color:'#b8bec8'}}>→</span>}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* Spec table */}
+            <div style={{fontSize:11, color:'#8a929f', fontFamily:'JetBrains Mono',
+              letterSpacing:0.6, marginBottom:10}}>每个 Tab 解决什么</div>
+            <div style={{fontSize:12, color:'#4a5260', lineHeight:1.7}}>
+              {[
+                ['终端','所有终端的总览（列表 / 分区 / 地图）· 长按多选直接派发动作','#0e7c70'],
+                ['广播','顶部三档切换：实时寻呼 / 对讲 / 点播 · 目标终端共享','#ea580c'],
+                ['AI','一句话搞定运维（任务迁移 / 周对调 / 取消 / 新建作息）· 待接入','#14b8a6'],
+                ['任务','今日时间轴 + 作息方案管理 + 临时任务入口','#7c3aed'],
+                ['服务','系统健康度 + AI 故障诊断 + 工单 · 待接入','#2563eb'],
+              ].map(([t,d,c]) => (
+                <div key={t} style={{display:'flex', gap:12, padding:'8px 0',
+                  borderBottom:'1px solid #f0f2f5'}}>
+                  <div style={{width:48, color:c, fontWeight:600, fontSize:13}}>{t}</div>
+                  <div style={{flex:1}}>{d}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Color palette */}
+            <div style={{marginTop:20, padding:14, borderRadius:12, background:'#f8fafb'}}>
+              <div style={{fontSize:11, color:'#8a929f', fontFamily:'JetBrains Mono',
+                letterSpacing:0.6, marginBottom:10}}>设计语言（沿用 v2）</div>
+              <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                {[
+                  ['#0e7c70','Teal 主色'],
+                  ['#ea580c','Page 寻呼'],
+                  ['#2563eb','Talk 对讲'],
+                  ['#7c3aed','Task 任务'],
+                  ['#f0eee9','米色背景'],
+                ].map(([c,l]) => (
+                  <div key={l} style={{display:'flex',alignItems:'center',gap:6,fontSize:11}}>
+                    <span style={{width:20,height:20,borderRadius:5,
+                      background:c, boxShadow:'inset 0 0 0 1px rgba(0,0,0,0.06)'}}></span>
+                    {l}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      {/* CORE PHONE SCREENS */}
+      <DCSection id="terminal" title="① 终端 Tab（分区为主）"
+        subtitle="分区是操作单位· 分区卡片 + 一键三档动作 + 展开看终端 + drill-in 详情页">
+        <DCArtboard id="terminal-default" label="① 分区默认" width={ART_W} height={ART_H}>
+          <Phone><TerminalHubScreenV2 expandedZone={null}/></Phone>
+        </DCArtboard>
+        <DCArtboard id="terminal-expanded" label="② 某分区展开" width={ART_W} height={ART_H}>
+          <Phone><TerminalHubScreenV2 expandedZone="教学楼 A 区"/></Phone>
+        </DCArtboard>
+        <DCArtboard id="terminal-multi" label="③ 多选 2 个分区" width={ART_W} height={ART_H}>
+          <Phone><TerminalHubScreenV2
+            expandedZone={null}
+            selectedZones={new Set(['教学楼 A 区','操场'])}
+            bulk/></Phone>
+        </DCArtboard>
+        <DCArtboard id="zone-detail" label="④ 分区详情页 (drill-in)" width={ART_W} height={ART_H}>
+          <Phone><ZoneDetailScreen/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="broadcast" title="② 广播 Tab（三档统一）"
+        subtitle="顶部 segmented control · 目标终端在三种模式间共享">
+        <DCArtboard id="broadcast-page" label="① 寻呼模式" width={ART_W} height={ART_H}>
+          <Phone><BroadcastScreen mode="page"/></Phone>
+        </DCArtboard>
+        <DCArtboard id="broadcast-cast" label="② 点播模式" width={ART_W} height={ART_H}>
+          <Phone><BroadcastScreen mode="cast"/></Phone>
+        </DCArtboard>
+        <DCArtboard id="broadcast-talk" label="③ 对讲模式" width={ART_W} height={ART_H}>
+          <Phone><BroadcastScreen mode="talk"/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="task" title="③ 任务 Tab（重组）"
+        subtitle="今日时间轴 + 作息方案 + 临时任务入口">
+        <DCArtboard id="task-home" label="① 主页" width={ART_W} height={ART_H}>
+          <Phone><TaskScreenV4/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* TASK SECONDARY SCREENS */}
+      <DCSection id="task-detail" title="③.a · 任务 Tab 二级页"
+        subtitle="点开作息方案 / 时间轴 / 临时任务 进入的子页">
+        <DCArtboard id="schedule-detail" label="① 作息方案详情" width={ART_W} height={ART_H}>
+          <Phone><ScheduleDetailScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="task-edit" label="② 编辑作息任务" width={ART_W} height={ART_H}>
+          <Phone><TaskEditScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="task-exec" label="③ 任务执行详情 + 日志" width={ART_W} height={ART_H}>
+          <Phone><TaskExecDetailScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="temp-file" label="④ 临时文件广播" width={ART_W} height={ART_H}>
+          <Phone><TempFileBroadcastScreen/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="placeholders" title="④ 占位屏（框架预览）"
+        subtitle="最小可用状态，下面有从 v2 拿过来的完整详细屏">
+        <DCArtboard id="ai-placeholder" label="AI 助手（占位）" width={ART_W} height={ART_H}>
+          <Phone dark><AIPlaceholderScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="service-placeholder" label="服务（占位）" width={ART_W} height={ART_H}>
+          <Phone><ServicePlaceholderScreen/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* AUTH (from v2) */}
+      <DCSection id="auth" title="§§ 启动 & 登录"
+        subtitle="从 v2 合并· Splash + Login·错误态">
+        <DCArtboard id="splash" label="① 闪屏" width={ART_W} height={ART_H}>
+          <Phone><SplashScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="login" label="② 登录" width={ART_W} height={ART_H}>
+          <Phone><LoginScreen/></Phone>
+        </DCArtboard>
+        <DCArtboard id="login-err" label="③ 错误态" width={ART_W} height={ART_H}>
+          <Phone><LoginScreen error/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* AI suite (from v2) */}
+      <DCSection id="ai-suite" title="⑤ AI 助手·详细屏"
+        subtitle="从 v2 合并· 主页 / 任务迁移 / 周对调 / 新建作息· 接入 NLU 后可直接上线">
+        <DCArtboard id="ai-home" label="① AI 主页" width={ART_W} height={ART_H}>
+          <Phone><AIHome/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ai-migrate" label="② 任务迁移确认" width={ART_W} height={ART_H}>
+          <Phone><AIMigrateConfirm/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ai-swap" label="③ 周对调" width={ART_W} height={ART_H}>
+          <Phone><AISwapDays/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ai-create" label="④ 新建作息" width={ART_W} height={ART_H}>
+          <Phone><AICreateSchedule/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* AfterSales suite (from v2) */}
+      <DCSection id="aftersales-suite" title="⑥ 服务/售后·详细屏"
+        subtitle="从 v2 合并· 主页 / AI 诊断对话 / 诊断方案 · 接入后可直接上线">
+        <DCArtboard id="as-home" label="① 售后主页" width={ART_W} height={ART_H}>
+          <Phone><AfterSalesHome/></Phone>
+        </DCArtboard>
+        <DCArtboard id="as-chat" label="② AI 诊断对话" width={ART_W} height={ART_H}>
+          <Phone><AfterSalesChat/></Phone>
+        </DCArtboard>
+        <DCArtboard id="as-solution" label="③ 诊断方案详情" width={ART_W} height={ART_H}>
+          <Phone><AfterSalesSolution/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* PAGE / 寻呼 (from v2) */}
+      <DCSection id="page-suite" title="⑦ 寻呼·完整流程（从 v2 合并）"
+        subtitle="v4 已用「广播 Tab · 寻呼模式」承接 · 这里保留完整 5 屏作为细节参考">
+        <DCArtboard id="page-default" label="① 常态" width={ART_W} height={ART_H}>
+          <Phone><PageTabDefault/></Phone>
+        </DCArtboard>
+        <DCArtboard id="page-selected" label="② 已选 3 台" width={ART_W} height={ART_H}>
+          <Phone><PageTabSelected/></Phone>
+        </DCArtboard>
+        <DCArtboard id="page-progress" label="③ 寻呼中" width={ART_W} height={ART_H}>
+          <Phone><PageTabInProgress/></Phone>
+        </DCArtboard>
+        <DCArtboard id="page-sheet-1" label="④ 长按单终端" width={ART_W} height={ART_H}>
+          <Phone><LongPressSingleSheet/></Phone>
+        </DCArtboard>
+        <DCArtboard id="page-sheet-2" label="⑤ 长按分区" width={ART_W} height={ART_H}>
+          <Phone><LongPressZoneSheet/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* CAST / 点播 (from v2) */}
+      <DCSection id="cast-suite" title="⑧ 点播·完整流程（从 v2 合并）"
+        subtitle="v4 已用「广播 Tab · 点播模式」承接 · 保留独立流程作为细节参考">
+        <DCArtboard id="cast-select" label="① 选终端" width={ART_W} height={ART_H}>
+          <Phone><CastTerminalSelect/></Phone>
+        </DCArtboard>
+        <DCArtboard id="cast-media" label="② 媒体选择 + 音量" width={ART_W} height={ART_H}>
+          <Phone><CastMediaPicker/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* INTERCOM / 对讲 (from v2) */}
+      <DCSection id="intercom-suite" title="⑨ 对讲·完整流程（从 v2 合并）"
+        subtitle="v4 已从主导航降级为二级 · 这里保留完整 4 屏，可从「广播 · 对讲模式」或长按入口进入">
+        <DCArtboard id="ic-list" label="① 终端列表" width={ART_W} height={ART_H}>
+          <Phone><IntercomList/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ic-calling" label="② 呼叫中" width={ART_W} height={ART_H}>
+          <Phone><IntercomCalling/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ic-incall" label="③ 通话中" width={ART_W} height={ART_H}>
+          <Phone><IntercomCalling connected/></Phone>
+        </DCArtboard>
+        <DCArtboard id="ic-incoming" label="④ 被叫全屏" width={ART_W} height={ART_H}>
+          <Phone dark><IntercomIncoming/></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* COMPONENTS (from v2) */}
+      <DCSection id="components" title="⑩ 组件 · 状态 · 通知（从 v2 合并）"
+        subtitle="终端卡片 5 态 · 空态/骨架屏 · 推送通知 · TabBar 角标规格">
+        <DCArtboard id="card-states" label="① 终端卡片状态" width={460} height={ART_H}>
+          <div style={{height:'100%',background:'#fff'}}>
+            <CardStatesGallery/>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="empty-loading" label="② 空态 / 骨架屏" width={460} height={ART_H}>
+          <div style={{height:'100%',background:'#fff'}}>
+            <StatesGallery/>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="notifs" label="③ 推送通知" width={460} height={ART_H}>
+          <div style={{height:'100%',background:'#fff'}}>
+            <NotificationMock/>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="tab-badge" label="④ TabBar 角标规格" width={460} height={ART_H}>
+          <div style={{height:'100%',background:'var(--bg)'}}>
+            <TabBadgeSpec/>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      {/* TABLET */}
+      <DCSection id="tablet" title="⑤ 平板版（横屏 1280×800）"
+        subtitle="三栏布局：导航 Rail · 终端列表 · 详情面板（适合下载/批量配置场景）">
+        <DCArtboard id="tablet-hub" label="终端 Hub · 平板" width={1280 + 32} height={800 + 32}>
+          <Tablet><TerminalHubTablet/></Tablet>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

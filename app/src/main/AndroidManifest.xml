@@ -112,6 +112,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Phase B · v4 Compose UI entry point. Declared with its own LAUNCHER
+            filter under a distinct app label so QA can install both the legacy
+            UI and the v4 UI on the same device. Once v4 reaches parity, drop
+            the legacy SignActivity launcher filter (or remove the activity
+            entirely) and make V4Activity the single MAIN/LAUNCHER.
+        -->
+        <activity
+            android:name=".ui.V4Activity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="true"
+            android:label="AeroRadio v4"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activity.ActivityMain"
             android:configChanges="orientation|keyboardHidden|screenSize"

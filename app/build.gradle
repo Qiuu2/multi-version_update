@@ -81,6 +81,17 @@ android {
         jvmTarget = '17'
     }
 
+    // Phase B (v4 UI overhaul): enable Jetpack Compose.
+    // New screens live under ui/ and are written in Compose; legacy XML screens
+    // continue to use the existing Activity/Fragment stack.
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        // 1.5.15 is the latest Compose compiler tested with Kotlin 1.9.25.
+        kotlinCompilerExtensionVersion '1.5.15'
+    }
+
     namespace 'com.htgd.radiocontrol.aeroradiocontrol'
 }
 
@@ -195,4 +206,27 @@ dependencies {
     testImplementation 'io.mockk:mockk:1.13.13'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
     testImplementation 'app.cash.turbine:turbine:1.2.0'
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Phase B · Jetpack Compose (v4 UI overhaul)
+    //
+    // BOM keeps all compose-* artifacts on compatible versions.
+    // 2024.10.01 is the latest BOM that pairs with Compose compiler 1.5.15
+    // (which is the latest compiler tested with Kotlin 1.9.25).
+    // ─────────────────────────────────────────────────────────────────────────
+    implementation platform('androidx.compose:compose-bom:2024.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.animation:animation'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.navigation:navigation-compose:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
 }

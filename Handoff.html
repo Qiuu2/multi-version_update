@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AeroRadioControl · v4 Engineering Handoff</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+<style>
+  :root {
+    /* tokens — mirror modern.css */
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #f8fafb;
+    --surface-3: #eef0f3;
+    --ink: #0d1117;
+    --ink-2: #4a5260;
+    --ink-3: #8a929f;
+    --ink-4: #b8bec8;
+    --line: rgba(13, 17, 23, 0.06);
+    --line-strong: rgba(13, 17, 23, 0.12);
+    --divider: #e8ebef;
+    --primary: #0e7c70;
+    --primary-ink: #095c54;
+    --primary-soft: #e6f4f2;
+    --status-online: #16a34a;
+    --status-offline: #8a929f;
+    --status-fault: #dc2626;
+    --status-playing: #2563eb;
+    --status-paging: #ea580c;
+    --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .mi { font-family: 'Material Symbols Rounded'; font-style: normal; font-weight: normal; display: inline-block; line-height: 1; }
+  .mi.filled { font-variation-settings: 'FILL' 1; }
+  a { color: var(--primary-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--font-mono); }
+
+  /* layout */
+  .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  nav.rail {
+    background: var(--surface);
+    border-right: 1px solid var(--divider);
+    padding: 28px 20px 40px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  nav.rail .brand {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+  }
+  nav.rail .brand-mark {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg,#0e7c70,#14b8a6 60%,#06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(14,124,112,0.32);
+  }
+  nav.rail .brand-mark .mi { color: #fff; font-size: 20px; }
+  nav.rail .brand-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+  nav.rail .brand-name span { color: var(--primary); }
+  nav.rail .brand-ver { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.4px; }
+  nav.rail h6 {
+    font-size: 10px; font-weight: 600; color: var(--ink-3);
+    letter-spacing: 0.8px; text-transform: uppercase;
+    margin: 22px 0 8px;
+  }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; }
+  nav.rail ol li { padding: 5px 0; }
+  nav.rail ol li a { color: var(--ink-2); display: block; padding: 4px 8px; border-radius: 6px; }
+  nav.rail ol li a:hover { background: var(--surface-3); color: var(--ink); text-decoration: none; }
+  nav.rail ol li .num { font-family: var(--font-mono); color: var(--ink-4); font-size: 10px; display: inline-block; width: 22px; }
+
+  main { padding: 40px 56px 120px; max-width: 1100px; }
+  main > section { margin-bottom: 80px; scroll-margin-top: 24px; }
+  main > section > .head { margin-bottom: 28px; }
+  main > section > .head .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  main > section > .head h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.4px; margin: 0 0 8px; }
+  main > section > .head p { font-size: 14px; color: var(--ink-2); margin: 0; max-width: 720px; }
+
+  h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.1px; margin: 32px 0 14px; color: var(--ink); }
+  h3 .secondary { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-left: 8px; font-family: var(--font-mono); letter-spacing: 0.4px; }
+  h4 { font-size: 13px; font-weight: 600; margin: 20px 0 10px; color: var(--ink); }
+
+  p { color: var(--ink-2); margin: 0 0 14px; }
+
+  /* utility */
+  .card { background: var(--surface); border: 1px solid var(--divider); border-radius: 14px; padding: 22px; }
+  .card.flat { box-shadow: none; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .row { display: flex; gap: 16px; align-items: stretch; }
+  .small { font-size: 12px; color: var(--ink-3); }
+  hr { border: 0; height: 1px; background: var(--divider); margin: 28px 0; }
+
+  /* cover */
+  .cover {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px;
+    align-items: stretch; margin-bottom: 60px;
+  }
+  .cover-left {
+    background: linear-gradient(160deg, #0d2826 0%, #0e7c70 70%, #14b8a6 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-left::before {
+    content:''; position:absolute; top:-60px; right:-60px;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+  .cover-left .tagline { font-family: var(--font-mono); font-size: 11px; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; }
+  .cover-left h1 { font-size: 42px; line-height: 1.1; margin: 12px 0 16px; letter-spacing: -1px; font-weight: 600; }
+  .cover-left .sub { font-size: 15px; opacity: 0.92; max-width: 380px; line-height: 1.6; }
+  .cover-left .meta { position: absolute; bottom: 32px; left: 40px; right: 40px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; opacity: 0.7; font-family: var(--font-mono); letter-spacing: 0.5px; }
+
+  .cover-right { display: flex; flex-direction: column; gap: 14px; }
+  .cover-right .stat {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 14px; padding: 18px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cover-right .stat .num { font-family: var(--font-mono); font-size: 28px; font-weight: 600; color: var(--primary-ink); letter-spacing: -0.5px; }
+  .cover-right .stat .label { color: var(--ink-2); font-size: 13px; }
+  .cover-right .stat .label small { display: block; color: var(--ink-3); font-size: 11px; margin-top: 2px; }
+
+  /* IA diagram */
+  .ia-flow {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+    margin: 24px 0;
+  }
+  .ia-node {
+    border: 1.5px solid var(--divider);
+    border-radius: 14px; padding: 16px 14px;
+    background: var(--surface);
+    text-align: left;
+  }
+  .ia-node.active { border-color: var(--primary); background: linear-gradient(180deg, var(--primary-soft), #fff); }
+  .ia-node .badge { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.5px; text-transform: uppercase; }
+  .ia-node .title { font-size: 16px; font-weight: 600; margin: 4px 0 6px; display: flex; align-items: center; gap: 6px; }
+  .ia-node .desc { font-size: 11px; color: var(--ink-2); line-height: 1.5; }
+
+  /* token swatches */
+  .swatch-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+  .swatch {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 12px; padding: 14px; overflow: hidden;
+  }
+  .swatch .chip {
+    height: 56px; border-radius: 8px; margin-bottom: 12px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .swatch .name { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .swatch .var { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); margin-top: 2px; }
+  .swatch .hex { font-family: var(--font-mono); font-size: 10px; color: var(--ink-2); margin-top: 2px; }
+
+  table.spec {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--surface); border: 1px solid var(--divider); border-radius: 12px; overflow: hidden;
+    font-size: 13px;
+  }
+  table.spec th, table.spec td {
+    padding: 12px 16px; text-align: left;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+  }
+  table.spec tr:last-child td { border-bottom: 0; }
+  table.spec th {
+    background: var(--surface-2);
+    font-size: 11px; color: var(--ink-3);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    font-weight: 600;
+  }
+  table.spec td.mono, table.spec td .mono { font-family: var(--font-mono); color: var(--ink-2); font-size: 12px; }
+
+  /* radius / type / shadow demos */
+  .demo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .demo {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 12px; padding: 18px; text-align: center;
+  }
+  .demo .box {
+    margin: 0 auto 12px; width: 88px; height: 64px;
+    background: var(--primary-soft); border: 1.5px solid var(--primary);
+  }
+  .demo .label { font-size: 12px; font-weight: 600; }
+  .demo .val { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+
+  /* type scale */
+  .type-row {
+    display: flex; align-items: baseline; gap: 24px;
+    padding: 14px 18px; border-bottom: 1px solid var(--divider);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .sample { flex: 1; }
+  .type-row .meta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+
+  /* component preview */
+  .preview {
+    background: var(--surface-2);
+    border: 1px solid var(--divider);
+    border-radius: 14px; padding: 24px;
+    display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: center;
+    min-height: 88px;
+  }
+  .preview.dark {
+    background: linear-gradient(160deg, #0d2826, #0e7c70);
+  }
+  .preview > .label-overlay {
+    position: absolute;
+  }
+
+  /* mock components (used in component gallery) */
+  .m-btn { display:inline-flex; align-items:center; gap:6px; font-family:inherit; font-weight:500; font-size:14px; padding:10px 18px; border:none; border-radius:999px; cursor:pointer; }
+  .m-btn.filled { background: var(--primary); color: #fff; }
+  .m-btn.tonal  { background: var(--primary-soft); color: var(--primary-ink); }
+  .m-btn.outline { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .m-btn.text { background: transparent; color: var(--primary-ink); }
+  .m-btn.danger { background: var(--status-fault); color: #fff; }
+  .m-btn.success { background: var(--status-online); color: #fff; }
+
+  .m-chip { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; background: var(--surface); color: var(--ink-2); font-size:13px; font-weight:500; box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .m-chip.active { background: linear-gradient(135deg,#0e7c70,#14b8a6,#06b6d4); color:#fff; box-shadow: 0 4px 12px rgba(20,184,166,0.32); }
+
+  .s-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:500; }
+  .s-pill .s-dot { width:6px; height:6px; border-radius:3px; background: currentColor; }
+  .s-pill.online  { background: #e8f7ec; color: var(--status-online); }
+  .s-pill.offline { background: #eef0f3; color: var(--status-offline); }
+  .s-pill.fault   { background: #fdecec; color: var(--status-fault); }
+  .s-pill.playing { background: #e8effd; color: var(--status-playing); }
+  .s-pill.paging  { background: #fdeee2; color: var(--status-paging); }
+
+  /* terminal card mini */
+  .t-tile {
+    width: 130px; height: 130px;
+    background: var(--surface); border: 1.5px solid transparent;
+    border-radius: 16px; padding: 12px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    box-shadow: 0 1px 2px rgba(13,17,23,0.06);
+  }
+  .t-tile.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .t-tile.offline  { background: var(--surface-2); box-shadow: none; border-color: var(--line); }
+  .t-tile.offline .t-tile-name { opacity: 0.55; }
+  .t-tile.fault    { border-color: var(--status-fault); }
+  .t-tile .t-tile-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .t-tile-name { font-size: 13px; font-weight: 600; }
+
+  /* spec card */
+  .spec-card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 0;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .spec-card .sh {
+    padding: 22px 26px 18px;
+    border-bottom: 1px solid var(--divider);
+    display: flex; align-items: flex-start; gap: 18px;
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  }
+  .spec-card .sh .num {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--primary-soft); color: var(--primary-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .spec-card .sh .title { flex: 1; }
+  .spec-card .sh .title h3 { margin: 0; font-size: 18px; }
+  .spec-card .sh .title .tag-row { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .spec-card .sh .src {
+    font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);
+    text-align: right; flex-shrink: 0;
+  }
+  .spec-card .sb { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .spec-card .sb > div { padding: 20px 26px; border-right: 1px solid var(--divider); }
+  .spec-card .sb > div:last-child { border-right: 0; }
+  .spec-card .sb h5 {
+    font-size: 10px; font-weight: 600; color: var(--ink-3);
+    letter-spacing: 0.8px; text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+  .spec-card .sb ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.7; }
+  .spec-card .sb ul li { margin-bottom: 4px; }
+  .spec-card .sb ul li b, .spec-card .sb ul li strong { color: var(--ink); font-weight: 600; }
+  .spec-card .sb code { font-size: 11px; background: var(--surface-3); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.3px; text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .tag.new     { background: #e6f4f2; color: var(--primary-ink); }
+  .tag.merged  { background: #ede9fe; color: #6d28d9; }
+  .tag.placeholder { background: #fef3c7; color: #92400e; }
+  .tag.tablet  { background: #e0f2fe; color: #0369a1; }
+  .tag.auth    { background: #f1f5f9; color: var(--ink-2); }
+  .tag.tier1   { background: #fee2e2; color: #991b1b; }
+  .tag.tier2   { background: var(--surface-3); color: var(--ink-2); }
+
+  /* screen index table */
+  table.index { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.index th { text-align: left; padding: 10px 14px; background: var(--surface-2); font-size: 11px; color: var(--ink-3); letter-spacing: 0.6px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--divider); }
+  table.index td { padding: 12px 14px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+  table.index tr:hover td { background: var(--surface-2); }
+  table.index .ix { font-family: var(--font-mono); color: var(--ink-3); font-size: 11px; width: 50px; }
+  table.index .name { font-weight: 500; color: var(--ink); }
+  table.index .file { font-family: var(--font-mono); color: var(--ink-3); font-size: 11px; }
+
+  /* callouts */
+  .callout {
+    border-left: 3px solid var(--primary);
+    background: var(--primary-soft);
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    font-size: 13px;
+    color: var(--primary-ink);
+    margin: 18px 0;
+  }
+  .callout.warn { border-color: #f97316; background: #fff7ed; color: #9a3412; }
+  .callout b { color: inherit; }
+
+  /* print */
+  @media print {
+    .shell { grid-template-columns: 1fr; }
+    nav.rail { display: none; }
+    main { padding: 24px; }
+    .spec-card { page-break-inside: avoid; }
+    section { page-break-before: auto; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    nav.rail { position: static; height: auto; }
+    main { padding: 24px; }
+    .cover { grid-template-columns: 1fr; }
+    .spec-card .sb { grid-template-columns: 1fr; }
+    .spec-card .sb > div { border-right: 0; border-bottom: 1px solid var(--divider); }
+    .ia-flow { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="rail">
+    <div class="brand">
+      <div class="brand-mark"><span class="mi filled">dvr</span></div>
+      <div>
+        <div class="brand-name">AeroRadio<span>Control</span></div>
+        <div class="brand-ver">v4 · HANDOFF</div>
+      </div>
+    </div>
+
+    <h6>Sections</h6>
+    <ol>
+      <li><a href="#overview"><span class="num">01</span>Overview</a></li>
+      <li><a href="#tokens"><span class="num">02</span>Design Tokens</a></li>
+      <li><a href="#components"><span class="num">03</span>Components</a></li>
+      <li><a href="#index"><span class="num">04</span>Screen Index</a></li>
+      <li><a href="#specs"><span class="num">05</span>Screen Specs</a></li>
+      <li><a href="#api"><span class="num">06</span>Data & Behavior</a></li>
+    </ol>
+
+    <h6>Spec Cards</h6>
+    <ol>
+      <li><a href="#s-splash"><span class="num">00a</span>闪屏 / 登录</a></li>
+      <li><a href="#s-terminal"><span class="num">01</span>终端 Hub</a></li>
+      <li><a href="#s-zone-detail"><span class="num">01b</span>分区详情</a></li>
+      <li><a href="#s-broadcast"><span class="num">02</span>广播</a></li>
+      <li><a href="#s-task"><span class="num">03</span>任务</a></li>
+      <li><a href="#s-task-secondary"><span class="num">03b</span>任务·二级页</a></li>
+      <li><a href="#s-ai"><span class="num">04</span>AI 助手</a></li>
+      <li><a href="#s-service"><span class="num">05</span>服务 / 售后</a></li>
+      <li><a href="#s-tablet"><span class="num">06</span>平板</a></li>
+    </ol>
+
+    <h6>Reference</h6>
+    <ol>
+      <li><a href="AeroRadio v4.html"><span class="num">↗</span>Live v4 design</a></li>
+      <li><a href="AeroRadio v2.html"><span class="num">↗</span>Live v2 design</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- COVER -->
+    <div class="cover">
+      <div class="cover-left">
+        <div class="tagline">v4 · Engineering Handoff · 2026</div>
+        <h1>终端为中心的<br/>校园广播控制 App</h1>
+        <div class="sub">
+          这是给工程实现（Claude Code）的开发手册：颜色 token、间距、组件清单、屏幕索引、按屏 spec。
+          视觉真值请以 <code style="color:#a7f3d0;background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;">AeroRadio v4.html</code> 为准。
+        </div>
+        <div class="meta">
+          <span>AERORADIOCONTROL · v4.0</span>
+          <span>HANDOFF · 2026-05</span>
+        </div>
+      </div>
+      <div class="cover-right">
+        <div class="stat"><div class="label">核心屏数<small>5 个一级 Tab</small></div><div class="num">30+</div></div>
+        <div class="stat"><div class="label">设计 Token<small>颜色 + 间距 + 圆角 + 字号</small></div><div class="num">45</div></div>
+        <div class="stat"><div class="label">组件<small>原子 + 复合</small></div><div class="num">18</div></div>
+        <div class="stat"><div class="label">目标平台<small>Android Phone + 平板</small></div><div class="num" style="font-size:18px;">Android</div></div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <div class="head">
+        <div class="kicker">01 · Overview</div>
+        <h2>设计立场</h2>
+        <p>原版 IA 把「动作」（寻呼/对讲/点播/任务/快捷）做 Tab，用户每次都得重新选终端。v4 把<b>终端</b>提为一等公民，「广播」聚合三种动作，形成「找 → 做 → 自动 → 兜底」的清晰心智。</p>
+      </div>
+
+      <h3>信息架构 <span class="secondary">5 tabs · entity-first</span></h3>
+      <div class="ia-flow">
+        <div class="ia-node active">
+          <div class="badge">找</div>
+          <div class="title"><span class="mi" style="color:#0e7c70;font-size:18px;">dvr</span>终端</div>
+          <div class="desc">总览（列表 / 分区 / 地图）· 长按多选 → 直接派发动作</div>
+        </div>
+        <div class="ia-node">
+          <div class="badge">做</div>
+          <div class="title"><span class="mi" style="color:#ea580c;font-size:18px;">campaign</span>广播</div>
+          <div class="desc">顶部三档：寻呼 / 对讲 / 点播 — 目标终端共享</div>
+        </div>
+        <div class="ia-node">
+          <div class="badge">自动</div>
+          <div class="title"><span class="mi" style="color:#14b8a6;font-size:18px;">auto_awesome</span>AI</div>
+          <div class="desc">一句话搞定运维：迁移 / 周对调 / 取消 / 新建作息</div>
+        </div>
+        <div class="ia-node">
+          <div class="badge">自动</div>
+          <div class="title"><span class="mi" style="color:#7c3aed;font-size:18px;">event_available</span>任务</div>
+          <div class="desc">今日时间轴 + 作息方案 + 临时任务入口</div>
+        </div>
+        <div class="ia-node">
+          <div class="badge">兜底</div>
+          <div class="title"><span class="mi" style="color:#2563eb;font-size:18px;">support_agent</span>服务</div>
+          <div class="desc">系统健康度 + AI 故障诊断 + 工单</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <b>主要差异 vs v2：</b> 「快捷」下线 → 被 AI 取代；「对讲」从主导航降级到广播 Tab 内的一档；新增「终端」作为主入口；新增「服务」做兜底。
+      </div>
+
+      <h3>目标用户与场景</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h4 style="margin-top:0;">主用户</h4>
+          <p>校园广播管理员（教师 / 总务）· 移动办公为主 · 偶尔在电脑上做批量配置。</p>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">核心场景</h4>
+          <p>① 临时广播通知（5 秒内开口）<br/>② 课间放音乐（按分区点播）<br/>③ 检查故障 / 上报售后<br/>④ 调整作息（学期开学 / 临时停课）</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKENS -->
+    <section id="tokens">
+      <div class="head">
+        <div class="kicker">02 · Design Tokens</div>
+        <h2>设计变量</h2>
+        <p>所有变量来自 <code>modern.css</code>。Claude Code 实现时请<b>用 token 命名引用，不要 hardcode 颜色 / 数值</b>。</p>
+      </div>
+
+      <h3>颜色 · 中性 <span class="secondary">surfaces & ink</span></h3>
+      <div class="swatch-row">
+        <div class="swatch"><div class="chip" style="background:#f4f5f7;"></div><div class="name">背景</div><div class="var">--bg</div><div class="hex">#f4f5f7</div></div>
+        <div class="swatch"><div class="chip" style="background:#fff;border:1px solid #eee;"></div><div class="name">表面</div><div class="var">--surface</div><div class="hex">#ffffff</div></div>
+        <div class="swatch"><div class="chip" style="background:#f8fafb;"></div><div class="name">表面 2</div><div class="var">--surface-2</div><div class="hex">#f8fafb</div></div>
+        <div class="swatch"><div class="chip" style="background:#eef0f3;"></div><div class="name">表面 3</div><div class="var">--surface-3</div><div class="hex">#eef0f3</div></div>
+        <div class="swatch"><div class="chip" style="background:#0d1117;"></div><div class="name">主文字</div><div class="var">--ink</div><div class="hex">#0d1117</div></div>
+        <div class="swatch"><div class="chip" style="background:#4a5260;"></div><div class="name">次文字</div><div class="var">--ink-2</div><div class="hex">#4a5260</div></div>
+        <div class="swatch"><div class="chip" style="background:#8a929f;"></div><div class="name">辅助文字</div><div class="var">--ink-3</div><div class="hex">#8a929f</div></div>
+        <div class="swatch"><div class="chip" style="background:#b8bec8;"></div><div class="name">弱化</div><div class="var">--ink-4</div><div class="hex">#b8bec8</div></div>
+      </div>
+
+      <h3>颜色 · 品牌 & 状态</h3>
+      <div class="swatch-row">
+        <div class="swatch"><div class="chip" style="background:#0e7c70;"></div><div class="name">品牌主色</div><div class="var">--primary</div><div class="hex">#0e7c70</div></div>
+        <div class="swatch"><div class="chip" style="background:#095c54;"></div><div class="name">主色·深</div><div class="var">--primary-ink</div><div class="hex">#095c54</div></div>
+        <div class="swatch"><div class="chip" style="background:#e6f4f2;"></div><div class="name">主色·浅</div><div class="var">--primary-soft</div><div class="hex">#e6f4f2</div></div>
+        <div class="swatch"><div class="chip" style="background:#16a34a;"></div><div class="name">在线</div><div class="var">--status-online</div><div class="hex">#16a34a</div></div>
+        <div class="swatch"><div class="chip" style="background:#8a929f;"></div><div class="name">离线</div><div class="var">--status-offline</div><div class="hex">#8a929f</div></div>
+        <div class="swatch"><div class="chip" style="background:#dc2626;"></div><div class="name">故障</div><div class="var">--status-fault</div><div class="hex">#dc2626</div></div>
+        <div class="swatch"><div class="chip" style="background:#2563eb;"></div><div class="name">播放中</div><div class="var">--status-playing</div><div class="hex">#2563eb</div></div>
+        <div class="swatch"><div class="chip" style="background:#ea580c;"></div><div class="name">寻呼中</div><div class="var">--status-paging</div><div class="hex">#ea580c</div></div>
+      </div>
+
+      <h3>颜色 · 渐变（仅用于装饰）</h3>
+      <div class="swatch-row">
+        <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#0e7c70 0%,#14b8a6 50%,#06b6d4 100%);"></div><div class="name">品牌渐变</div><div class="var">--grad-primary</div><div class="hex">FAB / hero / 抬起 Tab</div></div>
+        <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#ea580c,#f97316,#fb923c);"></div><div class="name">暖渐变</div><div class="var">--grad-warm</div><div class="hex">寻呼模式</div></div>
+        <div class="swatch"><div class="chip" style="background:linear-gradient(180deg,#0d2826 0%,#0e7c70 80%,#14b8a6 100%);"></div><div class="name">夜色</div><div class="var">--grad-night</div><div class="hex">AI / 全屏来电</div></div>
+      </div>
+
+      <h3>圆角</h3>
+      <div class="demo-grid">
+        <div class="demo"><div class="box" style="border-radius:12px;"></div><div class="label">卡片</div><div class="val">--r-card · 12px</div></div>
+        <div class="demo"><div class="box" style="border-radius:16px;"></div><div class="label">瓦片</div><div class="val">--r-tile · 16px</div></div>
+        <div class="demo"><div class="box" style="border-radius:999px;width:88px;height:36px;"></div><div class="label">胶囊 / 按钮</div><div class="val">--r-chip · 999px</div></div>
+        <div class="demo"><div class="box" style="border-radius:24px 24px 0 0;"></div><div class="label">底部 Sheet</div><div class="val">--r-sheet · 24px</div></div>
+        <div class="demo"><div class="box" style="border-radius:12px;"></div><div class="label">输入框</div><div class="val">--r-input · 12px</div></div>
+      </div>
+
+      <h3>间距 <span class="secondary">8px base</span></h3>
+      <table class="spec">
+        <tr><th style="width:120px;">名称</th><th style="width:80px;">值</th><th>用途</th></tr>
+        <tr><td>页面左右内边距</td><td class="mono">14–16 px</td><td>主区域与屏幕边缘的距离</td></tr>
+        <tr><td>卡片内边距</td><td class="mono">12–14 px</td><td>瓦片 / 列表 item</td></tr>
+        <tr><td>区段顶部间距</td><td class="mono">12 px</td><td>section label 与上一块的距离</td></tr>
+        <tr><td>瓦片间距 (gap)</td><td class="mono">10 px</td><td>3 列终端网格</td></tr>
+        <tr><td>按钮内边距</td><td class="mono">10×18 px</td><td>填充按钮垂直×水平</td></tr>
+        <tr><td>TopBar 高度</td><td class="mono">~ 56 px</td><td>padding 14/16/12，标题 22pt</td></tr>
+        <tr><td>TabBar 高度</td><td class="mono">80 px</td><td>含安全区，中间抬起 +16 px</td></tr>
+      </table>
+
+      <h3>字号 <span class="secondary">Noto Sans SC · JetBrains Mono</span></h3>
+      <div class="card flat" style="padding:0;">
+        <div class="type-row"><div class="sample" style="font-size:32px;font-weight:600;letter-spacing:-0.5px;">显示标题</div><div class="meta">32 / 600 / -0.5</div></div>
+        <div class="type-row"><div class="sample" style="font-size:22px;font-weight:600;letter-spacing:-0.2px;">TopBar 标题</div><div class="meta">22 / 600 / -0.2</div></div>
+        <div class="type-row"><div class="sample" style="font-size:18px;font-weight:600;">分区标题</div><div class="meta">18 / 600</div></div>
+        <div class="type-row"><div class="sample" style="font-size:15px;font-weight:500;">正文（输入框 / 列表 item）</div><div class="meta">15 / 500</div></div>
+        <div class="type-row"><div class="sample" style="font-size:14px;">正文</div><div class="meta">14 / 400</div></div>
+        <div class="type-row"><div class="sample" style="font-size:13px;color:var(--ink-2);">次要文字</div><div class="meta">13 / 400 / ink-2</div></div>
+        <div class="type-row"><div class="sample" style="font-size:11px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:0.6px;text-transform:uppercase;">小写大写标签</div><div class="meta">11 / mono / 0.6 / upper</div></div>
+        <div class="type-row"><div class="sample"><span class="tnum mono" style="font-size:22px;font-weight:700;color:var(--primary-ink);">24</span><span style="margin-left:6px;font-size:11px;color:var(--primary-ink);">在线</span></div><div class="meta">数字 → mono / tnum</div></div>
+      </div>
+      <p class="small">数字一律走 <code>font-family: var(--font-mono); font-variant-numeric: tabular-nums;</code> 等宽显示，避免跳动。</p>
+
+      <h3>阴影 / 高度</h3>
+      <div class="demo-grid">
+        <div class="demo"><div class="box" style="background:#fff;border:0;box-shadow:0 1px 2px rgba(13,17,23,0.04),0 1px 1px rgba(13,17,23,0.06);"></div><div class="label">e1 · 卡片静态</div><div class="val">--e1</div></div>
+        <div class="demo"><div class="box" style="background:#fff;border:0;box-shadow:0 2px 4px rgba(13,17,23,0.04),0 4px 12px rgba(13,17,23,0.06);"></div><div class="label">e2 · 卡片悬浮</div><div class="val">--e2</div></div>
+        <div class="demo"><div class="box" style="background:#fff;border:0;box-shadow:0 4px 12px rgba(13,17,23,0.08),0 12px 32px rgba(13,17,23,0.10);"></div><div class="label">e3 · 模态</div><div class="val">--e3</div></div>
+        <div class="demo"><div class="box" style="background:var(--primary);border:0;box-shadow:0 4px 16px rgba(14,124,112,0.32),0 2px 4px rgba(14,124,112,0.18);"></div><div class="label">FAB</div><div class="val">--e-fab</div></div>
+      </div>
+
+      <h3>动效</h3>
+      <table class="spec">
+        <tr><th style="width:160px;">名称</th><th style="width:120px;">时长 / 曲线</th><th>用途</th></tr>
+        <tr><td>fabIn</td><td class="mono">220ms · cubic-bezier(.2,.7,.3,1)</td><td>多选弹出 FAB-bar / 底部动作条</td></tr>
+        <tr><td>tabBadgePulse</td><td class="mono">2200ms · ease-out · 无限</td><td>红点角标呼吸</td></tr>
+        <tr><td>mPulse</td><td class="mono">scale 0.6 → 1.6 · 1500ms</td><td>呼叫 / 寻呼中扩散圆</td></tr>
+        <tr><td>wave (播放波形)</td><td class="mono">scaleY 0.5 → 1 · 900ms</td><td>4 条柱状波形</td></tr>
+        <tr><td>skel (骨架)</td><td class="mono">1600ms · 线性</td><td>加载占位扫光</td></tr>
+        <tr><td>tap / hover</td><td class="mono">120-150ms · ease</td><td>chip / tile / btn 状态切换</td></tr>
+      </table>
+    </section>
+
+    <!-- COMPONENTS -->
+    <section id="components">
+      <div class="head">
+        <div class="kicker">03 · Components</div>
+        <h2>组件清单</h2>
+        <p>18 个组件，分为 <b>原子</b>（按钮 / chip / pill / 输入框）、<b>复合</b>（终端瓦片 / TopBar / TabBar / 卡片）、<b>页面级</b>（FAB-bar / Sheet / Hero）。源码在 <code>m-components.jsx</code>。</p>
+      </div>
+
+      <h3>原子 · 按钮 <span class="secondary">.m-btn · 高 40 · radius 999</span></h3>
+      <div class="preview">
+        <button class="m-btn filled"><span class="mi" style="font-size:18px;">campaign</span>开始寻呼</button>
+        <button class="m-btn tonal">取消</button>
+        <button class="m-btn outline">重置</button>
+        <button class="m-btn text">了解更多</button>
+        <button class="m-btn danger"><span class="mi" style="font-size:18px;">stop</span>停止</button>
+        <button class="m-btn success">确认</button>
+      </div>
+      <table class="spec">
+        <tr><th>变体</th><th>类名</th><th>使用场景</th></tr>
+        <tr><td>Filled</td><td class="mono">.m-btn.filled</td><td>主要 CTA（每屏 0–1 个）</td></tr>
+        <tr><td>Tonal</td><td class="mono">.m-btn.tonal</td><td>次要操作 / 表单取消</td></tr>
+        <tr><td>Outline</td><td class="mono">.m-btn.outline</td><td>表单重置 / 切换视图</td></tr>
+        <tr><td>Text</td><td class="mono">.m-btn.text</td><td>"查看更多" / "了解详情"</td></tr>
+        <tr><td>Danger</td><td class="mono">.m-btn.danger</td><td>停止寻呼 / 删除作息</td></tr>
+        <tr><td>Success</td><td class="mono">.m-btn.success</td><td>确认大动作 (二次确认页)</td></tr>
+      </table>
+
+      <h3>原子 · Chip & 状态 Pill</h3>
+      <div class="preview">
+        <span class="m-chip active">全部</span>
+        <span class="m-chip">教学楼</span>
+        <span class="m-chip">操场</span>
+        <span class="m-chip">宿舍</span>
+        <span style="width:16px;"></span>
+        <span class="s-pill online"><span class="s-dot"></span>在线</span>
+        <span class="s-pill offline"><span class="s-dot"></span>离线</span>
+        <span class="s-pill fault"><span class="s-dot"></span>故障</span>
+        <span class="s-pill playing"><span class="s-dot"></span>播放中</span>
+        <span class="s-pill paging"><span class="s-dot"></span>寻呼中</span>
+      </div>
+
+      <h3>复合 · 终端瓦片 <span class="secondary">5 态 · 116×W min</span></h3>
+      <div class="preview">
+        <div class="t-tile">
+          <div style="display:flex;justify-content:space-between;">
+            <div class="t-tile-icon" style="background:var(--primary-soft);color:var(--primary-ink);"><span class="mi" style="font-size:20px;">speaker</span></div>
+            <span style="width:10px;height:10px;border-radius:5px;background:var(--status-online);box-shadow:0 0 0 2px #fff;"></span>
+          </div>
+          <div><div class="t-tile-name">营销大厅-1</div><div style="margin-top:4px;"><span class="s-pill online"><span class="s-dot"></span>在线</span></div></div>
+        </div>
+        <div class="t-tile selected">
+          <div style="display:flex;justify-content:space-between;">
+            <div class="t-tile-icon" style="background:var(--primary-soft);color:var(--primary-ink);"><span class="mi" style="font-size:20px;">speaker</span></div>
+            <span style="width:22px;height:22px;border-radius:11px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;"><span class="mi" style="font-size:14px;">check</span></span>
+          </div>
+          <div><div class="t-tile-name">教学楼A-101</div><div style="margin-top:4px;"><span class="s-pill online"><span class="s-dot"></span>在线</span></div></div>
+        </div>
+        <div class="t-tile offline">
+          <div style="display:flex;justify-content:space-between;">
+            <div class="t-tile-icon" style="background:var(--surface-3);color:var(--ink-3);"><span class="mi" style="font-size:20px;">speaker</span></div>
+            <span style="width:10px;height:10px;border-radius:5px;background:var(--status-offline);"></span>
+          </div>
+          <div><div class="t-tile-name">宿舍楼1F</div><div style="margin-top:4px;"><span class="s-pill offline"><span class="s-dot"></span>离线</span></div></div>
+        </div>
+        <div class="t-tile fault">
+          <div style="display:flex;justify-content:space-between;">
+            <div class="t-tile-icon" style="background:#fdecec;color:var(--status-fault);"><span class="mi" style="font-size:20px;">speaker</span></div>
+            <span style="width:18px;height:18px;border-radius:9px;background:var(--status-fault);color:#fff;display:flex;align-items:center;justify-content:center;"><span class="mi" style="font-size:12px;">priority_high</span></span>
+          </div>
+          <div><div class="t-tile-name">操场南侧</div><div style="margin-top:4px;"><span class="s-pill fault"><span class="s-dot"></span>故障</span></div></div>
+        </div>
+        <div class="t-tile">
+          <div style="display:flex;justify-content:space-between;">
+            <div class="t-tile-icon" style="background:#e8effd;color:var(--status-playing);"><span class="mi" style="font-size:20px;">speaker</span></div>
+            <span style="color:var(--status-playing);font-size:14px;">▮▮▮▮</span>
+          </div>
+          <div><div class="t-tile-name">教学楼B-201</div><div style="margin-top:4px;"><span class="s-pill playing"><span class="s-dot"></span>播放中</span></div></div>
+        </div>
+      </div>
+
+      <h3>页面级 · TopBar / TabBar / FAB-bar / Sheet / Hero / 输入框</h3>
+      <table class="spec">
+        <tr><th>组件</th><th>类 / 函数</th><th>位置 / 用法</th></tr>
+        <tr><td>TopBar</td><td class="mono">TopBar / TopBarV4 · .m-topbar</td><td>所有屏顶部 · 标题 22pt + 连接状态 chip + 设置 icon</td></tr>
+        <tr><td>TabBar (主导航)</td><td class="mono">TabBarV4 · .m-tabbar</td><td>5 格 · 中间 AI 抬起 +16 · 角标支持 dot / num / 99+</td></tr>
+        <tr><td>FAB-bar (动作条)</td><td class="mono">.m-fab-bar</td><td>选中后从底部浮出（22 cubic）· 携 3 个动作按钮</td></tr>
+        <tr><td>Bottom Sheet</td><td class="mono">.m-sheet</td><td>底部弹出 · 24 radius 顶角 · 32×4 handle 提示</td></tr>
+        <tr><td>Hero strip</td><td class="mono">.hero-strip</td><td>渐变带（终端 / AI 主页）· 含 .glass 内嵌统计块</td></tr>
+        <tr><td>Input</td><td class="mono">.m-input</td><td>填充态浅灰 · focused 加品牌色 1.5px 边 · error 红</td></tr>
+        <tr><td>Switch</td><td class="mono">.m-switch</td><td>52×32 · 开关动画 180ms</td></tr>
+      </table>
+
+      <h3>状态 · Empty / Skeleton / Notification</h3>
+      <p>详见 v2 的 <code>StatesGallery</code> / <code>NotificationMock</code> 屏；这三种状态<b>每个列表 / 数据屏都必须实现</b>。skeleton 用 <code>.skel</code> 类，扫光 1.6s 循环。</p>
+    </section>
+
+    <!-- SCREEN INDEX -->
+    <section id="index">
+      <div class="head">
+        <div class="kicker">04 · Screen Index</div>
+        <h2>屏幕索引</h2>
+        <p>v4 共 <b>30+ 屏</b>，按 Tab 分组。"NEW" = v4 新增；"MERGED" = 从 v2 合并（视觉沿用）。</p>
+      </div>
+
+      <table class="index">
+        <tr>
+          <th class="ix">No.</th>
+          <th>名称</th>
+          <th>类别</th>
+          <th>组件函数</th>
+          <th>源文件</th>
+        </tr>
+
+        <tr><td class="ix">00.1</td><td class="name">闪屏</td><td><span class="tag auth">Auth</span></td><td class="file">SplashScreen</td><td class="file">m-screens-1.jsx</td></tr>
+        <tr><td class="ix">00.2</td><td class="name">登录</td><td><span class="tag auth">Auth</span></td><td class="file">LoginScreen</td><td class="file">m-screens-1.jsx</td></tr>
+        <tr><td class="ix">00.3</td><td class="name">登录·错误态</td><td><span class="tag auth">Auth</span></td><td class="file">LoginScreen error</td><td class="file">m-screens-1.jsx</td></tr>
+
+        <tr><td class="ix">01.1</td><td class="name">终端 Hub · 默认</td><td><span class="tag new">NEW</span></td><td class="file">TerminalHubScreenV2</td><td class="file">m-screens-v4-zone.jsx</td></tr>
+        <tr><td class="ix">01.2</td><td class="name">终端 Hub · 某分区展开</td><td><span class="tag new">NEW</span></td><td class="file">TerminalHubScreenV2 expandedZone</td><td class="file">m-screens-v4-zone.jsx</td></tr>
+        <tr><td class="ix">01.3</td><td class="name">终端 Hub · 多选 bulk</td><td><span class="tag new">NEW</span></td><td class="file">TerminalHubScreenV2 bulk</td><td class="file">m-screens-v4-zone.jsx</td></tr>
+        <tr><td class="ix">01.4</td><td class="name">分区详情 (drill-in)</td><td><span class="tag new">NEW</span></td><td class="file">ZoneDetailScreen</td><td class="file">m-screens-v4-zone.jsx</td></tr>
+
+        <tr><td class="ix">02.1</td><td class="name">广播 · 寻呼模式</td><td><span class="tag new">NEW</span></td><td class="file">BroadcastScreen mode="page"</td><td class="file">m-screens-v4.jsx</td></tr>
+        <tr><td class="ix">02.2</td><td class="name">广播 · 点播模式</td><td><span class="tag new">NEW</span></td><td class="file">BroadcastScreen mode="cast"</td><td class="file">m-screens-v4.jsx</td></tr>
+        <tr><td class="ix">02.3</td><td class="name">广播 · 对讲模式</td><td><span class="tag new">NEW</span></td><td class="file">BroadcastScreen mode="talk"</td><td class="file">m-screens-v4.jsx</td></tr>
+
+        <tr><td class="ix">03.1</td><td class="name">任务 · 主页</td><td><span class="tag new">NEW</span></td><td class="file">TaskScreenV4</td><td class="file">m-screens-v4.jsx</td></tr>
+        <tr><td class="ix">03.2</td><td class="name">作息方案详情</td><td><span class="tag new">NEW</span></td><td class="file">ScheduleDetailScreen</td><td class="file">m-screens-v4-task.jsx</td></tr>
+        <tr><td class="ix">03.3</td><td class="name">编辑作息任务</td><td><span class="tag new">NEW</span></td><td class="file">TaskEditScreen</td><td class="file">m-screens-v4-task.jsx</td></tr>
+        <tr><td class="ix">03.4</td><td class="name">任务执行详情 + 日志</td><td><span class="tag new">NEW</span></td><td class="file">TaskExecDetailScreen</td><td class="file">m-screens-v4-task.jsx</td></tr>
+        <tr><td class="ix">03.5</td><td class="name">临时文件广播</td><td><span class="tag new">NEW</span></td><td class="file">TempFileBroadcastScreen</td><td class="file">m-screens-v4-task.jsx</td></tr>
+
+        <tr><td class="ix">04.0</td><td class="name">AI 助手 · 占位</td><td><span class="tag placeholder">Placeholder</span></td><td class="file">AIPlaceholderScreen</td><td class="file">m-screens-v4.jsx</td></tr>
+        <tr><td class="ix">04.1</td><td class="name">AI 主页 · 日历+时间轴</td><td><span class="tag merged">MERGED</span></td><td class="file">AIHome</td><td class="file">m-screens-ai.jsx</td></tr>
+        <tr><td class="ix">04.2</td><td class="name">AI · 任务迁移确认</td><td><span class="tag merged">MERGED</span></td><td class="file">AIMigrateConfirm</td><td class="file">m-screens-ai.jsx</td></tr>
+        <tr><td class="ix">04.3</td><td class="name">AI · 周对调</td><td><span class="tag merged">MERGED</span></td><td class="file">AISwapDays</td><td class="file">m-screens-ai.jsx</td></tr>
+        <tr><td class="ix">04.4</td><td class="name">AI · 新建作息</td><td><span class="tag merged">MERGED</span></td><td class="file">AICreateSchedule</td><td class="file">m-screens-ai.jsx</td></tr>
+
+        <tr><td class="ix">05.0</td><td class="name">服务 · 占位</td><td><span class="tag placeholder">Placeholder</span></td><td class="file">ServicePlaceholderScreen</td><td class="file">m-screens-v4.jsx</td></tr>
+        <tr><td class="ix">05.1</td><td class="name">售后主页</td><td><span class="tag merged">MERGED</span></td><td class="file">AfterSalesHome</td><td class="file">m-screens-aftersales.jsx</td></tr>
+        <tr><td class="ix">05.2</td><td class="name">AI 诊断对话</td><td><span class="tag merged">MERGED</span></td><td class="file">AfterSalesChat</td><td class="file">m-screens-aftersales.jsx</td></tr>
+        <tr><td class="ix">05.3</td><td class="name">诊断方案详情</td><td><span class="tag merged">MERGED</span></td><td class="file">AfterSalesSolution</td><td class="file">m-screens-aftersales.jsx</td></tr>
+
+        <tr><td class="ix">06.1</td><td class="name">平板 · 终端 Hub 三栏</td><td><span class="tag tablet">Tablet</span></td><td class="file">TerminalHubTablet</td><td class="file">m-screens-v4.jsx</td></tr>
+
+        <tr><td class="ix">07.1–7.5</td><td class="name">寻呼·完整流程 5 屏</td><td><span class="tag merged">MERGED</span></td><td class="file">PageTab* / LongPress*</td><td class="file">m-screens-1.jsx</td></tr>
+        <tr><td class="ix">08.1–8.2</td><td class="name">点播·完整流程 2 屏</td><td><span class="tag merged">MERGED</span></td><td class="file">CastTerminalSelect / CastMediaPicker</td><td class="file">m-screens-2.jsx</td></tr>
+        <tr><td class="ix">09.1–9.4</td><td class="name">对讲·完整流程 4 屏</td><td><span class="tag merged">MERGED</span></td><td class="file">Intercom*</td><td class="file">m-screens-2.jsx</td></tr>
+        <tr><td class="ix">10.1–10.4</td><td class="name">组件库 / 状态 / 通知</td><td><span class="tag merged">MERGED</span></td><td class="file">CardStatesGallery / StatesGallery / NotificationMock / TabBadgeSpec</td><td class="file">m-screens-2.jsx · aftersales.jsx</td></tr>
+      </table>
+    </section>
+
+    <!-- SPEC CARDS -->
+    <section id="specs">
+      <div class="head">
+        <div class="kicker">05 · Screen Specs</div>
+        <h2>按屏规格</h2>
+        <p>每张卡片包含：<b>目的</b> · <b>关键状态 / 变体</b> · <b>交互规则</b> · <b>数据 / API</b> · <b>导航</b>。优先级 <span class="tag tier1">P0</span> = 主流程必做；<span class="tag tier2">P1</span> = 二级页 / 后续。</p>
+      </div>
+
+      <!-- SPLASH / LOGIN -->
+      <div class="spec-card" id="s-splash">
+        <div class="sh">
+          <div class="num">00</div>
+          <div class="title">
+            <h3>闪屏 + 登录</h3>
+            <div class="small">App 启动 → 闪屏（≤1.5s）→ 检查 token → 登录 / 主页</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag auth">Auth</span></div>
+          </div>
+          <div class="src">m-screens-1.jsx<br/>SplashScreen<br/>LoginScreen</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>状态 / 变体</h5>
+            <ul>
+              <li>Splash 默认 — 品牌渐变背景 + Logo + 版本号</li>
+              <li>Login 默认 — 账号 + 密码 + 记住我 + 服务器地址折叠区</li>
+              <li>Login error — 输入框红边 + 红色提示文案；保留已输入值</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>POST /auth/login</code> → JWT (24h) + refresh token (30d)</li>
+              <li>本地存储：account / server URL（密码不存）</li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>Splash <b>最短显示 800ms</b>（防闪烁）· 最长 1500ms</li>
+              <li>失败 3 次 → 强制输入图形验证码（接入 captcha）</li>
+              <li>服务器地址默认折叠；点 chevron 展开</li>
+              <li>密码框右侧 <code>visibility</code> icon 长按可见</li>
+            </ul>
+            <h5 style="margin-top:18px;">导航</h5>
+            <ul>
+              <li>登录成功 → 首页（默认 <b>终端 Tab</b>）</li>
+              <li>Token 失效 → 跳回登录页，保留 deep link</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- TERMINAL HUB -->
+      <div class="spec-card" id="s-terminal">
+        <div class="sh">
+          <div class="num">01</div>
+          <div class="title">
+            <h3>终端 Hub（一级 Tab · 主入口）</h3>
+            <div class="small">分区为操作单位；分区卡片 + 一键三档动作；展开看终端；drill-in 进详情。</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag new">NEW</span></div>
+          </div>
+          <div class="src">m-screens-v4-zone.jsx<br/>TerminalHubScreenV2</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>状态 / 变体</h5>
+            <ul>
+              <li><b>默认</b> — 分区卡片折叠；显示统计数字 + 3 颗动作 icon</li>
+              <li><b>某分区展开</b> — 展开后内含 3 列终端瓦片；可选单台</li>
+              <li><b>多选 bulk</b> — 长按进入；选中态高亮 + 顶部计数；底部弹 FAB-bar (3 个动作)</li>
+              <li><b>搜索激活</b> — 顶部搜索框 focus → 全文检索（名称 / 编号 / 分区）</li>
+              <li><b>故障置顶</b> — 若任一分区有故障，整屏顶部出红色 banner（点击跳服务 Tab）</li>
+              <li><b>空态</b> — 无终端 → 大插画 + "扫码添加首台终端" CTA</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>GET /terminals?include=stats,zones</code> · 轮询 10s 或 WS push</li>
+              <li>每台：id, name, zone_id, state (online/offline/fault/playing/paging), volume, last_seen</li>
+              <li>分区：id, name, terminal_count, by_state{}</li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li><b>点击分区卡</b> → 展开/折叠（accordion）</li>
+              <li><b>点击分区动作 icon</b> → 跳广播 Tab 并预选该分区</li>
+              <li><b>长按终端 / 分区</b> → 进入 bulk 多选态</li>
+              <li><b>多选态：</b> 顶部出"已选 N · 完成" · 底部 FAB-bar 永远 3 个动作（寻呼 / 对讲 / 点播）</li>
+              <li><b>多选混合分区</b> 允许；提交时合并目标终端去重</li>
+              <li><b>点终端瓦片 → 详情页</b>（音量 / 历史 / 网络）</li>
+              <li>顶部 <code>map</code> icon → 地图视图（v4.1 实现）</li>
+            </ul>
+            <h5 style="margin-top:18px;">导航</h5>
+            <ul>
+              <li>入 → 任何一级 Tab 默认页</li>
+              <li>出 → 广播 Tab / 终端详情 / 分区详情</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONE DETAIL -->
+      <div class="spec-card" id="s-zone-detail">
+        <div class="sh">
+          <div class="num">01b</div>
+          <div class="title">
+            <h3>分区详情页</h3>
+            <div class="small">看分区里所有终端的健康度 + 单分区批量动作 + 配置（成员、默认音量、是否参与广播）。</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag new">NEW</span></div>
+          </div>
+          <div class="src">m-screens-v4-zone.jsx<br/>ZoneDetailScreen</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>状态 / 变体</h5>
+            <ul>
+              <li>默认 — 顶部统计 + 终端列表 + "对该分区"操作组</li>
+              <li>编辑成员 — 进入选择终端模式（多选）</li>
+              <li>设置弹窗 — 改名 / 改图标 / 调默认音量</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>GET /zones/:id</code></li>
+              <li><code>PATCH /zones/:id/members</code> · 改成员</li>
+              <li><code>PATCH /zones/:id</code> · 改名 / 默认音量</li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>顶部返回按钮回到 Hub</li>
+              <li>"开始广播" 主按钮 → 携带分区 ID 跳广播 Tab</li>
+              <li>故障终端在列表内置顶 + 红 banner</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- BROADCAST -->
+      <div class="spec-card" id="s-broadcast">
+        <div class="sh">
+          <div class="num">02</div>
+          <div class="title">
+            <h3>广播（一级 Tab · 三档统一）</h3>
+            <div class="small">顶部 segmented 切换 寻呼 / 对讲 / 点播；目标终端在三种模式之间共享。</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag new">NEW</span></div>
+          </div>
+          <div class="src">m-screens-v4.jsx<br/>BroadcastScreen mode="page|talk|cast"</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>三档差异</h5>
+            <ul>
+              <li><b>寻呼 page</b> — 暖色 #ea580c · 按住讲话 (push-to-talk) · 大圆形 mic 主控 · 计时显示</li>
+              <li><b>对讲 talk</b> — 蓝 #2563eb · 双向 · 显示对端状态 + 时长 + 静音 / 切扬声器</li>
+              <li><b>点播 cast</b> — Teal #0e7c70 · 选媒体 (本地 / 云库) + 音量 + 队列 + 循环/单次</li>
+              <li><b>目标终端共享</b> — 切档时上面"已选"列表不清空</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>POST /broadcast/start</code> body: <code>{ mode, targets[], media?, message? }</code></li>
+              <li>过程中：WebSocket 推送 state（success/fail per 终端）</li>
+              <li><code>POST /broadcast/stop</code></li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>未选终端时主按钮 disabled + 引导"前往终端选择"</li>
+              <li>录音权限缺失 → 弹半屏申请；拒绝后给"重新申请"</li>
+              <li>寻呼时<b>背景蜂窝持续脉动</b> (mPulse anim)</li>
+              <li>对讲来电 → 全屏暗色界面（详见 09.4）</li>
+              <li>切档时如有正在进行的会话，先弹确认"停止并切换 / 取消"</li>
+              <li>音量条松手即应用，长按 → 高级（每台单独调）</li>
+            </ul>
+            <h5 style="margin-top:18px;">导航</h5>
+            <ul>
+              <li>入 → TabBar / 终端 Hub 长按 / 通知点击</li>
+              <li>出 → 完成回 Hub · 失败回当前页 + toast</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK -->
+      <div class="spec-card" id="s-task">
+        <div class="sh">
+          <div class="num">03</div>
+          <div class="title">
+            <h3>任务（一级 Tab）</h3>
+            <div class="small">今日时间轴 + 启用中的作息方案 + 临时任务入口。</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag new">NEW</span></div>
+          </div>
+          <div class="src">m-screens-v4.jsx<br/>TaskScreenV4</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>结构</h5>
+            <ul>
+              <li><b>顶部</b> — 今日日期 + 当前作息方案名 + 切换按钮</li>
+              <li><b>时间轴</b> — 上午 / 下午 / 晚上分段；任务卡含时间 / 状态 / 目标分区</li>
+              <li><b>任务卡 4 态</b> — 已完成 / 进行中 / 待执行 / 已取消（灰）/ 已迁移（金）/ 对调（金⇄）</li>
+              <li><b>临时任务</b> — 浮动按钮 FAB / 顶部入口 → 临时文件广播页</li>
+              <li><b>作息方案区</b> — 启用方案大卡 + "查看全部"</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>GET /tasks/today</code> + <code>GET /schedule/active</code></li>
+              <li>状态枚举：<code>pending / running / done / cancelled / migrated / swapped</code></li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>点任务卡 → 任务执行详情 + 日志页（03.4）</li>
+              <li>长按任务 → 操作 sheet（取消 / 迁移 / 对调 / 复制）</li>
+              <li>"对调" 标识使用<b>金⇄</b>：两个任务都打金色边并加 swap icon</li>
+              <li>"迁移" 标识使用<b>金色虚线</b> + 箭头指原始时间</li>
+              <li>"取消" 标识使用<b>灰色 + 删除线</b>，但保留显示（透明 60%）</li>
+            </ul>
+            <h5 style="margin-top:18px;">导航</h5>
+            <ul>
+              <li>入 → TabBar</li>
+              <li>出 → 任务详情 (03.4) / 作息方案详情 (03.2) / 临时任务 (03.5) / AI Tab</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK SECONDARY -->
+      <div class="spec-card" id="s-task-secondary">
+        <div class="sh">
+          <div class="num">03b</div>
+          <div class="title">
+            <h3>任务·二级页（4 屏）</h3>
+            <div class="small">作息方案详情 / 编辑任务 / 执行详情+日志 / 临时文件广播</div>
+            <div class="tag-row"><span class="tag tier1">P0</span><span class="tag new">NEW</span></div>
+          </div>
+          <div class="src">m-screens-v4-task.jsx</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>03.2 作息方案详情 <code>ScheduleDetailScreen</code></h5>
+            <ul>
+              <li>方案名 + 启用开关 + 适用日期范围</li>
+              <li>任务列表（每条：时间 / 媒体 / 目标分区 / 启用）</li>
+              <li>底部"新增任务"主按钮</li>
+            </ul>
+            <h5>03.3 编辑作息任务 <code>TaskEditScreen</code></h5>
+            <ul>
+              <li>表单：开始时间 / 持续时长 / 媒体选择 / 目标分区 / 音量 / 重复规则</li>
+              <li>"测试播放" 链接 → 即时验证媒体可达</li>
+            </ul>
+          </div>
+          <div>
+            <h5>03.4 执行详情 + 日志 <code>TaskExecDetailScreen</code></h5>
+            <ul>
+              <li>顶部任务基本信息</li>
+              <li>每台终端的执行结果（成功 / 失败 / 跳过）</li>
+              <li>展开看时间戳日志</li>
+              <li>失败 → "重试该终端" 行动按钮</li>
+            </ul>
+            <h5>03.5 临时文件广播 <code>TempFileBroadcastScreen</code></h5>
+            <ul>
+              <li>本地文件 / 录音 / 文字转语音三选一</li>
+              <li>目标分区 + 优先级（普通 / 紧急）</li>
+              <li>"立即广播"主按钮</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="spec-card" id="s-ai">
+        <div class="sh">
+          <div class="num">04</div>
+          <div class="title">
+            <h3>AI 助手（一级 Tab · 中心抬起）</h3>
+            <div class="small">一句话搞定运维：任务迁移 / 周对调 / 取消 / 新建作息。占位 + 4 个完整子屏。</div>
+            <div class="tag-row"><span class="tag tier2">P1</span><span class="tag merged">MERGED</span><span class="tag placeholder">+ Placeholder</span></div>
+          </div>
+          <div class="src">m-screens-v4.jsx · AIPlaceholderScreen<br/>m-screens-ai.jsx · AIHome / Migrate / Swap / Create</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>P0 占位</h5>
+            <ul>
+              <li>暗色渐变背景 + 大输入框 + 提示气泡（"试试：把下周一的早会挪到周二"）</li>
+              <li>未接入 NLU 时显示"敬请期待"+ 跳转任务 Tab 链接</li>
+            </ul>
+            <h5 style="margin-top:18px;">P1 完整流程</h5>
+            <ul>
+              <li><b>AI 主页</b> — 日历 + 任务时间轴 + 底部输入</li>
+              <li><b>任务迁移确认</b> — 双卡片对比 (原时间 / 新时间) + 影响列表</li>
+              <li><b>周对调</b> — 周一↔周二视图 + 影响范围</li>
+              <li><b>新建作息</b> — 步进式表单 (名称 → 适用 → 起止 → 任务清单)</li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>输入"把 X 挪到 Y" → 自动定位任务 → 弹迁移确认</li>
+              <li>所有 AI 操作<b>必须二次确认</b>，显示完整 diff</li>
+              <li>确认后 toast + 时间轴动画到新位置</li>
+              <li>每条操作可一键撤销（24h 内）</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>POST /ai/parse</code> body: <code>{ text }</code> → <code>{ intent, slots, preview_diff }</code></li>
+              <li><code>POST /ai/commit</code> body: <code>{ intent_id }</code> → apply</li>
+              <li><code>POST /ai/undo</code> · 24h 窗口</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICE / AFTERSALES -->
+      <div class="spec-card" id="s-service">
+        <div class="sh">
+          <div class="num">05</div>
+          <div class="title">
+            <h3>服务 / 售后（一级 Tab · 兜底）</h3>
+            <div class="small">系统健康度 + AI 故障诊断对话 + 工单跟踪。</div>
+            <div class="tag-row"><span class="tag tier2">P1</span><span class="tag merged">MERGED</span><span class="tag placeholder">+ Placeholder</span></div>
+          </div>
+          <div class="src">m-screens-v4.jsx · ServicePlaceholderScreen<br/>m-screens-aftersales.jsx · AfterSales{Home,Chat,Solution}</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>P0 占位</h5>
+            <ul>
+              <li>系统状态卡（全部在线 / N 台离线 / N 台故障）</li>
+              <li>"联系工程师" 按钮 → 拨号</li>
+            </ul>
+            <h5 style="margin-top:18px;">P1 完整流程</h5>
+            <ul>
+              <li><b>售后主页</b> — 健康度 + 最近故障 + AI 诊断入口 + 工单列表</li>
+              <li><b>AI 诊断对话</b> — 用户描述 → AI 提问 → 定位</li>
+              <li><b>诊断方案详情</b> — 步骤列表 + 一键修复 + 工单跟踪</li>
+            </ul>
+          </div>
+          <div>
+            <h5>交互规则</h5>
+            <ul>
+              <li>TabBar 角标：dot = 有故障；num = 待处理工单数</li>
+              <li>诊断方案"一键修复" → 远程操作（重启 / 重新配音 / 推固件）</li>
+              <li>修复失败 → 自动生成工单 + 跳工单详情</li>
+            </ul>
+            <h5 style="margin-top:18px;">数据 / API</h5>
+            <ul>
+              <li><code>GET /service/health</code></li>
+              <li><code>POST /service/diagnose</code> body: <code>{ text, terminal_ids? }</code></li>
+              <li><code>POST /service/tickets</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLET -->
+      <div class="spec-card" id="s-tablet">
+        <div class="sh">
+          <div class="num">06</div>
+          <div class="title">
+            <h3>平板版 · 终端 Hub（横屏 1280×800）</h3>
+            <div class="small">三栏：导航 Rail · 终端列表 · 详情面板。适合下载 / 批量配置场景。</div>
+            <div class="tag-row"><span class="tag tier2">P1</span><span class="tag tablet">Tablet</span></div>
+          </div>
+          <div class="src">m-screens-v4.jsx · TerminalHubTablet</div>
+        </div>
+        <div class="sb">
+          <div>
+            <h5>布局</h5>
+            <ul>
+              <li><b>左：导航 Rail</b> — 64 px 宽，icon-only · 5 项一级导航</li>
+              <li><b>中：终端列表 / 分区树</b> — 28% 宽，支持多选</li>
+              <li><b>右：详情面板</b> — 剩余宽度，显示选中分区 / 终端的详情 + 操作</li>
+            </ul>
+            <h5 style="margin-top:18px;">P1 范围</h5>
+            <ul>
+              <li>仅"终端 Hub" 落地平板布局；其它 Tab P2 处理</li>
+              <li>批量上传 / 批量配音量 等管理操作放右栏</li>
+            </ul>
+          </div>
+          <div>
+            <h5>响应式断点</h5>
+            <ul>
+              <li><code>&lt; 600px</code> · Phone 单栏</li>
+              <li><code>600–840px</code> · 单栏拉宽 + 大卡片</li>
+              <li><code>&ge; 840px (横屏)</code> · 三栏布局</li>
+              <li>禁用沉浸；保留状态栏</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA & BEHAVIOR -->
+    <section id="api">
+      <div class="head">
+        <div class="kicker">06 · Data & Behavior</div>
+        <h2>实时性 / 错误处理 / 离线</h2>
+      </div>
+
+      <h3>实时性</h3>
+      <table class="spec">
+        <tr><th style="width:200px;">数据</th><th>策略</th></tr>
+        <tr><td>终端状态 (state/playing/paging)</td><td><b>WebSocket push</b>，回退 10s 轮询。断线时顶部出黄色 banner "实时已断开"。</td></tr>
+        <tr><td>任务进度</td><td>会话内 WS 持续推送；会话结束后改 30s 轮询。</td></tr>
+        <tr><td>工单状态</td><td>15s 轮询足够；进入详情页改 5s。</td></tr>
+        <tr><td>媒体库 / 作息</td><td>按需 fetch + 本地缓存（ETag）。</td></tr>
+      </table>
+
+      <h3>错误处理</h3>
+      <table class="spec">
+        <tr><th>层级</th><th>表现</th><th>恢复</th></tr>
+        <tr><td>致命 (无网络)</td><td>顶部红 banner + 缓存数据加灰</td><td>自动重试 + 手动"重新连接"</td></tr>
+        <tr><td>请求失败</td><td>Toast 3s + 失败原因</td><td>动作按钮自动恢复可点</td></tr>
+        <tr><td>部分终端失败 (广播)</td><td>结果卡列出失败终端</td><td>"重试失败项"按钮</td></tr>
+        <tr><td>表单校验</td><td>输入框红边 + 下方提示</td><td>用户修正后实时校验</td></tr>
+      </table>
+
+      <h3>离线策略</h3>
+      <p>本应用<b>严重依赖在线</b>（广播 / 对讲 / 点播都需要联网）。离线时：</p>
+      <ul style="color:var(--ink-2);">
+        <li>所有"动作类"按钮 disabled，给"离线，不可用"提示</li>
+        <li>仍可<b>查看缓存的</b>：终端列表（标灰 + 最后同步时间）、作息方案、工单列表</li>
+        <li>登录页：检测到网络后自动重连</li>
+      </ul>
+
+      <h3>权限</h3>
+      <table class="spec">
+        <tr><th>权限</th><th>时机</th><th>拒绝降级</th></tr>
+        <tr><td>录音</td><td>首次进寻呼 / 对讲</td><td>提示+设置链接；按钮禁用</td></tr>
+        <tr><td>通知</td><td>登录成功后</td><td>静默通过；用户可在设置开</td></tr>
+        <tr><td>文件读取</td><td>临时文件广播</td><td>提示选择文件夹</td></tr>
+        <tr><td>位置</td><td>暂不要</td><td>—</td></tr>
+      </table>
+
+      <h3>无障碍 / 可达性</h3>
+      <ul style="color:var(--ink-2);">
+        <li>所有 icon-only 按钮必须有 <code>contentDescription</code></li>
+        <li>状态色不单独传意 — 必须同时有形状 / 文字（在线绿点 + "在线"文字）</li>
+        <li>主交互区域<b>不小于 44×44 dp</b>（含 chip / tile / tab）</li>
+        <li>支持系统字号放大到 1.3 倍；超出后允许换行</li>
+      </ul>
+
+      <h3>本地化</h3>
+      <p>当前仅简体中文。所有字符串<b>外置成 string resource</b>，预留繁体 / 英文位置。日期 / 数字格式跟随系统 locale。</p>
+
+      <div class="callout warn">
+        <b>给 Claude Code 的注意事项：</b>
+        <ol style="margin:8px 0 0 0;padding-left:18px;color:#9a3412;">
+          <li>JSX 中的颜色 / 数值是设计真值，<b>移植时用 token 命名引用</b>（Compose 用 MaterialTheme 扩展，不要写死 hex）。</li>
+          <li>"播放波形" / "脉动呼吸" 这类装饰动效在 HTML 是 CSS keyframes；移植到 Compose 用 <code>InfiniteTransition</code>。</li>
+          <li>占位屏（AI / 服务）的功能<b>暂不接入</b>，UI 落地优先；AI / 售后的完整流程作为 P1。</li>
+          <li>底部 TabBar 中央抬起项<b>不要</b>用 BottomNavigation 默认行为；自定义布局，中间项 56×56 +16 上抬。</li>
+        </ol>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
