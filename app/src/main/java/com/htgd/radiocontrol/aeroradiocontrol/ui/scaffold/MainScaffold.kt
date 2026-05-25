@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TabBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TopBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.placeholder.TabPlaceholder
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalHubScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 private data class TabContent(val title: String, val subtitle: String)
@@ -29,6 +30,7 @@ private val tabContents = listOf(
 @Composable
 fun MainScaffold(
     onSettingsClick: () -> Unit = {},
+    onOpenZone: (String) -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val current = tabContents[selectedTab]
@@ -56,7 +58,10 @@ fun MainScaffold(
                 .padding(innerPadding)
                 .background(AeroTheme.colors.background),
         ) {
-            TabPlaceholder(title = current.title, subtitle = current.subtitle)
+            when (selectedTab) {
+                0 -> TerminalHubScreen(onOpenZone = onOpenZone)
+                else -> TabPlaceholder(title = current.title, subtitle = current.subtitle)
+            }
         }
     }
 }

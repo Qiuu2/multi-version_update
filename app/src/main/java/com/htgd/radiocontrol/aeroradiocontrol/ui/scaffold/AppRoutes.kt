@@ -13,6 +13,10 @@ object AppRoutes {
     const val SPLASH = "splash"
     const val LOGIN = "login"
     const val MAIN = "main"
+
+    const val ZONE_ARG = "zoneId"
+    const val ZONE_DETAIL = "zone/{$ZONE_ARG}"
+    fun zoneDetail(id: String) = "zone/$id"
 }
 
 /**
