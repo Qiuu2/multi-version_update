@@ -21,11 +21,12 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +37,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MChip
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.TerminalStatus
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.FabAction
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.FabBar
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationBanner
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalHubSkeleton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalTile
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import kotlinx.coroutines.delay
 
 private data class StatusFilter(val label: String, val status: TerminalStatus?)
 
@@ -70,8 +76,15 @@ fun TerminalHubScreen(
     var expandedZones by remember { mutableStateOf(setOf<String>()) }
     var bulkMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var loading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(1600)
+        loading = false
+    }
 
     fun matches(t: TerminalUi) = filter == null || t.status == filter
+    val anyVisible = zones.any { zone -> zone.terminals.any { matches(it) } }
 
     fun toggleSelect(id: String) {
         selectedIds = if (id in selectedIds) selectedIds - id else selectedIds + id
@@ -99,6 +112,10 @@ fun TerminalHubScreen(
                     },
                 )
             }
+            if (loading) {
+                TerminalHubSkeleton(modifier = Modifier.weight(1f))
+                return@Column
+            }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(spacing.base),
@@ -117,7 +134,24 @@ fun TerminalHubScreen(
                 }
 
                 if (faults.isNotEmpty()) {
-                    item(key = "fault-banner") { FaultBanner(count = faults.size) }
+                    item(key = "fault-banner") {
+                        NotificationBanner(
+                            type = NotificationType.Error,
+                            message = "${faults.size} 个终端故障，请尽快检查",
+                        )
+                    }
+                }
+
+                if (!anyVisible) {
+                    item(key = "empty") {
+                        EmptyState(
+                            icon = Icons.Filled.Search,
+                            title = "没有匹配的终端",
+                            description = "当前筛选条件下没有终端，试试切换筛选。",
+                            actionLabel = "清除筛选",
+                            onAction = { filter = null },
+                        )
+                    }
                 }
 
                 zones.forEach { zone ->
@@ -203,27 +237,6 @@ private fun BulkBar(count: Int, onCancel: () -> Unit, onSelectAll: () -> Unit) {
     }
 }
 
-@Composable
-private fun FaultBanner(count: Int) {
-    val colors = AeroTheme.colors
-    val spacing = AeroTheme.spacing
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(AeroTheme.shapes.md)
-            .background(colors.dangerContainer)
-            .padding(horizontal = spacing.base, vertical = spacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-    ) {
-        Icon(Icons.Filled.Warning, contentDescription = null, tint = colors.danger, modifier = Modifier.size(20.dp))
-        Text(
-            "$count 个终端故障，请尽快检查",
-            style = AeroTheme.typography.bodyStrong,
-            color = colors.danger,
-        )
-    }
-}
 
 @Composable
 private fun ZoneHeader(
