@@ -13,8 +13,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TabBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TopBarV4
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.ai.AiScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.broadcast.BroadcastScreen
-import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.placeholder.TabPlaceholder
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.service.ServiceScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task.TaskScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalHubScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
@@ -67,13 +68,15 @@ fun MainScaffold(
             when (selectedTab) {
                 0 -> TerminalHubScreen(onOpenZone = onOpenZone)
                 1 -> BroadcastScreen()
+                2 -> AiScreen()
                 3 -> TaskScreen(
                     onOpenSchemeDetail = onOpenSchemeDetail,
                     onOpenSchemeEdit = onOpenSchemeEdit,
                     onOpenLog = onOpenLog,
                     onOpenTempBroadcast = onOpenTempBroadcast,
                 )
-                else -> TabPlaceholder(title = current.title, subtitle = current.subtitle)
+                4 -> ServiceScreen()
+                else -> Unit
             }
         }
     }
