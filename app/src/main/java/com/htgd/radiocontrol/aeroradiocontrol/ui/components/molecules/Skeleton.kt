@@ -90,3 +90,17 @@ fun SkeletonLine(modifier: Modifier = Modifier, width: Int = 160, height: Int = 
         shape = AeroTheme.shapes.xs,
     )
 }
+
+/** Reference skeleton for list-style data screens: N card-height placeholder rows. */
+@Composable
+fun ListSkeleton(modifier: Modifier = Modifier, rows: Int = 5) {
+    val spacing = AeroTheme.spacing
+    Column(
+        modifier = modifier.fillMaxWidth().padding(spacing.base),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+    ) {
+        repeat(rows) {
+            SkeletonBox(modifier = Modifier.fillMaxWidth().height(64.dp), shape = AeroTheme.shapes.md)
+        }
+    }
+}

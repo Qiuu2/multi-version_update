@@ -27,6 +27,11 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,8 +42,11 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.HeroStrip
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.SkeletonBox
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun TaskScreen(
@@ -50,6 +58,11 @@ fun TaskScreen(
 ) {
     val spacing = AeroTheme.spacing
     val scheme = TaskMock.activeScheme
+    var loading by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(1400)
+        loading = false
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(AeroTheme.colors.background),
@@ -67,8 +80,22 @@ fun TaskScreen(
                 }
             }
         }
-        items(scheme.tasks, key = { it.id }) { task ->
-            TimelineRow(task = task)
+        when {
+            loading -> items(4) {
+                SkeletonBox(modifier = Modifier.fillMaxWidth().height(72.dp), shape = AeroTheme.shapes.md)
+            }
+            scheme.tasks.isEmpty() -> item(key = "empty") {
+                EmptyState(
+                    icon = Icons.AutoMirrored.Filled.ListAlt,
+                    title = "暂无任务",
+                    description = "编辑作息方案，添加定时任务。",
+                    actionLabel = "编辑方案",
+                    onAction = { onOpenSchemeEdit(scheme.id) },
+                )
+            }
+            else -> items(scheme.tasks, key = { it.id }) { task ->
+                TimelineRow(task = task)
+            }
         }
     }
 }

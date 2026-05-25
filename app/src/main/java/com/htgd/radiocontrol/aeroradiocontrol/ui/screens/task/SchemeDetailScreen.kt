@@ -18,13 +18,20 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.BackTopBar
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.HeroStrip
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.ListSkeleton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun SchemeDetailScreen(
@@ -35,6 +42,12 @@ fun SchemeDetailScreen(
 ) {
     val spacing = AeroTheme.spacing
     val scheme = TaskMock.scheme(schemeId)
+    var loading by remember { mutableStateOf(true) }
+    LaunchedEffect(schemeId) {
+        loading = true
+        delay(1200)
+        loading = false
+    }
 
     Column(modifier = modifier.fillMaxSize().background(AeroTheme.colors.background)) {
         BackTopBar(
@@ -52,6 +65,10 @@ fun SchemeDetailScreen(
                 )
             },
         )
+        if (loading) {
+            ListSkeleton(rows = 5)
+            return@Column
+        }
         if (scheme == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("未找到该方案", style = AeroTheme.typography.body, color = AeroTheme.colors.onSurfaceVariant)
