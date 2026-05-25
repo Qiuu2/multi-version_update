@@ -15,6 +15,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TabBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TopBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.broadcast.BroadcastScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.placeholder.TabPlaceholder
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task.TaskScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalHubScreen
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
@@ -32,6 +33,10 @@ private val tabContents = listOf(
 fun MainScaffold(
     onSettingsClick: () -> Unit = {},
     onOpenZone: (String) -> Unit = {},
+    onOpenSchemeDetail: (String) -> Unit = {},
+    onOpenSchemeEdit: (String) -> Unit = {},
+    onOpenLog: () -> Unit = {},
+    onOpenTempBroadcast: () -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val current = tabContents[selectedTab]
@@ -62,6 +67,12 @@ fun MainScaffold(
             when (selectedTab) {
                 0 -> TerminalHubScreen(onOpenZone = onOpenZone)
                 1 -> BroadcastScreen()
+                3 -> TaskScreen(
+                    onOpenSchemeDetail = onOpenSchemeDetail,
+                    onOpenSchemeEdit = onOpenSchemeEdit,
+                    onOpenLog = onOpenLog,
+                    onOpenTempBroadcast = onOpenTempBroadcast,
+                )
                 else -> TabPlaceholder(title = current.title, subtitle = current.subtitle)
             }
         }

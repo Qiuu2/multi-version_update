@@ -17,6 +17,15 @@ object AppRoutes {
     const val ZONE_ARG = "zoneId"
     const val ZONE_DETAIL = "zone/{$ZONE_ARG}"
     fun zoneDetail(id: String) = "zone/$id"
+
+    const val SCHEME_ARG = "schemeId"
+    const val SCHEME_DETAIL = "scheme/{$SCHEME_ARG}"
+    fun schemeDetail(id: String) = "scheme/$id"
+    const val SCHEME_EDIT = "scheme/{$SCHEME_ARG}/edit"
+    fun schemeEdit(id: String) = "scheme/$id/edit"
+
+    const val EXEC_LOG = "exec_log"
+    const val TEMP_BROADCAST = "temp_broadcast"
 }
 
 /**
