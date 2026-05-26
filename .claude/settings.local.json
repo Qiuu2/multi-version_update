@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "mcp__mcp-registry__search_mcp_registry",
-      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' PATH='/c/Program Files/Android/Android Studio/jbr/bin:__TRACKED_VAR__' ./gradlew :app:compileDebugKotlin --no-daemon)"
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' PATH='/c/Program Files/Android/Android Studio/jbr/bin:__TRACKED_VAR__' ./gradlew :app:compileDebugKotlin --no-daemon)",
+      "Bash(git push *)",
+      "Bash(git stash *)"
     ]
   }
 }

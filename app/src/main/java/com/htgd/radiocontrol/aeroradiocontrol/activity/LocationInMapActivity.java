@@ -30,7 +30,7 @@ import android.widget.TextView;
 
 import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
-import com.baidu.location.BDLocationListener;
+
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
@@ -127,7 +127,7 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
     private MachineInfo tempmachine = new MachineInfo("", "", "");
     private boolean isedit_lat = false;
     private LinearLayout fourstate;
-    private Switch edit_lat;
+    private androidx.appcompat.widget.SwitchCompat edit_lat;
     private Button select, edit, clear_select;
     private boolean isstate = true;
     private boolean isshoworhide = true;
@@ -217,33 +217,7 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
 
     }
 
-    /**
-     * 初始化前台服务
-     */
-    private void initNotification() {
-        //设置后台定位
-        //android8.0及以上使用NotificationUtils
-        if (Build.VERSION.SDK_INT >= 26) {
-           /* NotificationUtils notificationUtils = new NotificationUtils(this);
-            Notification.Builder builder = notificationUtils.getAndroidChannelNotification
-                    ("适配android 8限制后台定位功能", "正在后台定位");
-            mNotification = builder.build();*/
-        } else {
-            //获取一个Notification构造器
-            Notification.Builder builder = new Notification.Builder(this);
-            Intent nfIntent = new Intent(this, this.getClass());
 
-            builder.setContentIntent(PendingIntent.
-                    getActivity(this, 0, nfIntent, 0)) // 设置PendingIntent
-                    .setContentTitle("适配android 8限制后台定位功能") // 设置下拉列表里的标题
-                    .setSmallIcon(R.mipmap.ic_launcher) // 设置状态栏内的小图标
-                    .setContentText("正在后台定位") // 设置上下文内容
-                    .setWhen(System.currentTimeMillis()); // 设置该通知发生的时间
-            LogUtils.setLog(mTag, "dingwei kaiqi notification"  );
-            mNotification = builder.build(); // 获取构建好的Notification
-        }
-        mNotification.defaults = Notification.DEFAULT_SOUND; //设置为默认的声音
-    }
 
     private void createLocalLocation() {
         // 创建定位客户端
@@ -576,18 +550,18 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
 
     private void initUI() {
         //获取地图类
-        latlng = (TextView) findViewById(R.id.latlng);
-        upWait = (ProgressBar) findViewById(R.id.up_wait);
+        latlng = findViewById(R.id.latlng);
+        upWait = findViewById(R.id.up_wait);
         upWait.setVisibility(View.GONE);
 
         state = (TextView) findViewById(R.id.state);
-        operation = (RelativeLayout) findViewById(R.id.operation);
+        operation = findViewById(R.id.operation);
         state.setOnClickListener(this);
         showorhide = (TextView) findViewById(R.id.showorhide);
         showorhide.setOnClickListener(this);
         resets = (TextView) findViewById(R.id.resets);
         resets.setOnClickListener(this);
-        edit_lat = (Switch) findViewById(R.id.edit_lat);
+        edit_lat = findViewById(R.id.edit_lat);
         edit_lat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -603,7 +577,7 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
                 }
             }
         });
-        edit = (Button) findViewById(R.id.edit);
+        edit = findViewById(R.id.edit);
         edit.setOnClickListener(this);
         select = (Button) findViewById(R.id.select);
         select.setOnClickListener(this);
@@ -617,7 +591,7 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
         back.setOnClickListener(this);
         speach = (Button) findViewById(R.id.speach);
         speach.setOnClickListener(this);
-        fourstate = (LinearLayout) findViewById(R.id.four_state);
+        fourstate = findViewById(R.id.four_state);
         zone = (Button) findViewById(R.id.zone);
         zone.setOnClickListener(this);
         online = (TextView) findViewById(R.id.online);
@@ -625,7 +599,7 @@ public class LocationInMapActivity extends BaseActivity implements View.OnClickL
         outofline = (TextView) findViewById(R.id.outofline);
         chooseline = (TextView) findViewById(R.id.choose);
         zonename = (TextView) findViewById(R.id.zonename);
-        mMapView = (MapView) findViewById(R.id.bmapViews);
+        mMapView = findViewById(R.id.bmapViews);
         mBaiduMap = mMapView.getMap();
         mUiSettings = mBaiduMap.getUiSettings();
         mUiSettings.setAllGesturesEnabled(false);
