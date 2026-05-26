@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.htgd.radiocontrol.aeroradiocontrol.ui.scaffold.AppNavGraph
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import com.htgd.radiocontrol.screanadaption.CancelAdapt
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -17,9 +18,13 @@ import dagger.hilt.android.AndroidEntryPoint
  *
  * Annotated with [AndroidEntryPoint] so Compose-side ViewModels can use Hilt
  * via `hiltViewModel()`.
+ *
+ * Implements [CancelAdapt] to opt out of the legacy AutoSize density rewrite:
+ * AutoSize rescales density to the legacy landscape design baseline, which
+ * shrinks the Compose UI on portrait phones. Compose screens use native dp.
  */
 @AndroidEntryPoint
-class V4Activity : ComponentActivity() {
+class V4Activity : ComponentActivity(), CancelAdapt {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
