@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.automirrored.filled.Dvr
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.runtime.Composable
@@ -21,6 +20,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.AeroTab
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TabBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TopBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.placeholder.TabPlaceholder
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalTab
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 /**
@@ -55,11 +55,7 @@ fun MainScaffold(
 
             Box(modifier = Modifier.weight(1f)) {
                 when (selected) {
-                    AeroTab.Terminal  -> TabPlaceholder(
-                        title    = "终端 Hub",
-                        subtitle = "任务 #6 · 分区卡片 · 多选 · 详情页",
-                        icon     = Icons.AutoMirrored.Filled.Dvr,
-                    )
+                    AeroTab.Terminal  -> TerminalTab()
                     AeroTab.Broadcast -> TabPlaceholder(
                         title    = "广播",
                         subtitle = "任务 #7 · 寻呼 / 对讲 / 点播 三档统一",
