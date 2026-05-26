@@ -130,8 +130,21 @@ fun TaskScreen(
                     onAction = { onOpenSchemeEdit(scheme.id) },
                 )
             }
-            else -> items(scheme.tasks, key = { it.id }) { task ->
-                TimelineRow(task = task)
+            else -> {
+                listOf("上午", "下午", "晚上").forEach { period ->
+                    val inPeriod = scheme.tasks.filter { periodOf(it.time) == period }
+                    if (inPeriod.isNotEmpty()) {
+                        item(key = "period-$period") {
+                            Text(
+                                period,
+                                style = AeroTheme.typography.label,
+                                color = AeroTheme.colors.ink3,
+                                modifier = Modifier.padding(top = spacing.sm, start = 56.dp),
+                            )
+                        }
+                        items(inPeriod, key = { it.id }) { task -> TimelineRow(task = task) }
+                    }
+                }
             }
         }
     }
@@ -190,8 +203,8 @@ private fun dotColor(state: TaskCardState): Color {
     val c = AeroTheme.colors
     return when (state) {
         TaskCardState.Running -> c.statusPaging
-        TaskCardState.Swapped -> c.talkBlue
-        TaskCardState.Migrated -> c.statusPaging
+        TaskCardState.Swapped -> Gold
+        TaskCardState.Migrated -> Gold
         TaskCardState.Deleted, TaskCardState.Cancelled -> c.ink3
         TaskCardState.Normal -> c.primary
     }
@@ -201,7 +214,7 @@ private fun dotColor(state: TaskCardState): Color {
 private fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
-    val gold = colors.statusPaging
+    val runningBorder = colors.statusPaging
     val shape = AeroTheme.shapes.rCard
     val faded = task.state == TaskCardState.Deleted || task.state == TaskCardState.Cancelled
 
@@ -217,11 +230,11 @@ private fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
         .background(container)
 
     box = when (task.state) {
-        TaskCardState.Running -> box.border(1.5.dp, gold, shape)
-        TaskCardState.Swapped -> box.border(1.dp, colors.talkBlue, shape)
+        TaskCardState.Running -> box.border(1.5.dp, runningBorder, shape)
+        TaskCardState.Swapped -> box.border(1.dp, Gold, shape)
         TaskCardState.Migrated -> box.drawBehind {
             drawRoundRect(
-                color = gold,
+                color = Gold,
                 style = Stroke(
                     width = 1.5.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)),
@@ -255,8 +268,8 @@ private fun StateTag(state: TaskCardState) {
     val c = AeroTheme.colors
     val (label, fg, bg, icon) = when (state) {
         TaskCardState.Running -> Quad("进行中", c.statusPaging, c.statusPagingSoft, null)
-        TaskCardState.Swapped -> Quad("对调", c.talkBlue, c.statusPlayingSoft, Icons.Filled.SwapHoriz)
-        TaskCardState.Migrated -> Quad("迁移", c.statusPaging, c.statusPagingSoft, null)
+        TaskCardState.Swapped -> Quad("对调", Gold, GoldSoft, Icons.Filled.SwapHoriz)
+        TaskCardState.Migrated -> Quad("迁移", Gold, GoldSoft, null)
         TaskCardState.Deleted -> Quad("已删除", c.ink3, c.surface3, null)
         TaskCardState.Cancelled -> Quad("已取消", c.ink3, c.surface3, null)
         TaskCardState.Normal -> return
@@ -282,3 +295,16 @@ private data class Quad(
     val bg: Color,
     val icon: ImageVector?,
 )
+
+// 迁移 / 对调 use a gold accent per Handoff §任务; refactor has no gold token.
+private val Gold = Color(0xFFA8780A)
+private val GoldSoft = Color(0xFFFAF0CC)
+
+private fun periodOf(time: String): String {
+    val hour = time.substringBefore(":").toIntOrNull() ?: 0
+    return when {
+        hour < 12 -> "上午"
+        hour < 18 -> "下午"
+        else -> "晚上"
+    }
+}

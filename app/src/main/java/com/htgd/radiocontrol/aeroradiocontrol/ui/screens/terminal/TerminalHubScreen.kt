@@ -190,7 +190,8 @@ fun TerminalHubScreen(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = spacing.lg),
             actions = {
                 MButton(text = "寻呼", variant = MButtonVariant.Filled, onClick = {})
-                MButton(text = "停止", variant = MButtonVariant.Danger, onClick = {})
+                MButton(text = "对讲", variant = MButtonVariant.Tonal, onClick = {})
+                MButton(text = "点播", variant = MButtonVariant.Tonal, onClick = {})
             },
         )
     }

@@ -2,6 +2,7 @@ package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.ai
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +29,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 /** AI tab placeholder: dark gradient, a large (disabled) prompt box, "敬请期待". */
 @Composable
-fun AiScreen(modifier: Modifier = Modifier) {
+fun AiScreen(modifier: Modifier = Modifier, onGoToTasks: () -> Unit = {}) {
     val spacing = AeroTheme.spacing
     val onDark = Color.White
 
@@ -51,6 +52,13 @@ fun AiScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.weight(1f))
 
             ComingSoonBadge()
+
+            Text(
+                "未接入 · 先去任务页手动安排 →",
+                style = AeroTheme.typography.body,
+                color = onDark.copy(alpha = 0.85f),
+                modifier = Modifier.clickable(onClick = onGoToTasks),
+            )
 
             Spacer(modifier = Modifier.size(spacing.md))
 
@@ -86,7 +94,7 @@ private fun PromptBox() {
         horizontalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         Text(
-            "例如：下午 4 点给教学楼 A 播放放学通知",
+            "试试：把下周一的早会挪到周二",
             style = AeroTheme.typography.body,
             color = Color.White.copy(alpha = 0.5f),
             modifier = Modifier.weight(1f),

@@ -1,5 +1,7 @@
 package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.service
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButtonVariant
@@ -96,6 +99,7 @@ private fun StatusDot(color: Color) {
 private fun ContactCard() {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,7 +124,9 @@ private fun ContactCard() {
             text = "联系工程师",
             variant = MButtonVariant.Tonal,
             leading = { Icon(Icons.Filled.Phone, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            onClick = {},
+            onClick = {
+                context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:")))
+            },
             modifier = Modifier.fillMaxWidth(),
         )
     }

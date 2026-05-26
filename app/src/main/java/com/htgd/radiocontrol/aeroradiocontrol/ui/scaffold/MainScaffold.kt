@@ -55,7 +55,7 @@ fun MainScaffold(
                 when (selected) {
                     AeroTab.Terminal  -> TerminalTab()
                     AeroTab.Broadcast -> BroadcastScreen()
-                    AeroTab.AI        -> AiScreen()
+                    AeroTab.AI        -> AiScreen(onGoToTasks = { selected = AeroTab.Task })
                     AeroTab.Task      -> TaskTab()
                     AeroTab.Service   -> ServiceScreen()
                 }

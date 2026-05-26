@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +51,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.TerminalStatus
 import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalMock
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroGradients
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import kotlinx.coroutines.delay
 
 enum class BroadcastMode(val label: String) { Page("寻呼"), Talk("对讲"), Cast("点播") }
 
@@ -161,6 +163,16 @@ private fun PagePanel(targetCount: Int) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
     var pressing by remember { mutableStateOf(false) }
+    var seconds by remember { mutableStateOf(0) }
+    LaunchedEffect(pressing) {
+        if (pressing) {
+            seconds = 0
+            while (true) {
+                delay(1000)
+                seconds++
+            }
+        }
+    }
 
     val transition = rememberInfiniteTransition(label = "ptt")
     val pulse by transition.animateFloat(
@@ -182,7 +194,11 @@ private fun PagePanel(targetCount: Int) {
                 horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             ) {
                 StatusPill(status = TerminalStatus.Paging)
-                Text("正在寻呼 $targetCount 区", style = AeroTheme.typography.bodySmall, color = colors.statusPaging)
+                Text(
+                    "正在寻呼 $targetCount 区 · %02d:%02d".format(seconds / 60, seconds % 60),
+                    style = AeroTheme.typography.bodySmall,
+                    color = colors.statusPaging,
+                )
             }
         } else {
             Text(
