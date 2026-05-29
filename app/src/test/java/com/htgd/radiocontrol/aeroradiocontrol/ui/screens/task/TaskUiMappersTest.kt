@@ -47,12 +47,13 @@ class TaskUiMappersTest {
         assertEquals("t1", first.id)
         assertEquals("08:00", first.time)
         assertEquals("上课铃", first.title)
-        assertEquals("铃声A", first.zone) // no domain zone → media name fallback
+        // No zone on the v3 wire (PA-10) → blank, even when a media name is present.
+        assertEquals("", first.zone)
         assertEquals(TaskCardState.Running, first.state)
 
         val second = ui.tasks[1]
         assertEquals("", second.time)  // null startTime → blank-tolerant
-        assertEquals("", second.zone)  // null mediaName → blank
+        assertEquals("", second.zone)  // no zone → blank
         assertEquals(TaskCardState.Normal, second.state)
     }
 

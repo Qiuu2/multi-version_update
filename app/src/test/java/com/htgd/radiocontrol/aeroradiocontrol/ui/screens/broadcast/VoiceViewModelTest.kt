@@ -142,6 +142,20 @@ class VoiceViewModelTest {
     }
 
     @Test
+    fun `same-frame double start does not spawn two sessions`() = runTest {
+        // BL-VOICE-DOUBLESTART: two synchronous start() calls before the dispatcher
+        // runs. The pre-emptive Connecting flip makes the 2nd bail on the isInSession
+        // guard → exactly one adapter call.
+        val adapter = FakeVoiceAdapter(sessionStates = listOf(VoiceState.Active))
+        withVm(adapter) { vm ->
+            vm.start(VoiceKind.Talk, setOf("z1"))
+            vm.start(VoiceKind.Talk, setOf("z1")) // same frame, before runCurrent
+            runCurrent()
+            assertEquals(1, adapter.startTalkCalls)
+        }
+    }
+
+    @Test
     fun `talk session flows through to Active`() = runTest {
         val adapter = FakeVoiceAdapter(
             sessionStates = listOf(VoiceState.Connecting, VoiceState.Waiting, VoiceState.Active),
