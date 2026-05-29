@@ -3,6 +3,8 @@ package com.htgd.radiocontrol.aeroradiocontrol.di
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.AudioPermissionChecker
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.DefaultAudioPermissionChecker
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.DefaultVoiceNativeProbe
+import com.htgd.radiocontrol.aeroradiocontrol.data.voice.OnDemandCastAdapter
+import com.htgd.radiocontrol.aeroradiocontrol.data.voice.OnDemandCastAdapterImpl
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.VoiceNativeProbe
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.VoiceTalkAdapter
 import com.htgd.radiocontrol.aeroradiocontrol.data.voice.VoiceTalkAdapterImpl
@@ -29,6 +31,10 @@ abstract class VoiceModule {
     @Binds
     @Singleton
     abstract fun bindVoiceTalkAdapter(impl: VoiceTalkAdapterImpl): VoiceTalkAdapter
+
+    @Binds
+    @Singleton
+    abstract fun bindOnDemandCastAdapter(impl: OnDemandCastAdapterImpl): OnDemandCastAdapter
 
     @Binds
     @Singleton
