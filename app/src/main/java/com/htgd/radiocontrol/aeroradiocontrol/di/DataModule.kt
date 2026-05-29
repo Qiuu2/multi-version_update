@@ -145,13 +145,14 @@ abstract class DataBindings {
     ): TerminalRepository
 
     /**
-     * TaskRepository binding (ICD-TaskRepository-v1, TASK-PA-03b).
+     * TaskRepository binding (ICD-TaskRepository-v1; TASK-PA-03b stub → TASK-PA-10
+     * real impl).
      *
-     * Plan A: bound to [V3TaskRepository], currently a STUB returning empty/neutral
-     * values — it unblocks fe-business's Task Tab ViewModel compile against the LIVE
-     * contract before the real v3 adapter exists. The real impl (V3CallbackAdapter →
-     * SchemeDto → SSOT) swaps in later behind this same seam (no ViewModel change).
-     * Exactly ONE @Binds for TaskRepository app-wide.
+     * Plan A: bound to [V3TaskRepository] — now the REAL impl (V3CallbackAdapter →
+     * SchemeDto → SchemeMapper group-by-sechename → SSOT; setSchemeActive POSTs
+     * /task/sechenableordisable then re-fetches per I-3). The earlier stub was
+     * filled in place, so the binding is unchanged. Exactly ONE @Binds for
+     * TaskRepository app-wide.
      */
     @Binds
     @Singleton
