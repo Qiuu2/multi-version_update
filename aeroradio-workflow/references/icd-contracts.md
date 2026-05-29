@@ -21,12 +21,15 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD-TtsTaskDto-v1 | TTS 任务 DTO（逆推自 TtsTaskContentModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-MediaDto-v1 | 媒体/文件夹 DTO（逆推自 MusicInfoModel + MusicFolderInfoModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-ServerStateDto-v1 | 系统健康度 DTO（逆推自 SeverStateModel） | data-integration | frontend-business | LIVE (源见 §12) |
+| ICD-ServerStateRepository-v1 | 系统健康度 Repository(observeServerState/refresh) + Domain ServerState + ServerHealth(sealed+Unknown) | data-integration | frontend-business（Service Tab） | LIVE (real V3 impl) |
+| ICD-MediaRepository-v1 | 点播媒体库 Repository(observeFolders/observeMedia/refresh) + Domain Media/MediaFolder(嵌套); CAST 不含(→legacy OnDemandCastAdapter) | data-integration | frontend-business（广播 Tab 点播） | LIVE (real V3 impl, LIST 半) |
+| ICD-OnDemandCast-v1 | 点播 cast 推送 seam(HTIntf newondemandlist→setondemand*→startondemand; 逆推 orderMusic/startplay + javap) | legacy-native | frontend-business（广播 Tab 点播） | **LIVE**(控制结构纯Java) / **DRAFT-pending-device**(真机执行 R-001) / **DRAFT-pending-vendor**(int 码语义) |
 | ICD-BroadcastWS-v1 | 终端状态 WebSocket 推送格式 | frontend-platform | frontend-business, data-integration | DRAFT |
 | ICD-RealtimeFallback-v1 | WS 断线时的 10s 轮询协议 | frontend-platform | frontend-business | DRAFT |
 | ICD-IPCSocket-v2 | 本机 127.0.0.1:4521 TCP（逆推自 SocketClient） | legacy-native | frontend-business | **LIVE**(连接语义+协程封装) / **DRAFT-pending-vendor**(命令词表, O-4) |
 | ICD-VoiceAAR-v2 | htapplib.aar Kotlin 适配（逆推自 AAR javap + v3） | legacy-native | frontend-business | **LIVE**(HTIntf控制+CallBackIntf 21回调+MP3结构) / **DRAFT-pending-device**(native执行, R-001) + **OPEN**(init参语义) |
 | ICD-MapLocation-v1 | 百度地图定位回调 + 经纬度回写 | legacy-native | frontend-business, data-integration | PLANNED (Phase 2 百度地图; 无 section, 落地时定义) |
-| ICD-DesignTokens-v1.1 | 设计 token（颜色/圆角/阴影/字体/动效，含落地别名映射） | frontend-platform（从 Handoff 提炼） | 所有 frontend agent | LIVE |
+| ICD-DesignTokens-v1.2 | 设计 token（颜色/圆角/阴影/字体/动效，含落地别名映射 + gold/goldSoft 任务迁移 accent） | frontend-platform（从 Handoff 提炼） | 所有 frontend agent | LIVE |
 | ICD-Endpoints-v1 | REST 端点权威清单（路径×方法）+ 全局约定 | data-integration | frontend-business, legacy-native | DRAFT-FROZEN (含 OPEN, 待 INQ-O-1) |
 
 ---
@@ -435,15 +438,16 @@ sealed class TalkState {
 
 ---
 
-## 9. ICD-DesignTokens-v1.1（设计 token）
+## 9. ICD-DesignTokens-v1.2（设计 token）
 
 **Producer**: Frontend-Platform Agent（从 `references/design-system-spec.md` 落地，spec 从 Handoff.html / AeroRadio v4.html 提炼）
 **Consumers**: 所有 frontend agent
-**Status**: LIVE（v1.1 — TASK-AR-009 校准后修订）
+**Status**: LIVE（v1.2 — +gold/goldSoft 任务迁移 accent，BL-GOLD-TOKEN）
 **实际落地包**: `app/src/main/java/com/htgd/radiocontrol/aeroradiocontrol/ui/theme/`（8 文件：Color/Shape/Spacing/Type/Elevation/Motion/Gradients/AeroTheme）
 **注入方式**: CompositionLocal（`LocalAeroColors` 等）+ `AeroTheme.xxx` 访问器；token 为 data-class 字段（非 object 常量），可被 AeroTheme override。
 
 > v1.1 修订（DEL-TASK-AR-009-v2，PM R-1~R-5 裁定）：① 速查子集升级为完整清单；② 落地命名与 spec 权威名不一致 → 见 §9.1 **别名映射**（R-1 非破坏路径）；③ 补录 bgBeige（R-2）+ 派生 token（R-3）；④ Elevation 对齐 spec 2/8（R-4）；⑤ 字体占位状态登记（R-5）。
+> v1.2 修订（BL-GOLD-TOKEN，fe-platform，Critic PASSED HIGH 2026-05-29）：+`gold`(#A8780A) + `goldSoft`(#FAF0CC) 两个 AeroColors 字段（任务 迁移/对调 accent：gold=border+tag fg / goldSoft=tag pill bg）。**ADDITIVE 非破坏**（defaulted 字段，仅 no-arg `AeroColors()` 构造点，无消费方迁移，无 CTO gate）。去硬编码 `TaskScreen.kt:300-301`（DSN-ERR-001 缓解）；消费方 fe-business 待 ③ 任务 VM slot 接 `c.gold`/`c.goldSoft`。
 
 ### 9.1 命名别名映射（R-1 — 非破坏；落地名 ↔ spec 权威名）
 
@@ -473,7 +477,7 @@ sealed class TalkState {
 
 ### 9.2 完整 token 清单（落地 1:1，详值见 design-system-spec.md）
 
-- **Color（31）**：中性 bg/bgBeige/surface(1-3)/ink(1-4) + 品牌 primary/primaryInk/primarySoft + tab/mode pageWarm/talkBlue/taskPurple/aiTeal/serviceBlue + status 5 + statusSoft 5 + 派生 line/lineStrong/divider。
+- **Color（33）**：中性 bg/bgBeige/surface(1-3)/ink(1-4) + 品牌 primary/primaryInk/primarySoft + tab/mode pageWarm/talkBlue/taskPurple/aiTeal/serviceBlue + status 5 + statusSoft 5 + 派生 line/lineStrong/divider + **gold/goldSoft（任务 迁移/对调 accent，v1.2）**。
 - **Shape（5）**：rCard 12 / rTile 16 / rChip 999 / rInput 12 / rSheet 24(顶角)。
 - **Spacing（16）**：pageH16 / sectionV12 / cardPad14 / tileGap10 / btnPadV10 / btnPadH18 / topBarH56 / tabBarH80 / tabRaise16 + 8px 栅格 xs4/sm8/md12/lg16/xl24/xxl32。
 - **Type（9）**：display/topBar/sectionTitle/bodyLarge/body/bodySmall/kicker/numeric/label/button（mono = numeric+kicker）。
@@ -652,9 +656,109 @@ data class TaskLog(id:String, taskName:String, timestamp:String, message:String)
 - **SchemeTaskStatus 已知 case（Idle/Running/Disabled）= 保守占位**，真值集候 v3 适配实测验证（同 deriveStatus）；ICD_UPDATE 加 case 时 fe when 仍穷尽（Unknown 分支）。
 - **getExecutionLog 数据源待 impl 钉死**（Critic §13 INFO F-1）：endpoint-inventory 无独立日志端点，TaskLog 可能从 taskinfo 派生——impl(V3TaskRepository) 时实读确认，否则 TaskLog 是无源骨架。不阻接口（形状对、有源待 impl 验）。
 - **`projectstatetate` 拼错字段**：impl 的 SchemeDto @SerializedName 须照抄（§12 / TaskZuoxiModel:40），否则丢字段。
+- **UI 边界映射 documented-assumption（PA-03③ 实现期发现；Critic PASSED_WITH_MINOR 2026-05-29）**：
+  - `TaskItem.zone` 无 v3 源（TaskZuoxiModel 无 zone 列）。PA-03③ 暂 `zone = mediaName ?: ""`（Critic MINOR：媒体名落 zone 槽=语义错配）。**决策（PM+Critic）= 真 impl 时 `zone → 空白`**（除非 v3 别处暴露真 zone 源；空白则省略该 UI 行）。stub 下不可见（返空），不阻塞；real-impl(V3TaskRepository) 大审强制 re-check 本决策。
+  - `LogEntry.success` 无 v3 源（TaskLog 无 success 字段）。PA-03③ 暂硬编码 `true`；真 impl 钉 v3 日志源时定（绑上 getExecutionLog 数据源 OPEN）。stub 下日志不渲染。
 
 ### 变更历史
 - v1 (2026-05-28, 方案A PA-03b 接口先行): observe/refresh/setSchemeActive/getExecutionLog；Scheme 嵌套 tasks（同 Zone）；SchemeTaskStatus sealed+Unknown（同 TerminalStatus）；getExecutionLog 一次性。Critic 轻审 PASSED（同构核 Terminal）。impl=V3TaskRepository 待 PA-01 收尾后排。
+- v1-doc (2026-05-29, PA-03③ UI 接入): fe-business 落 TaskHome/SchemeDetail/ExecutionLog VM + TaskUiMappers（对接口编程，跑 V3TaskRepository stub[空]，21 测绿）。**无接口签名变更（仍 v1）**；仅追加 UI 边界映射 documented-assumption（zone/success 见上）。impl=V3TaskRepository（真 v3 wire）仍待排（大审 pin zone/success/status/projectstatetate）。
+
+---
+
+## 14. ICD-ServerStateRepository-v1（系统健康度 Repository 接口 + Domain · 方案A）
+
+> Producer: Data-Integration（领域 owner）· LIVE（**real V3 impl** = V3ServerStateRepository，非 stub）· Critic PASSED HIGH 2026-05-29（PA-05；独立复核 8 测 + 终端回归绿）。
+> 触发: Service Tab（系统健康度）。契约源 = 已 LIVE 逆推 ServerStateDto（§12，1:1 SeverStateModel）。wire: GET /server/serverstate（Constant.java:97）→ SeverStateRsp{data:[SeverStateModel]} → data[0]（单元素信封，同 terminals）。
+
+### 接口
+```kotlin
+interface ServerStateRepository {
+    fun observeServerState(): Flow<ServerState?>   // 单对象；null 直到首次 refresh 成功；每次成功重发
+    suspend fun refresh(): Result<Unit>            // 拉 /server/serverstate 入 SSOT；失败(network/parse/empty)保留上一快照（同 V3TerminalRepository 契约）
+}
+```
+
+### Domain 模型
+```kotlin
+data class ServerState(
+    health: ServerHealth, name: String?, ip: String?, gate: String?,
+    connection: Int?, maxConnection: Long?, taskCount: Int?, bandwidth: Int?, ctrlPort: Int?, dataPort: Int?
+)
+sealed interface ServerHealth {            // R-003；fe when 须保 Unknown 分支
+    data object Online; data object Offline; data class Unknown(val raw: String)
+}
+```
+
+### OPEN / documented-assumption
+- **deriveHealth 保守占位**：`state` int → null/0→Offline，else→Online（候 v3 适配实测）。当前 `state` 为 Int? 全覆盖 when，**ServerHealth.Unknown 暂不可达**（前向兼容 affordance；真值集变富时加 case 路由 Unknown，fe when 不变）。
+- **dual-slot（R-ADDR-SLOT, cross-cutting watch）**：repo 用 ServerConfig.baseUrl()(=Constant.serveraddress)，**不**读 v3 PreferencesUtil('serverAddress')。V4 login 只写前者；15 个保留 v3 GET 路径读后者但 V4 nav 不可达 → dormant。广播 Tab/运行时 demo re-check（见 tasks.yaml risks_added R-ADDR-SLOT）。
+- 10/10 字段 verbatim（无 typo trap，不同于 SchemeDto 的 projectstatetate）。
+
+### 变更历史
+- v1 (2026-05-29, PA-05): real-direct（镜像 V3TerminalRepository）。observeServerState/refresh + ServerState + ServerHealth sealed。V3ServerStateRepository real impl（V3CallbackAdapter path1 raw JSON）。Critic PASSED HIGH（8 测 + 终端回归绿；SSOT 3 失败模式留快照实测）。
+
+---
+
+## 15. ICD-MediaRepository-v1（点播媒体库 Repository 接口 + Domain · 方案A · LIST 半）
+
+> Producer: Data-Integration（领域 owner）· LIVE（real V3 impl=V3MediaRepository，LIST 半）· Critic PASSED HIGH 2026-05-29（PA-07；独立复核 7 测 + 全 V3 回归绿）。
+> 触发: 广播 Tab 点播媒体选择器。契约源 = 已 LIVE 逆推 MediaDto（§12，1:1 MusicInfoModel/MusicFolderInfoModel）。wire: GET /terminal/mediafolderinfo + GET /terminal/mediainfo(all-media)，{data:[...]} 信封；client 端 groupBy folderId join（同 Terminal 两取+join，非 per-folder 递归）。
+
+### 接口（LIST 半；CAST 不在此契约）
+```kotlin
+interface MediaRepository {
+    fun observeFolders(): Flow<List<MediaFolder>>   // 每 folder 嵌套其 media；start empty；refresh 成功重发
+    fun observeMedia(): Flow<List<Media>>            // 扁平 media 列；同 SSOT
+    suspend fun refresh(): Result<Unit>             // 两取入 SSOT；失败(network/parse)留上一快照（同 V3TerminalRepository）；空列=合法空库(非失败, 区别 ServerState 单对象)
+}
+```
+
+### Domain 模型
+```kotlin
+data class Media(id:String, name:String, folderId:String, format:String?=null, durationSeconds:Int?=null, sizeBytes:Int?=null)
+data class MediaFolder(id:String, name:String, parentId:String?=null, media:List<Media> = emptyList())  // parentId null at root(FALG_MUSIC=3)/0
+```
+
+### 范围 / OPEN
+- **CAST(点播 推送到终端) 不在此契约** = legacy-native 的 OnDemandCastAdapter（HTIntf AAR，§16 待 impl）。fe 点播屏组合: MediaRepository(选) + OnDemandCastAdapter(推) + BroadcastTargetsViewModel(目标)。urgentplay REST = 死端点(v3 从未接线)。
+- count/all（folder 媒体计数）现 DTO-only 未入 domain；fe 若要库头计数 badge → ICD_UPDATE 提升（非 wire 变更）。
+- per-folder /terminal/mediainfo/{folderid} lazy-load 端点保留备用（现 all-media+client group）。start（分页 offset）wire 有但 fetch-all 无分页消费, 未 carry。
+
+### 变更历史
+- v1 (2026-05-29, PA-07 Option A): LIST 半 real-direct。observeFolders/observeMedia/refresh + Media/MediaFolder(嵌套)。castMedia 按 Option A 剔除(→legacy OnDemandCastAdapter)。Critic PASSED HIGH（7 测 + 回归绿）。
+
+---
+
+## 16. ICD-OnDemandCast-v1（点播 cast 推送 seam · AAR/HTIntf · 方案A）
+
+> Producer: Legacy-Native（领域 owner）· Critic PASSED HIGH 2026-05-29（PA-08；javap 复核 6 签名 + v3 序列 verbatim + 回归绿）。
+> 触发: 广播 Tab 点播模式 推送动作（区别 MediaRepository §15 的"选"）。源: v3 ActivityMusicOrder.orderMusic():241-260 + MainMethod.startplay():34-49 + AAR javap。
+
+**Status 分裂（同 §8 VoiceAAR）**：
+- **LIVE**（控制结构, 纯 Java，javap 证）：HTIntf 6 静态方法 newondemandlist():void / setondemandterminal(int):int / setondemandmedia(int):int / setondemandvolume(int):int / startondemand():int / stopondemand():int。接口 = OnDemandCastAdapter。
+- **DRAFT-pending-device**（R-001）：startondemand/stopondemand 真机执行（MP3/audio native 路径，§7.2 真机清单）。
+- **DRAFT-pending-vendor**：startondemand()/stopondemand() int 返回码成功语义（v3 两站点均忽略该 int=无源；isOk(state)=true 单点假设；vendor-inquiry 候选，并入 O-4 厂商包）。
+
+### 接口（data/voice/OnDemandCastAdapter.kt）
+```kotlin
+interface OnDemandCastAdapter {
+    fun isAvailable(): Boolean   // AAR/ABI 探针(复用 VoiceNativeProbe). 非 RECORD_AUDIO(playback 非 capture)
+    suspend fun castMedia(mediaIds: List<Int>, targetTerminalIds: List<Int>): Result<Unit>  // 一次性(非 Flow); newondemandlist→setondemandterminal*→setondemandmedia*→startondemand
+    suspend fun stopCast(): Result<Unit>           // stopondemand; best-effort 幂等
+    suspend fun setCastVolume(volume: Int): Result<Unit>  // setondemandvolume
+}
+class OnDemandCastException(val state: Int) : RuntimeException
+```
+
+### 决策 / 边界
+- 独立 adapter（非并入 VoiceTalkAdapter）：一次性 Result vs voice 长流 Flow。
+- isAvailable 复用 VoiceNativeProbe（无第 2 探针）。**无 RECORD_AUDIO**（fe 点播屏不弹麦权限；gate=isAvailable only）。
+- **不注册 CallBackIntf**（castMedia 返回于 startondemand 同步 int，不夺 voice 全局回调）。fail-closed 复用 VoiceUnavailableException。
+- 屏组合（fe）: MediaRepository §15(选) + OnDemandCastAdapter(推) + BroadcastTargetsViewModel(目标)。urgentplay REST=死端点。
+
+### 变更历史
+- v1 (2026-05-29, PA-08): impl 落地。javap 证 6 签名; 序列 verbatim v3; gate JVM 测 + happy-path device-pending(同 AR-104 边界). Critic PASSED HIGH(5 测 + Voice 回归 7 绿).
 
 ---
 

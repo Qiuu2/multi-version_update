@@ -3,7 +3,18 @@
 # 状态机见 SKILL.md §4 / communication-protocol.md §3.
 
 project: "aeroradio-v4"
-last_updated: "2026-05-27T09:45:24Z"
+last_updated: "2026-05-29 (session resume)"
+
+# ── SESSION RESUME 2026-05-29 (PM /clear 后接手, CTO go) ──
+session_resume_2026_05_29:
+  context: "新会话接手 handover-snapshot.md; CTO 确认 4 条状态接得对 + F-1 维持 closed(Zone state/datetime 不补); go. CTO 授 '无需每步介入', 按串行链推进."
+  team_respawned: "5 teammate 重新 spawn 进 team aeroradio-v4. ⚠ 活跃 addressable 名带 -2 后缀(旧 in-process 死成员名占用): data-integration-2 / critic-2 / fe-business-2 / fe-platform-2 / legacy-native-2. SendMessage 一律用 -2 名."
+  active_slot: "data-integration-2 持 build-slot, 做 PA-04 (F-2 + TaskRepository stub). 其余 4 = read-only standby(无 slot, 不 edit/build)."
+  serial_chain_next: "data F-2+stub → Critic 审 → fe-business 任务VM+终端polling接线+终端3屏验证 → 5-Tab 顺序往下(终端✓→任务→服务→广播(对讲走AAR)→AI降级)."
+  pm_decisions_this_session:
+    - "BL-GOLD-TOKEN 归属 = 方案(b): fe-platform 只在 Color.kt 加 gold/goldSoft(additive 非破坏); TaskScreen.kt 的 Gold→c.gold 替换由 fe-business 在任务 Tab 工作时顺手做(屏归属清晰, 不跨域改). fe-platform 的 Color.kt token slot 排在 fe-business 任务 slot 之前(快). ICD-DesignTokens v1.1→v1.2 additive, fe-platform 提 diff PM 串行落."
+    - "legacy 填窗(批准): 写 VoiceTalkAdapter 暴露面 DESIGN-ONLY 备忘(message 文本, 非 .md, 不碰 icd-contracts, 无 slot). 关键裁定: VoiceTalkAdapter(长流 callbackFlow) 不强行对齐 V3CallbackAdapter(一次性 Result)——对齐在 idiom 级, AR-104 已满足; fe 不应期待 Result 形状的语音 API. PM 收下, 广播 Tab slot 时转 fe."
+  fe_business_note: "fe-business 指出: 终端①polling接线+②3屏验证 不依赖 TaskRepository stub, 只需 build-slot(PA-02+V3*Repo 已落); 仅③任务VM 依赖 stub 落+Critic过. → fe 拿 slot 后 ①②先做, ③随 stub 就绪. (若 stub 评审 stall, 可提前给 fe slot 做①②.)"
 
 # ── 团队 (Agent Teams 模式, team=aeroradio-v4, lead=team-lead/PM) ──
 team:
@@ -158,13 +169,86 @@ plan_a_pivot:
       verify: "DELIVERED. PollingRefreshSchedulerTest 6/0/0/0 (Critic 18:13 复跑确认). 挂死根因=手搓 scope 无限 loop 撞 runTest advanceUntilIdle, 修=backgroundScope. 顺修真 bug(前台 resume 立即刷新). PollingState{IDLE/REFRESHING/POLLING/ERROR}绑 banner. 解耦 suspend ()->Result<Unit>"
     PA-03:
       owner: fe-business
-      status: in_progress
-      blocked_by: PA-01
-      title: "终端 Tab 验证(V3 impl 上 Hub/ZoneDetail/广播目标三屏跑通, VM 零改) + 接 PollingRefreshScheduler; 起任务 Tab UI/VM(对 V3TaskRepository 接口编程, 消费需求先经 PM). 顺序 终端→任务→服务→广播(对讲走AAR)→AI降级"
+      status: COMPLETED
+      title: "终端 Tab 验证(V3 impl 上 Hub/ZoneDetail/广播目标三屏跑通, VM 零改) + 接 PollingRefreshScheduler; 起任务 Tab UI/VM(对 TaskRepository 接口编程). 顺序 终端→任务→服务→广播(对讲走AAR)→AI降级"
+      slot_plan: "拆 3 子步, 按 5-Tab 节奏分 build-slot: (①+②) 终端 Tab=接 PollingRefreshScheduler 进 TerminalHub/ZoneDetail VM + 测级验证(VM 零改保持; 运行时 demo 延后统一模拟器, 见 runtime-demo-checklist) → Critic. 然后 fe-platform gold token(Color.kt). 然后 (③) 任务 Tab VM(de-mock TaskMockData + 对 TaskRepository 接口 + SchemeTaskStatus→UI 边界映射含 Unknown 兜底 + TaskScreen Gold→c.gold 替换; 不碰 StatusPill) → Critic. ③ 已由 PA-04(stub PASS) 解锁."
+      subslot_log:
+        - "①+② 终端 polling 接线 = Critic PASSED HIGH 2026-05-29 (0 B/M/Mi, 2 INFO). 独立复核: --no-daemon testDebugUnitTest EXECUTED 13s 无 hang; TerminalHubViewModelTest 8/0/0 + ZoneDetailViewModelTest 6/0/0 (原 5+4 派生测 unchanged 全绿=VM 零改实证, deriveState/combine git diff 未动); 无 double-fetch; Error/banner 分流确认(无数据→硬 Error, 有数据 poll 失败→banner, Partial 保留未用); MainDispatcherRule additive(复跑 BroadcastTargets 2/0/0+Login 8/0/0 绿); AppForegroundState 单 @Binds 预存. 新测 idiom=ViewModelStore.clear() 取消 viewModelScope (fe 存 memory vm-polling-test-viewmodelstore-cancel)."
+      subslot_log_2: "BL-GOLD-TOKEN(fe-platform) = Critic PASSED HIGH 2026-05-29 (0 findings; Color.kt +8 additive, defaulted 字段仅 no-arg AeroColors() 构造点, 值 bit-identical TaskScreen:300-301, TaskScreen 未碰). ICD-DesignTokens v1.1→v1.2 PM 已落注册表(§9 +gold/goldSoft, Color 31→33, 注册表行)."
+      subslot_log_3: "③ 任务 Tab read+control = Critic PASSED_WITH_MINOR HIGH 2026-05-29 (0 B/0 MA, 1 MINOR, 3 INFO). 独立复核 21/0/0/0(TaskHome7/SchemeDetail7/ExecLog3/Mappers4) + 终端回归 8/0/0+6/0/0 未破. 3 VM(TaskHome 30s/SchemeDetail 5s/ExecLog 一次性无轮询) + TaskUiMappers(Unknown→Normal 兜底) + de-mock(TaskMockData 裁剪留 schemes/scheme(id) 供 deferred SchemeEdit CRUD) + gold swap zero-visual(删私有 Gold/GoldSoft 字面量). Empty-on-stub 实证非伪造."
+      pa03_done: "PA-03 整体 COMPLETED: 终端 Tab(①②)+任务 Tab(③) 全 Critic PASS. 5-Tab: 终端✓ 任务✓."
+      carried_minor: "[CARRIED 已注册] MINOR: TaskUiMappers zone=mediaName ?: '' (v3 TaskZuoxiModel 无 zone 列). Critic 裁定=blank 更诚实. PM 决定 carry(非 fix-now): stub 下不可见+真 impl 时 mapper 整体重写对真 v3 JSON, 不为将被重写的一行耗 slot. 决策记录: zone→blank 除非 v3 别处暴露真 zone 源; 真 impl 大审 re-check. 已落 ICD-TaskRepository §13."
+      carried_info: "[opportunistic] TaskUiModels.kt:16 注释 'OPEN pending O-1' 陈旧(O-1 D-13 作废) → fe 下个 slot 顺手改, 不单独占 slot. LogEntry.success=true / SchemeTaskStatus 真值集 = documented-assumption 待真 impl pin(同 §13 OPEN)."
+    PA-04:
+      owner: data-integration
+      status: COMPLETED
+      assigned_session: "2026-05-29 resume; agent data-integration-2"
+      title: "F-2 (V3LoginAuthenticator→ServerConfig.setBaseUrl, PA-01 收尾) + TaskRepository stub (interface TaskRepository.kt[ICD-TaskRepository-v1 §13 4签名] + STUB V3TaskRepository 返空 + @Binds in DataModule)"
+      goal: "解 fe-business 任务 Tab VM 编译依赖(VM 对 TaskRepository 接口编程); 域模型 Scheme/SchemeTask/SchemeTaskStatus/TaskLog 已存(data/model/), 复用不重定义"
+      verify: "compile-only: ./gradlew --no-daemon :app:compileDebugKotlin (JBR, timeout). STUB 返空标注清晰, 不接 RequestManger/v3 (真 impl 后续 PA 任务)"
+      crit_path: true
+      reviewer: critic-2
+      critic: "PASSED HIGH 2026-05-29 (0 BLOCKER/MAJOR/MINOR, 1 INFO). 独立复核: 强制 --rerun-tasks :app:kaptDebugKotlin EXECUTED, 零 MissingBinding/Duplicate. §13 接口 verbatim 4 签名, 域类型复用零重定义. STUB 诚实(返空+标注+KDoc 警告, 无 v3 wire). F-2 确认: 动态 serveraddress 仅经 ServerConfig seam(line63), 留存 Constant import 是静态字面量读(getAuthorization/token_tag), 非 seam bypass; Constant.java 零改(Plan A 红线). token→ServerToken(D-14)."
+      info_finding: "[INFO 非阻塞, 留给真 impl 大审] V3LoginAuthenticator.authenticate 在 runCatching 内首行 setBaseUrl, 登录失败不回滚 base URL(已指向可能错误地址). 现匹配 v3 LoginActivity.prelogin 行为(用户重输重试), 非缺陷; 真流程+重试/重登语义落地时复看(关联 OPEN INQ-O-1 D-1 / TokenRefresher)."
+      note: "PM 已确认 COMPLETED(Critic PASS + STD-CANONICAL-STATE). build-slot 释放回 PM, 转 fe."
+    PA-05:
+      owner: data-integration
+      status: COMPLETED
+      assigned: "2026-05-29; data-integration-2"
+      critic: "PASSED HIGH 2026-05-29 (0 B/M/Mi, 2 INFO + 1 cross-cutting WATCH R-ADDR-SLOT). 独立复核: --rerun kapt 零 MissingBinding; 8/0/0/0 + 终端回归 V3Terminal 7/0/0+Adapter 3/0/0; SSOT 3 失败模式(network/malformed/empty)留快照实测; 10/10 字段 verbatim 无 typo; path1 不碰 *Method/POJO/HealthApiService; deriveHealth 保守(0/null→Offline, Unknown 当前不可达=前向兼容)honest. dual-slot 裁定=watch-item 非缺陷(PA-05 自洽用 ServerConfig)."
+      title: "Service Tab(系统健康度) 数据层 REAL-DIRECT(镜像 V3TerminalRepository/PA-01, 非 stub): ServerState 域(逆推 ServerStateDto §12 LIVE) + ServerStateRepository 接口(observeServerState:Flow<ServerState?> + refresh, SSOT 失败留快照) + V3ServerStateRepository(V3CallbackAdapter path1 raw JSON, 不碰 *Method, 不用 dormant HealthApiService) + @Binds + 测(镜像 V3TerminalRepositoryTest)"
+      fallback_gate: "若 v3 serverstate wire 不可经 V3CallbackAdapter 干净 wrap → data STOP+flag PM 定 stub-first"
+      reviewer: critic-2
+      crit_path: true
+      next: "PASS 后 PM 落 ServerStateRepository 接口 ICD(镜像§13) → fe 接 Service VM + de-mock ServiceScreen"
+    PA-06:
+      owner: fe-business
+      status: COMPLETED
+      title: "Service Tab(系统健康度) UI: ServiceViewModel 对 ServerStateRepository(real PA-05) + 3态(Loading/Error/Success, 无 Empty=单对象端点) + ServiceUiMapper(ServerHealth→UI 含 Unknown 非崩) + de-mock ServiceScreen + 轮询 Custom(20s) + 顺手修 TaskUiModels O-1 陈旧注释"
+      critic: "PASSED HIGH 2026-05-29 (0 findings). 独立复核 10/0/0/0 + 全 Tab 回归绿(TaskHome7/SchemeDetail7/ExecLog3/TerminalHub8). 2 判定 blessed: 无 Empty 正确(单对象 empty→failure→Error)/Custom(20s) 右域调用(不改 fe-platform sealed). de-mock 诚实(ContactCard 静态非 mock). TaskUiModels 仅注释零行为."
+      note: "Service Tab 完成(data PA-05 real + UI PA-06). 5-Tab: 终端✓ 任务✓ 服务✓."
+    PA-07:
+      owner: data-integration
+      status: COMPLETED
+      assigned: "2026-05-29; data-integration-2"
+      critic: "PASSED HIGH 2026-05-29 (0 B/M/Mi, 2 INFO doc-nit). 独立复核: --rerun kapt 零 MissingBinding; 7/0/0/0 + 全 V3 回归(ServerState8/Terminal7/Adapter3); SSOT 2 失败模式留快照实测; 空库=合法空(区别 ServerState 单对象 empty=fail); all-media+client groupBy folderId join sound(同 Terminal 两取+join 非 N+1 递归); castMedia 确认无 sneak(Option A boundary); R-ADDR-SLOT dormant(ServerConfig); path1 honest. INFO: MediaFolderDto '1:1' 措辞 vs 丢 start 分页字段(无消费 harmless) / companion 行号 transposed(路径字串对). 均 cosmetic 不返工(data 可日后顺手)."
+      title: "广播 Tab 点播 LIST 半 = MediaRepository(observeMedia/observeFolders + refresh, SSOT 同 Terminal) REAL-DIRECT(用 ServerConfig). wire: GET /terminal/mediafolderinfo + /terminal/mediainfo[/{folderid}] + /terminal/mediainfo(all). 域 Media/MediaFolder(folderid/parentid 嵌套, root=3). 契约源 ICD-MediaDto-v1 §12 LIVE"
+      cast_split_finding: "⚠ PA-07 fallback 触发: 点播 CAST 动作非 REST 而是 HTIntf AAR(newondemandlist/setondemterm/setondemmedia/startondemand, v3 ActivityMusicOrder:235); /terminal/urgentplay 死常量. → 点播 拆: LIST(REST/data PA-07) + CAST(AAR/legacy PA-08). data 删 castMedia. PM 裁 Option A (transport-vs-AAR 正确域分, 非 scope change)"
+      r_addr_slot: "⚠ MediaRepository 用 ServerConfig(v3 原 list GET 也读 PreferencesUtil 槽——data 正确改用 ServerConfig); 不启 legacy 媒体 Activity. R-ADDR-SLOT dormant"
+      reviewer: critic-2
+      crit_path: true
+      next: "PASS 后 PM 落 MediaRepository(list) ICD → fe 广播 Tab 点播屏 接 list"
+    PA-08:
+      owner: legacy-native
+      status: COMPLETED
+      assigned: "2026-05-29; legacy-native-2"
+      critic: "PASSED HIGH 2026-05-29 (0 findings). 独立复核: javap 真 AAR classes.jar 证 6 签名(全 static 纯 Java) + 序列 verbatim v3 orderMusic/startplay + --rerun kapt 零 MissingBinding; OnDemandCastAdapterImplTest 5/0/0/0 + Voice 回归 7/0/0. 5 锁定决策全确认; 边界诚实典范(stopCast 纯 Java→JVM success 修正, happy-path 诚实 device-deferred 非伪造). isOk()=true documented-assumption(v3 两站点忽略 int 实证)."
+      vendor_inquiry_added: "cast int 返回码语义(startondemand/stopondemand) = 厂商问询项, 并入 O-4 厂商包(与 4521 命令词表一起). isOk 单点待码集落地"
+      title: "广播 Tab 点播 CAST seam = OnDemandCastAdapter (AAR/HTIntf 独立 adapter, 非 REST): isAvailable()+castMedia(mediaIds,targetTerminalIds):Result(一次性非Flow)+stopCast+setCastVolume. 镜像 VoiceTalkAdapter AAR-control idiom. 源 v3 ActivityMusicOrder.orderMusic():236 + MainMethod.startplay():34"
+      contract_held: ".state/cast-seam-contract.md (PM 持有, 广播 Tab slot 时随 voice 契约转 fe)"
+      decisions: "独立 adapter(非并入 Voice); isAvailable 复用 VoiceNativeProbe; 无 RECORD_AUDIO(playback 非 capture, fe 点播屏不弹麦权限); castMedia 用 synchronous int 返回(不注第 2 个 CallBackIntf, 避免 clobber voice 回调); 一次性 Result 非 Flow"
+      open_documented_assumption: "startondemand()/stopondemand() int 返回码语义未知(v3 两处忽略返回值, 实证). 防御映射: runCatching + 单 isOk(state) choke point → 码集已知时一行改. 厂商问询候选(HTIntf ondemand/voice int 码集, 并入 O-4 厂商包)"
+      r001: "AAR native → on-device happy-path 待 arm64 device-verify(同 voice R-001). 结构静态自洽, happy path 未device验"
+      singleton_callback_watch: "CallBackIntf 单全局 impl; cast 用 sync int 不需回调; 若将来要 async cast 态→须先做共享 CallBackIntf dispatcher(独立任务). 现 cast UI 用 Result 确认"
+      next: "legacy impl OnDemandCastAdapter(interface+impl+VoiceModule @Binds+测) 待 slot(data list 后); impl 时 PM 落 ICD-OnDemandCast(结构 LIVE/int码 DRAFT-pending, 镜像 §8 VoiceAAR split) + Critic 审"
+    PA-09:
+      owner: fe-business
+      status: COMPLETED
+      assigned: "2026-05-29; fe-business-2"
+      critic_sd2: "PASSED HIGH 2026-05-29 (0 B/M/Mi, 1 INFO + 1 design COMMENT). 独立复核 VoiceViewModelTest 14/0/0/0 + SD1 回归 13 绿 + BroadcastTargets 2; mic gate 正确且与点播 asymmetric(RECORD_AUDIO 仅 voice path, CastViewModel 零); session 生命周期无泄漏(sessionJob teardown); 共享 BroadcastTargetResolver refactor behavior-preserving(SD1 10 测 unchanged); de-mock 诚实. INFO=sub-frame double-start window(UI 不可达+bounded, 一行可硬化→BL-VOICE-DOUBLESTART carry). COMMENT=PTT→tap Critic 认合理(session seam), Handoff 取舍=CTO."
+      broadcast_done: "广播 Tab COMPLETE (寻呼/对讲/点播). ====== 5-Tab BUILD COMPLETE 2026-05-29: 终端✓ 任务✓(跑 stub 空) 服务✓ 广播✓; AI 降级不做 ======"
+      title: "广播 Tab 3 模式 UI (寻呼/对讲/点播) — 最后功能 Tab: 段控 + 共享目标(BroadcastTargetsViewModel) + 寻呼/对讲 VM(VoiceTalkAdapter gate→start→observeSession Flow, RECORD_AUDIO) + 点播 VM(MediaRepository 选 + OnDemandCastAdapter castMedia Result, 无麦权限) + de-mock BroadcastScreen"
+      contracts: ".state/voice-fe-consumption-note.md (寻呼/对讲) + .state/cast-seam-contract.md (点播); 权限纪律: 麦仅寻呼/对讲, 点播无"
+      split: "PM 批准 2-拆: SD1 = Critic PASSED HIGH 2026-05-29 (0 B/M/Mi, 1 INFO; 13/0/0/0; shell hoist + 点播 Cast 端到端 CastViewModel 3-seam + 零麦 gate + zone→terminal Option A 含 dedup/双空 guard + de-mock). SD2(进行中)=寻呼/对讲 voice(VoiceTalkAdapter observeSession Flow + RECORD_AUDIO gate + deviceEvents banner; 复用 SD1 resolver). SD2 PASS=广播 Tab DONE=5-Tab build done"
+      zone_to_terminal_ruling: "PM 批准 Option A: 目标 seam(BroadcastTargetsViewModel)=zone 级(ZoneTarget.id String), 适配器=terminal 级(List<Int>, AAR HTIntf per-terminal 本质=硬件现实非契约). broadcast VM 边界用 TerminalRepository SSOT(zone 嵌套 terminal ZoneDto-v2) 展开 zone→terminal ids; Terminal.id String→Int 防御丢非数字. 3 正确性要求: (a)跨选 dedup (b)空目标 guard (c)documented-assumption. UI-composition 内域(改适配器 sig 或目标 seam 才是 contract change). Critic 审展开正确性"
+      reviewer: critic-2
+      crit_path: true
+      note: "AI Tab=降级不做; 广播=最后 Tab. SD1+SD2 全 PASS=5-Tab build DONE(终端✓任务✓服务✓广播✓), 触发大里程碑报告 + handover-snapshot refresh"
     PA-RESERVE-legacy:
       owner: legacy-native
-      status: reserve
+      status: consumed (voice AR-104 + cast PA-08 都已落; 余 R-001 真机=CTO)
       title: "VoiceTalkAdapter 保留; 对讲集成在广播 Tab(顺序靠后)接入. 可选填窗: VoiceTalkAdapter callback→StateFlow 暴露面预对齐(先发 PM 转 fe). 真机 R-001=CTO. 否则 standby"
+      fill_window_done: "2026-05-29: legacy 交 design-only 暴露面消费契约, PM 持有于 .state/voice-fe-consumption-note.md, 待广播 Tab slot 时转 fe. 关键: Flow 形(非 Result)的会话态; adapter 自管 RECORD_AUDIO 门; 点播/目标列表走 v3 REST、4521 是独立面. 无 ICD 变更(ICD-VoiceAAR-v2 已覆盖)."
   superseded_impl: "AR-002 拦截器 / AR-003 AuthStore那套 / AR-004 单例OkHttp / AR-101 Retrofit impl / RetrofitLoginAuthenticator / AR-103 WS — 新栈 IMPL 白做(代码留盘作'未来迁移'资产, 不删)"
   retained: "全部 UI/ViewModel/5态机(AR-005/102/105/106) + 设计Token(AR-009) + 逆推DTO契约(AR-110/111/001=v3真值,升值) + 接口/域模型/Mapper(AR-101) + 语音(AR-104)/IPC(AR-007)/权限(AR-010)/基建(AR-107)/6标准"
   new_work: "callback→StateFlow 适配层(唯一新网络代码) + V3*Repository impl(替 Retrofit impl, 喂已有接口, ViewModel 零改). 新 Phase0 估 ~18-22h(原75h)"
@@ -206,6 +290,7 @@ wp_icd_reverse:
   ws_handling: "ICD-BroadcastWS 维持 DRAFT「待后端对接」(纯新增无源)"
 risks_added:
   - id: "R-WS-NEW"; risk: "ICD-BroadcastWS 纯新增、无 v3 代码可逆推(grep 全 legacy .java 零 WebSocket, CTO 已确认)"; impact: "实时方案全靠后端 O-2 文档+实测对接, 无 v3 事实兜底; 对接偏差风险高于其它 ICD"; mitigation: "维持 DRAFT; RealtimeClient(AR-103) parseMessage→Unknown 容错(已实现); O-2 回执后实测对接才 LIVE"; owner: "fe-platform + 后端/厂商"; status: "ACTIVE"
+  - id: "R-ADDR-SLOT"; risk: "V4 login(V3LoginAuthenticator F-2) 只写 Constant.serveraddress(经 ServerConfig), 不写 v3 PreferencesUtil('serverAddress') 槽; v3 LoginActivity.prelogin(:497-499) 原来两槽都写. 15 个保留 v3 GET 路径(TaskGuangbo*/SelectMusic/ActivityMusicOrder/getServeNomber 等)读 PreferencesUtil 槽 → V4-only 登录下该槽 stale/空"; impact: "DORMANT: 这 15 个 legacy Activity 均未接入 V4 Compose nav(Critic grep 证), 当前 V4 UI 不可达. 若后续 Tab(尤其广播 点播/媒体——at-risk 路径名含 TaskGuangbo/SelectMusic/ActivityMusicOrder) 启动未迁移 legacy Activity 则地址 stale 请求失败"; mitigation: "首选: 新功能一律走 V3*Repository(用 ServerConfig), 不启 legacy Activity. 备选(若必须用保留路径): ConstantServerConfig.setBaseUrl 同步写 PreferencesUtil('serverAddress')——需给 ConstantServerConfig 注入 Context(小设计改, 非免费), 复刻 v3 双写. PM 决定现 DEFER(dormant)"; owner: "data-integration + PM watch"; status: "DORMANT-TRACKED"; gate: "广播 Tab 排期时 + 运行时 demo 时强制 re-check"
 
 # ── 跨域接口协商在途 (经 PM) ──
 xdomain_negotiation:
@@ -246,7 +331,7 @@ team_standards:
 # ── 跨域 seam / ICD ──
 icd_in_flight:
   - id: "ICD-AuthState-v2"; state: "LIVE (Critic PASSED, PM 已落 §3 + 注册表 line14 v1→v2 + 广播 fe-business/fe-platform 2026-05-27)"
-  - id: "ICD-DesignTokens-v1.1"; state: "LIVE (Critic DELTA PASSED, fe-platform 已写 §9/§1, PM 已广播 fe-business)"; note: "别名映射§9.1(非破坏)+bgBeige+派生*Soft+elevation 2/8"
+  - id: "ICD-DesignTokens-v1.2"; state: "LIVE (v1.2 BL-GOLD-TOKEN Critic PASSED HIGH 2026-05-29, PM 已落 §9 注册表; +gold/goldSoft additive 非破坏). 前: v1.1 别名映射§9.1+bgBeige+派生*Soft+elevation 2/8"; note: "v1.2 +gold(#A8780A)/goldSoft(#FAF0CC) 任务迁移accent; 消费方 fe-business 待 ③ TaskScreen 接 c.gold/c.goldSoft 完成去硬编码"
   - id: "ICD-LoginAuthenticator-v1"; state: "LIVE (PM 已登记 icd-contracts.md §3A + 注册表行 2026-05-27). fe 接口定稿 + data RetrofitLoginAuthenticator 真实 impl 均落地编译绿. @Binds 单点归 data(归属铁律). Critic 经 AR-005(消费)+AR-002(impl) 评审验证"
   - id: "ICD-IPCSocket-v1 §7"; state: "AR-007 已过 Critic; connectionStateFlow 已对齐; ShellCommand Raw 注待 PM 统写(housekeeping)"; source: "legacy-native AR-007 v2 信封 proposed diff"
   - id: "ICD-TerminalDto-v2 / ZoneDto-v2"; state: "LIVE (Critic v2 DELTA PASSED, PM 已落 §4/§5 + 注册表行 + 广播 fe-business 2026-05-27)"; note: "两层 wire/domain(4int→派生); Repository observe/refresh; sealed TerminalStatus+Unknown; Zone 嵌套. 派生/Fault/真值集候 O-1 D-3+O-2"
@@ -272,6 +357,16 @@ watch_items:
 
 # ── Deferred backlog ──
 backlog_deferred:
+  - placeholder_id: "BL-VOICE-DOUBLESTART"
+    title: "VoiceViewModel.start() 子帧 double-start window: 单会话 guard(if isInSession return) 同步跑在 viewModelScope.launch 前, 但 Connecting 在 launch 体内置 → 同帧两次同步 start 都过 guard → 两次 startPaging/startTalk"
+    domain: "frontend-business"
+    phase: "Phase 3 / 任意广播触碰时顺手 (低优)"
+    note: "Critic 广播 SD2 INFO. UI 不可达(start 按钮仅 Idle 显, 首态变即换'结束'; 人类双击 >> 子帧调度窗) + bounded(observe 取消前 sessionJob). 一行硬化: start() 在 launch 前置 Connecting/pending flag. 非阻塞非缺陷, 不值专 slot"
+  - placeholder_id: "BL-ROTATION-SAVEABLE"
+    title: "v4 屏用 remember(非 rememberSaveable) 存 nav/选择/mode 态 → config change(旋转)重置选择"
+    domain: "frontend-business + frontend-platform"
+    phase: "Phase 3 (打磨; 若需旋转存活做一次性 sweep)"
+    note: "Critic 广播 SD1 INFO 标. 跨 Tab 特性(终端/任务/服务/广播 同), AR-102/105 起项目惯例, 非新引入非缺陷. 真要旋转存活=独立 sweep 改 rememberSaveable. 低优"
   - placeholder_id: "BL-LAUNCHER-FIX"
     title: "收敛启动入口: 删除 SignActivity 的 LAUNCHER intent-filter, 仅留 V4Activity"
     domain: "frontend-business"   # 已纳入 Gate 1 package 为 TASK-AR-006 (纯 Manifest 部分)
