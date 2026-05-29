@@ -244,6 +244,26 @@ plan_a_pivot:
       reviewer: critic-2
       crit_path: true
       note: "AI Tab=降级不做; 广播=最后 Tab. SD1+SD2 全 PASS=5-Tab build DONE(终端✓任务✓服务✓广播✓), 触发大里程碑报告 + handover-snapshot refresh"
+    PA-10:
+      owner: data-integration
+      status: COMPLETED
+      assigned: "2026-05-29; data-integration-2 (CTO D-15 批准; 5-Tab build 已提交 4ccdd13..85ea115)"
+      critic: "PASSED HIGH 2026-05-29 (0 findings; big review). 独立读 v3 源证: /task/sechinfo→TaskGuangboModel(clean projectstate L39, 非 TaskZuoxiModel——AR-110 mis-attributed; projectstatetate 在 TaskZuoxiModel 另一流 String); projectstate==0=running(TaskZuoxiActivity:248-254); setSchemeActive reply 0/15 OK(ErrorCode:60-61); I-3 POST→refresh 无本地翻转; R-ADDR-SLOT 真避(two-arg setUrl 逐字, 读 MyRequestBuilder body); getExecutionLog empty 诚实(grep 无 log 端点). 复核 10/0/0/0 + fe 任务 VM 回归全绿(TaskHome7/SchemeDetail7/ExecLog3/Mappers4)=swap interface-transparent. ====== 4 活跃 Tab 数据层全 REAL on v3 wire ======"
+      followups: "PM 待办: ①落 §12/§13 ICD 校正(已派) ②fe 任务 mapper re-touch(zone→blank 现真数据下可见; log empty-state; status 对齐 pinned 派生)——zone=mediaName 不再 dormant"
+      title: "real V3TaskRepository impl (替空 stub, Critic 大审): 4 法 real(observeSchemes 真 v3 作息+嵌套 tasks / refresh / setSchemeActive 真 enable-disable 端点 / getExecutionLog 真源). path1 V3CallbackAdapter, ServerConfig. 契约源 SchemeDto §12(projectstatetate typo verbatim) + §13 接口"
+      pin_assumptions: "大审 pin: SchemeTaskStatus 真值集(taskstate/projectstate→派生, 保 Unknown) / getExecutionLog 真源(§13 OPEN: 无独立日志端点?可能 taskinfo 派生) / projectstatetate @SerializedName verbatim. I-3 双层 state: setSchemeActive 经 SSOT 重取/重发翻转, 非分叉本地写(Critic I-3 关注). 真域形状报 PM → 排 fe mapper 小 re-touch(zone→blank/LogEntry.success)"
+      r_addr_slot: "ServerConfig(非 PreferencesUtil), 不启 legacy Activity. dormant"
+      fallback_gate: "scheme/task 多端点复杂 or enable-disable/log wire 不清 → STOP+flag PM"
+      reviewer: critic-2
+      crit_path: true
+      note: "fe 任务 VM 对 fake 测=swap 透明仍绿; 本任务=真数据+诚实 pin 假设. 完成→PM 落 §13 stub→real + fe mapper re-touch(应用 carried zone→blank)"
+    PA-11:
+      owner: fe-business
+      status: COMPLETED
+      assigned: "2026-05-29; fe-business-2"
+      title: "任务 mapper re-touch (post-PA-10 真数据): zone→blank(确认无 zone 字段, 闭 PA-03③ carried MINOR) + ExecutionLog empty-state copy(无 log 端点) + 折叠 BL-VOICE-DOUBLESTART(VoiceViewModel.start 同步置 Connecting 前于 launch, 闭 SD2 double-start INFO)"
+      critic: "PASSED HIGH 2026-05-29 (0 findings). zone→blank 测翻转绿; double-start 同步 guard 关窗且空目标→Idle 不锁(真回归测 startTalkCalls==1, 非 tautology); log empty-state render-only 诚实; 全 task+broadcast 套件回归绿(Mappers4/TaskHome7/SchemeDetail7/ExecLog3/Voice15/Cast10/CastMapper3). 两 carried 项闭. Critic 队列空."
+      milestone: "===== PLAN A BUILD FUNCTIONALLY COMPLETE 2026-05-29: 5-Tab UI 全真数据(终端/任务/服务/广播; AI 降级) + 数据层全 real on v3 wire(terminal/task/service/media + cast/voice adapters) + 全程 Critic PASS 零未决 finding + carried 项闭. 余: R-ADDR-SLOT dormant / rotation-saveable Phase3 / 任务CRUD(SchemeEdit 仍 mock)deferred / R-001 device + runtime demo = CTO/外部 ====="
     PA-RESERVE-legacy:
       owner: legacy-native
       status: consumed (voice AR-104 + cast PA-08 都已落; 余 R-001 真机=CTO)
@@ -358,10 +378,8 @@ watch_items:
 # ── Deferred backlog ──
 backlog_deferred:
   - placeholder_id: "BL-VOICE-DOUBLESTART"
-    title: "VoiceViewModel.start() 子帧 double-start window: 单会话 guard(if isInSession return) 同步跑在 viewModelScope.launch 前, 但 Connecting 在 launch 体内置 → 同帧两次同步 start 都过 guard → 两次 startPaging/startTalk"
-    domain: "frontend-business"
-    phase: "Phase 3 / 任意广播触碰时顺手 (低优)"
-    note: "Critic 广播 SD2 INFO. UI 不可达(start 按钮仅 Idle 显, 首态变即换'结束'; 人类双击 >> 子帧调度窗) + bounded(observe 取消前 sessionJob). 一行硬化: start() 在 launch 前置 Connecting/pending flag. 非阻塞非缺陷, 不值专 slot"
+    status: "RESOLVED 2026-05-29 (PA-11): VoiceViewModel.start() 同步置 Connecting 前于 launch; 真回归测 startTalkCalls==1; 空目标→Idle 不锁. Critic PASS."
+    title: "[CLOSED] VoiceViewModel.start() 子帧 double-start window"
   - placeholder_id: "BL-ROTATION-SAVEABLE"
     title: "v4 屏用 remember(非 rememberSaveable) 存 nav/选择/mode 态 → config change(旋转)重置选择"
     domain: "frontend-business + frontend-platform"

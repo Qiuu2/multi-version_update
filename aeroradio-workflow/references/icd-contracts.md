@@ -17,7 +17,7 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD-ZoneDto-v2 | Domain Zone(嵌套 terminals, join by zoneId) | data-integration | frontend-business | LIVE |
 | ICD-TaskRepository-v1 | 作息/任务 Repository(observe/refresh/setSchemeActive/getExecutionLog) + Domain Scheme(嵌套 tasks)/SchemeTask/SchemeTaskStatus(sealed+Unknown)/TaskLog | data-integration（领域 owner） | frontend-business | LIVE (接口契约; impl=V3TaskRepository 后续) |
 | ICD-TaskDto-v1 | 任务 DTO（逆推自 TaskGuangboModel + TaskIdModel） | data-integration | frontend-business | LIVE (code-fact, 源见 §12) |
-| ICD-SchemeDto-v1 | 作息方案 DTO（逆推自 TaskZuoxiModel；含拼写 projectstatetate 保真） | data-integration | frontend-business | LIVE (源见 §12) |
+| ICD-SchemeDto-v1 | 作息方案/任务 list DTO（**PA-10 校正: /task/sechinfo 逆推自 TaskGuangboModel, clean projectstate**; projectstatetate 是 TaskZuoxiModel[另一 detail/CRUD 流]的 String 字段, 仅 SchemeRowDto 防御保留） | data-integration | frontend-business | LIVE (源见 §12; PA-10 校正 AR-110 mis-attribution) |
 | ICD-TtsTaskDto-v1 | TTS 任务 DTO（逆推自 TtsTaskContentModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-MediaDto-v1 | 媒体/文件夹 DTO（逆推自 MusicInfoModel + MusicFolderInfoModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-ServerStateDto-v1 | 系统健康度 DTO（逆推自 SeverStateModel） | data-integration | frontend-business | LIVE (源见 §12) |
@@ -614,7 +614,7 @@ ICD_UPDATE
 | ICD | 逆推自（旧栈 model） | 关键点 |
 |-----|------|------|
 | ICD-TaskDto-v1 | TaskGuangboModel(:12-49) + 写响应 TaskIdModel | state="15"=任务名重复(TaskMainMethod:313) |
-| ICD-SchemeDto-v1 | TaskZuoxiModel(:10-40) | ⚠ 旧栈拼写字段 `projectstatetate`(:40, 与 projectstate:19 是两字段)——新栈 @SerializedName **须照抄拼错名**否则丢字段（wire-fidelity，镜像服务器事实不纠错） |
+| ICD-SchemeDto-v1 | **TaskGuangboModel** (作息 list /task/sechinfo, PA-10 校正) | ⚠ PA-10 big-review: /task/sechinfo→TaskGuangboListRsp/TaskGuangboModel(TaskZuoxiActivity:291), **clean `projectstate`(0=running)**. 拼写 `projectstatetate` 是 **TaskZuoxiModel**(String, 另一 detail/CRUD 流, 非 list wire)——SchemeRowDto 仅防御保留. AR-110 原"逆推自 TaskZuoxiModel" 为 mis-attribution |
 | ICD-TtsTaskDto-v1 | TtsTaskContentModel | state/taskid/speed/male/contents |
 | ICD-MediaDto-v1 | MusicInfoModel + MusicFolderInfoModel | 媒体 + 文件夹 |
 | ICD-ServerStateDto-v1 | SeverStateModel(:10-19) | state/connection/taskcount/bandwidth/maxconnection/ctrl·dataport/name/ip/gate |
@@ -627,7 +627,7 @@ ICD_UPDATE
 
 ## 13. ICD-TaskRepository-v1（作息/任务 Repository 接口 + Domain · 方案A）
 
-> Producer: Data-Integration（领域 owner 拍板）· LIVE（接口契约；impl=V3TaskRepository 后续走 v3 *Method/RequestManger）· Critic 轻审 PASSED（与已 LIVE Terminal 套路逐项同构）
+> Producer: Data-Integration（领域 owner 拍板）· LIVE（接口契约 + **real impl V3TaskRepository, PA-10 Critic PASSED HIGH big-review**）· wire 经 PA-10 校正为 TaskGuangboModel（见下 RESOLVED）
 > 触发: fe-business 从任务 5 屏渲染反推消费需求（AR-101 接口先行纪律）。契约源 = 已 LIVE 逆推 DTO（ICD-SchemeDto-v1/TaskDto-v1/TtsTaskDto-v1，§12）。
 > 全文 proposal: `.state/icd-taskrepository-proposed.md`
 
@@ -652,17 +652,18 @@ sealed interface SchemeTaskStatus {   // Unknown-tolerant（同 TerminalStatus�
 data class TaskLog(id:String, taskName:String, timestamp:String, message:String)
 ```
 
-### OPEN / documented-assumption
-- **SchemeTaskStatus 已知 case（Idle/Running/Disabled）= 保守占位**，真值集候 v3 适配实测验证（同 deriveStatus）；ICD_UPDATE 加 case 时 fe when 仍穷尽（Unknown 分支）。
-- **getExecutionLog 数据源待 impl 钉死**（Critic §13 INFO F-1）：endpoint-inventory 无独立日志端点，TaskLog 可能从 taskinfo 派生——impl(V3TaskRepository) 时实读确认，否则 TaskLog 是无源骨架。不阻接口（形状对、有源待 impl 验）。
-- **`projectstatetate` 拼错字段**：impl 的 SchemeDto @SerializedName 须照抄（§12 / TaskZuoxiModel:40），否则丢字段。
-- **UI 边界映射 documented-assumption（PA-03③ 实现期发现；Critic PASSED_WITH_MINOR 2026-05-29）**：
-  - `TaskItem.zone` 无 v3 源（TaskZuoxiModel 无 zone 列）。PA-03③ 暂 `zone = mediaName ?: ""`（Critic MINOR：媒体名落 zone 槽=语义错配）。**决策（PM+Critic）= 真 impl 时 `zone → 空白`**（除非 v3 别处暴露真 zone 源；空白则省略该 UI 行）。stub 下不可见（返空），不阻塞；real-impl(V3TaskRepository) 大审强制 re-check 本决策。
-  - `LogEntry.success` 无 v3 源（TaskLog 无 success 字段）。PA-03③ 暂硬编码 `true`；真 impl 钉 v3 日志源时定（绑上 getExecutionLog 数据源 OPEN）。stub 下日志不渲染。
+### RESOLVED by PA-10 real impl (was OPEN) + remaining documented-assumption
+- ✅ **wire = TaskGuangboModel** (NOT TaskZuoxiModel): /task/sechinfo→TaskGuangboListRsp, FLAT rows (each=1 task carrying parent sechename+projectstate), grouped by sechename → nested Schemes. Scheme.id=name=sechename (v3 唯一方案标识 + POST key).
+- ✅ **Scheme.active = (projectstate == 0)** — 0==running（反直觉；pinned TaskZuoxiActivity:248-254）。setSchemeActive(active) POST {sechename, state} 0=enable/1=disable → /task/sechenableordisable；reply 0(success)/15(already-same) OK 否则 fail；then refresh()（I-3 单源，无本地翻转）。
+- ✅ **SchemeTaskStatus 派生 PINNED**：both-null→Unknown；!active(projectstate!=0)→Disabled；active&taskstate!=0→Running；active&taskstate==0→Idle。*余 doc-assumption*：taskstate 比 0/非0 更细的语义无 v3 doc → Unknown-tolerant 兜底未分类。
+- ✅ **getExecutionLog = empty (RESOLVED)**：grep 证 v3 无 log REST 端点（仅 on-device LOCAL_DIR_LOG）。返空列——诚实, 非派生/伪造。日后有端点 → ICD_UPDATE 升 real。
+- ✅ **`projectstatetate` 校正**：是 **TaskZuoxiModel**(detail/CRUD 另一流, String) 的字段, **非** list wire。list 用 clean `projectstate`。SchemeRowDto 仅 cost-free 防御 @SerializedName 保留。
+- ✅ **UI 映射 (fe re-touch, post-PA-10)**：`TaskItem.zone` → **空白**（确认 TaskGuangboModel 无 zone 字段；原 mediaName 占位现真数据下=visible bug, 已修）。`LogEntry.success` moot（无 log feed → ExecutionLog Empty 态）。SchemeTaskStatus→UI 映射对齐 pinned 派生。
 
 ### 变更历史
 - v1 (2026-05-28, 方案A PA-03b 接口先行): observe/refresh/setSchemeActive/getExecutionLog；Scheme 嵌套 tasks（同 Zone）；SchemeTaskStatus sealed+Unknown（同 TerminalStatus）；getExecutionLog 一次性。Critic 轻审 PASSED（同构核 Terminal）。impl=V3TaskRepository 待 PA-01 收尾后排。
 - v1-doc (2026-05-29, PA-03③ UI 接入): fe-business 落 TaskHome/SchemeDetail/ExecutionLog VM + TaskUiMappers（对接口编程，跑 V3TaskRepository stub[空]，21 测绿）。**无接口签名变更（仍 v1）**；仅追加 UI 边界映射 documented-assumption（zone/success 见上）。impl=V3TaskRepository（真 v3 wire）仍待排（大审 pin zone/success/status/projectstatetate）。
+- v2 (2026-05-29, PA-10 real impl): V3TaskRepository STUB→REAL。Critic PASSED HIGH big-review（独立读 v3 源）。**接口签名不变（仍 v1）**；解全部 OPEN（见 RESOLVED 节）：wire=TaskGuangboModel/clean projectstate(0=running)/setSchemeActive POST {sechename,state}/getExecutionLog 无端点返空/SchemeTaskStatus 派生 pinned/projectstatetate 校正到 TaskZuoxiModel。fe mapper re-touch（zone→blank）post-PA-10。
 
 ---
 

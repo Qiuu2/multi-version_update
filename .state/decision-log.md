@@ -18,6 +18,7 @@
 | **D-2026-05-28-12** | 2026-05-28 | **ICD 契约建立策略二分法 + ICD逆推独立工作包** | CTO 方向性指示。⚠ CTO 称"D-05"，但 D-05 已用于 R-001 条件降级——为保编号链不冲突，记为 D-12（请知悉） | 见下方「ICD 建立策略（D-12）」详述；ICD逆推派 data/legacy 为独立工作包（回执无关，正好填消化窗）；WS 维持 DRAFT 标风险 | ACTIVE |
 | **D-2026-05-28-13** | 2026-05-28 | **🔴 范围最终决策 = 方案 A（只改 UI、协议/v3 数据层零改动）** | CTO 最终确认。⚠ CTO 称"D-06"，但 D-06 已用于真机路径——记为 D-13。**最高优先级，supersede 部分既往决策** | 后端零改 / httptask/*Method.java 一行不改全保留 / 协议沿用 v3 / 不引入 WS。唯一新增=callback→StateFlow 适配层。SUPERSEDES: D-07/G2新栈架构/D-11/O-1。**重新 G1 = CTO APPROVED**（校正版 ~24-30h，Critic 计划评审过）。详见 `.state/gate1-planA-review-package.md` | **APPROVED-EFFECTIVE** |
 | **D-2026-05-28-14** | 2026-05-28 | **方案 A token 存储 = 沿用 v3 ServerToken（纯零改）** | 重新 G1 同批，CTO 选"纯零改"优先 | 登录后 token 存 v3 ServerToken/Constring（数据层零改）；新栈 AuthStore 降级为纯 UI 校验工具(ServerAddress.parse)、不接管持久化。⚠ 接受 v3 token 存储的安全级别(可能明文/非加密 SharedPreferences)——属 R-A-NEW"继承 v3"取舍的一部分 | ACTIVE |
+| **D-2026-05-29-15** | 2026-05-29 | **5-Tab build 完成里程碑 — 3 项指令** | CTO 在「5-Tab build complete」里程碑（终端✓任务✓服务✓广播✓, AI 降级）的方向选择 | ①**推进 real V3TaskRepository**（替空 stub, Critic 大审）; ②**提交 5-Tab build** = 已落 5 grouped commits 4ccdd13(data)/4e3ab39(legacy)/82fd1de(ui)/6c87a74(test)/85ea115(workflow) on claude/v4-screens-on-refactor（排除 .idea/.claude/skill_matlab_addendum）; ③**对讲/寻呼保持 tap-to-start/end**（非 Handoff press-hold PTT）=终版, Critic+PM 认 session-seam-honest, 偏离 Handoff 已 CTO 批准; 日后要 PTT=UX-only follow-up | ACTIVE |
 
 ## SPIKE-001 结论已回报（2026-05-27T10:00Z）— 以下为 PM 建议，待 CTO 批准
 
