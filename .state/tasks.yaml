@@ -1,0 +1,315 @@
+# AeroRadio v4 — Task State Ledger
+# 维护者: Project Manager Agent. 状态机权威来源.
+# 状态机见 SKILL.md §4 / communication-protocol.md §3.
+
+project: "aeroradio-v4"
+last_updated: "2026-05-27T09:45:24Z"
+
+# ── 团队 (Agent Teams 模式, team=aeroradio-v4, lead=team-lead/PM) ──
+team:
+  activated_at: "2026-05-27T09:45:24Z"
+  lead: "team-lead"            # PM, agentId team-lead@aeroradio-v4
+  members:
+    - name: "critic"            # 横切评审; 待接 Phase 0 deliverable 评审
+      state: "READY"
+    - name: "fe-business"       # AR-006 入口收敛(now) + AR-005 登录(queued)
+      state: "WORKING"
+    - name: "fe-platform"       # O-2/O-3 问询 + AR-009 Token 校准
+      state: "WORKING"
+    - name: "data-integration"  # O-1 问询 + AR-001 ICD + AR-003 AuthStore (Phase0 瓶颈域 39h)
+      state: "WORKING"
+    - name: "legacy-native"     # AR-008 档案同步 + AR-007 IPC 协程化
+      state: "WORKING"
+
+tasks:
+  - task_id: "TASK-AR-SPIKE-001"
+    title: "验证 htapplib.aar arm64-v8a 可用性"
+    domain: "legacy-native"
+    assigned_agent: "agent.legacy.native"
+    priority: "P0_CRITICAL"
+    state: "COMPLETED"         # PENDING->ASSIGNED->IN_PROGRESS->REVIEW->PASSED_WITH_MINOR->COMPLETED (Critic 通过, PM 确认 2026-05-27T10:00Z). cto_gate=false 故 PM 直接 COMPLETED, 不走 HUMAN_REVIEW; 但结论与 3 MINOR/真机残留作为 CTO 决策点上报.
+    team_owner: "legacy-native"
+    reviewer: "critic"
+    go_signal_sent_at: "2026-05-27T09:45:24Z"
+    accepted_at: "2026-05-27T09:45:37Z"   # legacy-native 就绪并接受 (READY ACK)
+    submitted_at: "2026-05-27T09:52:19Z"
+    deliverable_version: 2     # v1 sha b602919 (278 行) 已作废; v2 新增 §8.1 (GO≠取消兜底), 纯增量无结论变更
+    deliverable_sha256: "a70c3f9c724051b419b568d896d795df9850d6070c5c923233968d5a79565204"  # v2, 286 行 (PM 已核对)
+    deliverable_envelope: ".messages/archive/legacy-native__TASK-AR-SPIKE-001_deliverable_v2.yaml"
+    deliverable_envelope_v1: ".messages/archive/legacy-native__TASK-AR-SPIKE-001_deliverable.yaml"  # 历史保留
+    routed_to_critic_at: "2026-05-27T09:52:30Z"
+    version_correction_at: "2026-05-27T09:54Z"  # 通知 Critic 以 v2 (a70c3f) 为权威版
+    review_result:
+      verdict: "PASSED_WITH_MINOR"
+      reviewer: "critic"
+      confidence: "HIGH"
+      cycle: 1
+      independently_reproduced: true   # Critic 亲跑 nm -D/readelf -d/comm/javap 复核, 非仅读报告
+      severity_counts: { BLOCKER: 0, MAJOR: 0, MINOR: 3, INFO: 2 }
+      minor_findings:                   # 不阻塞, 作 "GO 后落地工单" 备注, 无需返工
+        - "F-001: §7.2 步骤A 措辞——触发 loadLibrary 的是 MediaCodec 类初始化, 非 a() 方法本身"
+        - "F-002: §7.2 步骤B Mp3EncodeInit 参数缺 TempTTSActivity 行号溯源, 真机执行前补"
+        - "F-003: §0/§6.1 '完全等价' 收敛为 'JNI 入口与对外 API 符号等价'"
+      verified_focus_points:            # PM 5 个对抗式焦点 Critic 逐条裁定
+        - "架构纠正成立 [VERIFIED]: HTIntf.* native 方法数=0, 唯一 native 面=MediaCodec 4 个 Mp3Encode*"
+        - "链接闭包充分 [VERIFIED]: arm64 libaudioplay 13 undefined (10 lame_* 全由 arm64 libmp3lame 导出 + 3 系统符号), 零 32 位-only 依赖"
+        - "GO-pending 定位站得住 [SUPPORTED]: 真机回执前 R-001 不得直接关 LOW"
+        - "build.gradle 零行为变更 [VERIFIED]: abiFilters 已含 arm64-v8a, 仅注释滞后"
+        - "§8.1 兜底约束 [PASS]: v7a 必留 + 降级 UI 路径不取消"
+      reviewed_at: "2026-05-27T09:59Z"
+      authoritative_deliverable_id: "DEL-TASK-AR-SPIKE-001-v2 (a70c3f9)"   # Critic 确认: 实审即 v2; header 里 v1 sha 系笔误
+      independently_reproduced_evidence: "javap -p HTIntf (native count=0) / readelf -d / nm -D comm 闭包 — Critic 亲跑结果与报告一致"
+    env_constraint: >
+      执行环境 = x86_64 主机, 无 arm64 物理真机, adb 未安装. 验收项 ②(loadLibrary 成功性)
+      与 ③(startTalk/endTalk 真机调用链) 本环境无法动态验证; 静态项 ①④⑤⑧ + javap 接口签名
+      可完整可复现完成. PM 已批准 "GO-pending-device-confirmation" 定位 (静态自洽 + 真机两项转交
+      CTO/QA 验收清单). 真机终验为 R-001 收尾至 LOW 的残留前置.
+    expected_verdict: "GO-pending-device-confirmation (待真机终验)"
+    flags:
+      legacy_impact: true
+      abi_sensitive: true
+      cross_domain: false
+    estimated_hours: 8.0
+    calibrated_hours: 12.0     # 8 × 1.60 (legacy-native domain factor; abi_sensitive 已含在领域系数判断内)
+    deliverable: ".state/spike-aar64-report.md"
+    deadline: "2026-05-29T17:00:00+08:00"
+    assign_message: ".messages/outbox/TASK-AR-SPIKE-001_assign.yaml"
+    created_at: "2026-05-27T09:23:55Z"
+    assigned_at: "2026-05-27T09:23:55Z"
+    cto_gate: false            # spike 结论回 PM, 不直接走 Gate; 但结论驱动 Gate 1 计划
+    depends_on: []
+    blocks: ["WBS-Phase0 (待 spike 结论)"]
+    rationale: >
+      审计发现 AAR 已含 64 位库, 与头号风险 R-001 前提矛盾.
+      spike 结论决定 R-001 是否降级及 Phase 1 关键路径.
+
+# ── Gate 1 (Phase 0 计划批准) ──
+gate1:
+  state: "APPROVED"             # CTO APPROVE 2026-05-27 (D-08). Phase 0 执行解冻, 按 DAG 派发.
+  package: ".state/gate1-review-package.md"   # 现 v2
+  review_cycle: 2
+  v1_verdict: "FAILED (2 MAJOR F-1 关键路径/F-2 O-1依赖 + 4 MINOR; Critic 判定主体可用)"
+  v2_revisions: "F-1 资源关键路径(data 39h)+移除AR-001→002幻边 / F-2 AR-002错误映射 hard-block O-1 / F-3 AR-005依赖AR-002 / F-4 估算口径不叠乘+AR-001正名草案冻结12.5h / F-5 R-003 fallback"
+  v2_verdict: "PASSED (Critic DELTA cycle 2, HIGH; 0 MAJOR/0 MINOR/1 INFO F-9 资源负载vs墙钟 仅记录). Critic 接受 PM 对 28.5h 幻边的反纠正."
+  routed_to_critic_at: "2026-05-27T10:10Z"
+  resubmitted_v2_at: "2026-05-27T10:20Z"
+  critic_passed_at: "2026-05-27T10:21Z"
+  submitted_to_cto_at: "2026-05-27T10:22Z"
+  cto_facing_pointers: ["data-integration 瓶颈 39h/75.4h≈52% (排期决策点)", "O-1后端5问+O-2 WS文档 是 Phase1 外部前置, 建议 APPROVE 时一并授权问询"]
+  decision_ref: "decision-log.md#D-2026-05-27-07"
+  phase0_tasks: ["TASK-AR-001..009 (见 package §1; APPROVE 后材料化为 PENDING 并按 DAG 派发)"]
+  open_items_for_cto: ["O-1 后端 5 问", "O-2 WS 文档", "O-3 x86_64 .so(P3)", "O-4 端点口径", "O-5 G2 触发点"]
+  note: "任务在 CTO APPROVE 后才派发 (workflow Step 5); 现仅 PENDING-on-plan."
+
+# ── Phase 0 tasks (Gate 1 APPROVED 后材料化; 详见 gate1-review-package.md §1) ──
+# 估算口径: cal = raw × 域系数 × 单个最高适用调整 (不叠乘)
+phase0_dispatched_at: "2026-05-27T10:25Z"
+phase0_tasks:
+  - id: "TASK-AR-001"; title: "ICD-Endpoints-v1 草案冻结(含 OPEN)"; owner: "data-integration"; cal_h: 12.5; P: "P0"; state: "COMPLETED"; depends: []; note: "Critic PASSED HIGH. DRAFT-FROZEN 名实相符, 路径×方法口径. 实读新约束 base=http://host:port/api. O-1 回执后出 v2 增量"
+  - id: "TASK-AR-002"; title: "DynamicBaseUrlInterceptor + AuthInterceptor"; owner: "data-integration"; cal_h: 9.0; P: "P0"; state: "COMPLETED"; depends: []; note: "Critic PASSED HIGH (真跑13测+kapt整图). /api 单处注入无双带(grep全ApiService验); 401→refresh(knownStaleJwt)契约对齐AR-003; seam两侧一致; 密码不落盘; debug-only logging(闭v3-audit token泄露). 错误映射/form/refreshToken 候 O-1. INFO: isAuthExempt .contains 未来收 endsWith(BL-AUTHEXEMPT)"
+  - id: "TASK-AR-003"; title: "AuthStore (JWT+Refresh+ServerAddress)"; owner: "data-integration"; cal_h: 10.0; P: "P0"; state: "COMPLETED"; depends: []; note: "Critic PASSED HIGH (亲跑并发测确认无flaky). 并发去重时序无关; 密码不落盘; commit()同步写后发布; TokenRefresher seam. 是 ICD-AuthState-v2 契约源. (security-crypto alpha=未来 tech-debt 关注 INFO)"
+  - id: "TASK-AR-004"; title: "单例 OkHttpClient 统一 + 旧栈复用"; owner: "data-integration"; cal_h: 7.5; P: "P1"; state: "COMPLETED"; depends: ["TASK-AR-002","TASK-AR-003"]; flags: ["legacy_impact","§7.3 三方会签 PASS"]; reviewers: ["critic PASSED HIGH","legacy-native PASS"]; note: "§7.3 双签全过. @LegacyOkHttpClient 共享池但 clear 拦截器(旧栈字节级不变, AuthInterceptor 不覆盖 ServerToken header). RequestManger null守卫+注入, 回调零改. newBuilder() 别名安全(clear 副本不动新栈). 注入时序无竞态. RISK-AUDIT-05 解. INFO: 旧栈宽松 hostnameVerifier 是 verbatim 还原, tech-debt 挂 Gate4 旧栈退役"
+
+# ════════════════════════════════════════════════════════
+# PHASE 0 COMPLETE — 2026-05-27 (SPIKE + AR-001~010, 全 Critic PASS)
+# 下一 Gate: G2 架构评审 (拦截器/AuthStore/WS/IPC/Compose 跨域一致性)
+# ════════════════════════════════════════════════════════
+phase0_status:
+  state: "COMPLETE"
+  completed_at: "2026-05-27"
+  tasks_done: "SPIKE-001 + AR-001/002/003/004/005/006/007/008/009/010 (10 task, 全 Critic PASS)"
+  critic_first_pass: "~6/9 AR 首过; 3 次 FAILED→DELTA(AR-006 CRLF / AR-008 共享文件越界 / AR-009 CRLF+失实自陈) + Gate1 计划 1 次 FAILED→PASS. 全部机械/标注类, 无设计返工"
+  bottleneck_realized: "data-integration 4 任务/39h≈52% 如预判; 其余域并行无堵"
+
+# ── Gate 2 架构评审 ──
+gate2:
+  state: "APPROVED — 正式生效 (CTO D-10 + Critic holistic PASSED HIGH 2026-05-27)"
+  package: ".state/g2-review-package.md"
+  decision_ref: "decision-log.md#D-2026-05-27-10"
+  approved_methods: ["拦截器/双栈隔离", "AuthStore", "IPC 桥接", "Compose/前端架构"]
+  conditional: "WS 协议方案 DRAFT (卡 O-2); Critic 背书条件批准不污染其它定型件; O-2 回执后增量过审 + ICD-BroadcastWS DRAFT→LIVE"
+  critic_holistic: "PASSED HIGH — 实核 3 跨域 seam(AuthStore汇流/OkHttp单例/双栈鉴权隔离)+6 ICD一致+WS边界+retrospective. 0 BLOCKER/MAJOR/MINOR, 1 INFO(注册表 housekeeping)"
+
+# ════════════════════════════════════════════════════════
+# 🔴 D-13 范围最终决策 = 方案 A (只改 UI, 协议/v3 数据层零改动, 不引入 WS) — 2026-05-28
+#    OVERRIDES: D-07/G2新栈架构/D-11/O-1. 重排 WBS → 重新 G1.
+# ════════════════════════════════════════════════════════
+plan_a_pivot:
+  decision_ref: "decision-log D-13"
+  package: ".state/gate1-planA-review-package.md (→ Critic 计划评审 → CTO 重新 G1)"
+  gate_state: "APPROVED (CTO 重新 G1 = APPROVE @2026-05-28; D-13 APPROVED-EFFECTIVE). 校正版 ~24-30h, Mapper 半保留, salvage 经 Critic 双向核实成立. token=v3 ServerToken(D-14, AuthStore→UI util), 轮询归 ViewModel 层, RequestManger 零改(适配 callbackFlow)"
+  token_decision: "D-14: 登录 token 存 v3 ServerToken/Constring(数据层纯零改); 新栈 AuthStore 降级为 UI 校验工具(ServerAddress.parse), 不接管持久化. 接受 v3 token 存储安全级别(R-A-NEW '继承 v3' 取舍)"
+  dispatched_at: "2026-05-28"
+  pa_tasks:
+    PA-01:
+      owner: data-integration
+      status: COMPLETED
+      critic: "PASS HIGH 2026-05-28 (静态 STATIC-PASS + 动态 19 测全绿闭环)"
+      title: "V3CallbackAdapter(callbackFlow 包 RequestManger, double-param onRequestLister, sync/async 容忍) + V3TerminalRepository(@Binds swap 替 Retrofit impl[DORMANT], SSOT 语义保, 4-int 双层状态) + V3LoginAuthenticator(token=ServerToken)"
+      impl_path_ruling: "PM 裁决 = path1 (data 已落地, 主编译绿): V3CallbackAdapter 包 RequestManger 拿 raw JSON → 逆推 DTO(TerminalEnvelopeDto/ZoneEnvelopeDto) → 复用 AR-101 Mapper(toTerminalOrNull/toZoneOrNull); 不走 *Method、不碰 MachineInfo POJO. 理由: wire JSON 同一份字节(任何 transport 取的都一样)→DTO+Mapper 正当复用; path1 不沾 *Method UI 耦合; 与 AR-004 RequestManger 复用一脉相承. M-1'Mapper 需重写'基于 path2, path1 规避非违背, salvage 比校正估算更高. 范围内实现决策(不改 scope/协议/契约/域模型/SSOT/VM 零改), 非 CTO 决策"
+      critic_ac: "SSOT 语义(起始空/两 fetch 都成才发布/失败留旧快照, 守 AR-101) / [改]raw JSON→逆推 DTO→复用 AR-101 Mapper(取代 MachineInfo binding) / [path1 硬核验]逆推 DTO @SerializedName 与 v3 wire 1:1 保真无字段丢失 vs MachineInfo(data 附字段对照表) / sync execute()+async enqueue 双容忍(I-2) / 并发去重 / I-3 边界(终端读不背, 归写操作) / VM 零改验证"
+      crit_path: true
+      verify: "动态全绿(Critic 18:13 跑, PM 据 XML 实证): V3TerminalRepositoryTest 7/0/0/0 + V3CallbackAdapterTest 3/0/0/0 (PA-01 10 测) + TerminalHubViewModelTest 5/0/0/0 + ZoneDetailViewModelTest 4/0/0/0 (证 AC#7 消费侧 VM 零改, swap 透明). 字段保真表零丢失(Terminal 14/14, Zone 漏 state/datetime=F-1 已知未映射 v4不需). Critic 静态 STATIC-PASS, 正式 PASS 字待发(证据已齐). F-2(V3LoginAuthenticator→ServerConfig.setBaseUrl) data 顺修中"
+      hang_resolved: "fe-platform PollingRefreshSchedulerTest 挂死 57min(value-class vararg 先修, 真因=周期协程 advanceUntilIdle)已修 backgroundScope; 全量 testDebugUnitTest 解锁但仍守 scoped+timeout"
+    PA-02:
+      owner: fe-platform
+      status: done_pending_critic_signoff
+      title: "PollingRefreshScheduler(ViewModel 层调度, Handoff 节奏 终端10s/任务30s/详情5s, 前台感知, ExponentialBackoff 复用, banner 状态, 无 WS)"
+      verify: "DELIVERED. PollingRefreshSchedulerTest 6/0/0/0 (Critic 18:13 复跑确认). 挂死根因=手搓 scope 无限 loop 撞 runTest advanceUntilIdle, 修=backgroundScope. 顺修真 bug(前台 resume 立即刷新). PollingState{IDLE/REFRESHING/POLLING/ERROR}绑 banner. 解耦 suspend ()->Result<Unit>"
+    PA-03:
+      owner: fe-business
+      status: in_progress
+      blocked_by: PA-01
+      title: "终端 Tab 验证(V3 impl 上 Hub/ZoneDetail/广播目标三屏跑通, VM 零改) + 接 PollingRefreshScheduler; 起任务 Tab UI/VM(对 V3TaskRepository 接口编程, 消费需求先经 PM). 顺序 终端→任务→服务→广播(对讲走AAR)→AI降级"
+    PA-RESERVE-legacy:
+      owner: legacy-native
+      status: reserve
+      title: "VoiceTalkAdapter 保留; 对讲集成在广播 Tab(顺序靠后)接入. 可选填窗: VoiceTalkAdapter callback→StateFlow 暴露面预对齐(先发 PM 转 fe). 真机 R-001=CTO. 否则 standby"
+  superseded_impl: "AR-002 拦截器 / AR-003 AuthStore那套 / AR-004 单例OkHttp / AR-101 Retrofit impl / RetrofitLoginAuthenticator / AR-103 WS — 新栈 IMPL 白做(代码留盘作'未来迁移'资产, 不删)"
+  retained: "全部 UI/ViewModel/5态机(AR-005/102/105/106) + 设计Token(AR-009) + 逆推DTO契约(AR-110/111/001=v3真值,升值) + 接口/域模型/Mapper(AR-101) + 语音(AR-104)/IPC(AR-007)/权限(AR-010)/基建(AR-107)/6标准"
+  new_work: "callback→StateFlow 适配层(唯一新网络代码) + V3*Repository impl(替 Retrofit impl, 喂已有接口, ViewModel 零改). 新 Phase0 估 ~18-22h(原75h)"
+  halted: "AR-103 已令 fe-platform 停; data-integration 新栈暂停候新 WBS"
+  o1_status: "作废(方案A不谈协议; 逆推DTO从'待O-1验'升'v3跑通即LIVE')"
+  o2_status: "削减: 保留 AAR/x86_64真机(O-3)+4521(O-4); WS协议23问作废"
+  g2_note: "原 G2 批的拦截器/AuthStore/WS 架构被 D-13 supersede; 新架构(v3数据层+适配层+Compose)重新基线, 并入本次 G1 或 Phase0末轻量 G2"
+  risk_R-A-NEW: "v4=v3数据层换皮: 无实时推送(轮询)/旧栈不退役(技术债)/v3协议怪癖继承. CTO '快交付+低风险' 换 '留技术债' 的取舍"
+
+# ── (作废) Phase 1 prep 模式 D-11 — 被 D-13 方案A supersede ──
+# phase1_mode: 原"CTO取回执+团队回执无关结构"——方案A下 O-1 作废、新栈白做; 终端域已建的 UI/VM 保留, 换 V3 适配 impl
+phase1_prep_dispatched_at: "2026-05-27"
+phase1_prep_tasks:
+  - id: "TASK-AR-101"; title: "TerminalRepository + Terminal/Zone DTO 骨架"; owner: "data-integration"; P: "P0"; state: "COMPLETED"; cycle: 2; note: "Critic v2 DELTA PASSED HIGH (--no-daemon 实证 compile+测真绿; seam 两侧闭合). 两层 wire/domain(4int→派生) + Flow 接口 + sealed TerminalStatus+Unknown. ICD-TerminalDto-v2/ZoneDto-v2 已 PM 落 §4/§5 + 注册表 LIVE + 广播 fe. 派生/Fault/真值集候 O-1 D-3+O-2. (v1 FAILED 是真 BLOCKER 非 daemon 幽灵, 已修)"
+  - id: "TASK-AR-102"; title: "终端 Tab TerminalHub ViewModel 接真骨架"; owner: "fe-business"; P: "P0"; state: "COMPLETED"; depends: ["TASK-AR-101 接口"]; note: "Critic PASSED HIGH (seam 两侧闭合, --no-daemon). TerminalHubViewModel 消费 TerminalRepository + 5态 + domain→UI status映射(Unknown→Offline,未动StatusPill,import alias) + Hub de-mock(屏内零mock) + 7测绿. Compose渲染=设备验收"
+  - id: "TASK-AR-103"; title: "RealtimeClient 连接生命周期骨架"; owner: "fe-platform"; P: "P0"; state: "ASSIGNED"; note: "@Singleton+指数退避(RISK-AR-004)+前后台+ConnectionState; 消息解析/鉴权URL/心跳 = DRAFT占位候 O-2"
+  - id: "TASK-AR-104"; title: "VoiceTalkAdapter 设计骨架"; owner: "legacy-native"; P: "P1"; state: "COMPLETED"; note: "Critic PASSED HIGH(7 gate测 + kotlinc 对真 AAR classes.jar 证 21 override 匹配; gate序 fail-closed; callbackFlow DP-4; 边界诚实未fake). 与 AR-101 解耦不受其 FAILED 牵连. ICD-VoiceAAR-v1 §8(DRAFT→LIVE-pending-device) 待 PM 写入(registry housekeeping). 整树编译绿待 AR-101 修后 Critic 坐实(无迹象有问题)"
+  - id: "TASK-AR-105"; title: "ZoneDetailScreen 接真"; owner: "fe-business"; P: "P1"; state: "COMPLETED"; depends: ["TASK-AR-101 接口"]; note: "Critic PASSED HIGH (ZoneDetail scope). 5态含 NotFound(删)/Empty(空)/Error(拉失败) 三者分清(Critic赞) + ZoneDetailViewModel + 屏内零mock + 复用 TerminalStatusMapper(不分叉) + 11测绿. 删 mock 归 AR-106 收口"
+  - id: "TASK-AR-106"; title: "广播/临时文件广播屏 目标终端选择接真 + 删 TerminalMockData"; owner: "fe-business"; P: "P1"; state: "COMPLETED"; note: "Critic PASSED HIGH (--no-daemon: 删后整树编译绿+测绿, grep 零代码引用仅留无害doc注释). Broadcast/TempFile 目标选择接真(共用 BroadcastTargetsViewModel, 不越界三档) + 删 TerminalMockData.kt + 修 BroadcastScreen 空列表崩 bug(Critic赞:既修崩又处理陈旧选中id). 终端域 de-mock 完成无 Mock-Forever 残留"
+  - id: "TASK-AR-107"; title: ".gitattributes 根因修复 + 7 个 v4 屏 EOL→LF"; owner: "fe-business"; P: "P1"; state: "COMPLETED"; note: "Critic PASSED HIGH. 二进制安全实证(htapplib.aar/so/jks text:unset, eol inert 不损坏) + EOL-only content-zero + 编译绿. .gitattributes eol=lf = CRLF 顽疾根因修复(git 层强制 LF, STD-CRLF 降为兜底). 未跑全树 renormalize(延 BL-EOL-RENORMALIZE). commit-time INFO 见 commit_hygiene"
+
+# ── Commit 卫生清单 (本 session 零 commit; CTO 要求提交时执行) ──
+commit_hygiene:
+  note: "整 session 未 commit (遵 '仅 CTO 要求时提交'); 共享工作树累积大量 Critic-PASSED 但未提交工作 (AR-001~107). 提交时:"
+  checklist:
+    - "按任务/hunk 切分提交, 禁 git add -A/-am 一锅端 (Critic AR-107 F-1; 否则跨任务混提糊审计链)"
+    - "AR-008 的 build.gradle ndk 注释 hunk 与 AR-003 的 security-crypto hunk 分属不同 commit (Critic 早提示)"
+    - "清 index 残留: .idea/caches/deviceStreaming.xml + .idea/deviceManager.xml 当前误 stage (Critic AR-107 F-2), git reset; .idea/caches 宜 gitignore"
+    - "BL-EOL-RENORMALIZE (全树 424 存量 EOL 归一) 在静默期作独立 commit"
+    - "不提交 IDE 配置(.idea/*)/.claude/(已 gitignore)"
+
+# ── ICD逆推工作包 (CTO D-12, 回执无关 code-fact, 填消化窗) ──
+wp_icd_reverse:
+  trigger: "decision-log D-12 (CTO 2026-05-28)"
+  tasks:
+    - id: "TASK-AR-110"; owner: "data-integration"; state: "COMPLETED"; scope: "Critic PASSED HIGH(抽验 file:line 真命中, DRAFT 真无源 grep 零调用, projectstatetate 保真对). PM 已落 icd-contracts.md: §1 注册表 +5 LIVE行(Task/Scheme/Tts/Media/ServerState) + 新增 §12(引 proposed 不复制) + 已LIVE的源标注. 广播 fe-business. F-1: file:line=字段级溯源非byte锚点"
+    - id: "TASK-AR-111"; owner: "legacy-native"; state: "COMPLETED"; scope: "Critic PASSED HIGH(亲跑 javap 验 CallBackIntf=21双源, 实读 SocketClient 行号全中, UTF-8 诚实标注赞). PM 已落 icd-contracts §7(IPCSocket-v2)/§8(VoiceAAR-v2)+注册表混合状态(LIVE结构+控制 / DRAFT-pending-device 执行 / DRAFT-pending-vendor 词表 O-4). 顺手修 §8 旧'只有32位'废述. O-4→词表LIVE, R-001→native执行LIVE 均 additive"
+  wp_status: "COMPLETE — AR-110(REST/DTO)+AR-111(VoiceAAR/IPCSocket) 全过 Critic + 落注册表. ICD 现 source-traceable(每 LIVE 项有 v3/AAR 源, 每 DRAFT 标无源/待外部). CTO D-12 落地完成"
+  ws_handling: "ICD-BroadcastWS 维持 DRAFT「待后端对接」(纯新增无源)"
+risks_added:
+  - id: "R-WS-NEW"; risk: "ICD-BroadcastWS 纯新增、无 v3 代码可逆推(grep 全 legacy .java 零 WebSocket, CTO 已确认)"; impact: "实时方案全靠后端 O-2 文档+实测对接, 无 v3 事实兜底; 对接偏差风险高于其它 ICD"; mitigation: "维持 DRAFT; RealtimeClient(AR-103) parseMessage→Unknown 容错(已实现); O-2 回执后实测对接才 LIVE"; owner: "fe-platform + 后端/厂商"; status: "ACTIVE"
+
+# ── 跨域接口协商在途 (经 PM) ──
+xdomain_negotiation:
+  - id: "TerminalRepository 接口"; status: "fe-business(AR-102消费需求) → PM 转 data-integration(AR-101 领域owner定接口)"; open_q: ["Zone嵌套vs双Flow(data拍)", "status Unknown-tolerant sealed 领域类型(必须, ESC-WATCH-2 真值候 O-2/D-3)", "Partial 语义(repo缓存vs刷新失败 or 绑 connectionState)"]; next: "data 定稿接口→PM 走 STD-ICD-WRITE 落 ICD-TerminalDto/ZoneDto + 广播 fe 解锁 AR-102"
+  - note: "StatusPill.kt 是 fe-business/fe-platform 共享原子; fe 倾向 ViewModel 边界映射 Unknown 不动 enum; 若须动→STATUS_UPDATE→PM 协调(STD-SHAREDFILE)"
+  - id: "TASK-AR-005"; title: "LoginScreen 接 AuthStore + 刷新闭环"; owner: "fe-business"; cal_h: 9.6; P: "P0"; state: "COMPLETED"; depends: ["TASK-AR-003"]; note: "Critic PASSED HIGH (kapt 真跑证 seam 单点 binding). 5态 ViewModel + validateServer→parse + isLoggedIn导航 + saveLogin, 经 LoginAuthenticator seam 不越界接网络. 25单测绿. Compose渲染=设备验收"
+  - id: "TASK-AR-006"; title: "入口收敛 (删 SignActivity LAUNCHER)"; owner: "fe-business"; cal_h: 3.6; P: "P1"; state: "COMPLETED"; cycle: 2; depends: []; note: "Critic DELTA v2 PASSED HIGH. CRLF→LF + SignActivity 注释据实(intended-dead). 单LAUNCHER=V4Activity. RISK-AUDIT-02 解"
+  - id: "TASK-AR-007"; title: "IPC 4521 协程化 LocalSocketClient"; owner: "legacy-native"; cal_h: 12.8; P: "P2"; state: "COMPLETED"; depends: []; note: "Critic PASSED HIGH(亲跑10测绿). 协程+Mutex+5s超时+有界重连(无死锁验)+Result. connectionStateFlow 对齐ICD §7. ShellCommand=Raw(UNK-002 候 INQ-O-4). §7 ShellCommand注 待 PM 统写(registry housekeeping)"
+  - id: "TASK-AR-008"; title: "R-001 GO 后档案同步 + 真机清单交接"; owner: "legacy-native"; cal_h: 4.8; P: "P1"; state: "COMPLETED"; cycle: 2; depends: []; note: "Critic DELTA v2 PASSED HIGH. CLAUDE.md/SKILL/memory/build.gradle注释 已同步双ABI实情; realdevice-checklist VERIFIED 可执行→交 CTO/QA 真机(R-001关闭路径). commit纪律: security-crypto hunk 归 AR-003 commit"
+  - id: "TASK-AR-009"; title: "设计 Token 校准核对"; owner: "fe-platform"; cal_h: 5.6; P: "P2"; state: "COMPLETED"; cycle: 2; depends: []; note: "Critic DELTA v2 PASSED HIGH. R-1~R-5 全落(别名映射§9.1/bgBeige查证Handoff补spec/*Soft派生源/elevation 2/8/BL-FONT-ASSETS). ICD-DesignTokens-v1.1 LIVE+已广播 fe-business. (CRLF+失实自陈已纠正致歉)"
+  - id: "TASK-AR-010"; title: "v4 运行时权限编排 (RECORD_AUDIO/定位/媒体/FGS麦克风)"; owner: "fe-business"; cal_h: "TBD"; P: "P1"; state: "COMPLETED"; depends: []; note: "Critic PASSED_WITH_MINOR HIGH. 冷启动前置 critical+拒绝降级不崩(亲跑6测). 会签: 冷启动前置维持, 调用时二次校验归 legacy-native VoiceTalkAdapter(Phase1). F-1 OPEN(RECORD_AUDIO时机与语音native一致性)→挂 Phase1 对讲任务验收"
+  # 总 ~75.4h + AR-010(TBD); data-integration 39.0h (瓶颈)
+
+# ── O-1/O-2/O-3 问询起草 (D-09) → 已汇总待 Critic 完整性快审 → CTO 转发 ──
+inquiry_tasks:
+  - id: "INQ-O-1"; title: "后端契约 5 问 + 衍生 D-1/D-2"; owner: "data-integration"; state: "DELIVERED"; artifact: ".state/inquiry-O1-backend-contract.md"; note: "v3 逐行实读证据落地; 衍生 D-1(无 refresh 端点)/D-2(form/userpwd)"
+  - id: "INQ-O-2"; title: "厂商 WS 协议 23 问"; owner: "fe-platform"; state: "DELIVERED"; artifact: ".state/inquiry-O2-ws-protocol.md §A"; note: "捕获 A-4 枚举不一致"
+  - id: "INQ-O-3"; title: "x86_64 .so 索要 (搭车)"; owner: "fe-platform"; state: "DELIVERED"; artifact: ".state/inquiry-O2-ws-protocol.md §B"
+  - id: "INQ-O-4"; title: "4521 守护进程命令词表 (UNK-002)"; owner: "legacy-native"; state: "ASSIGNED"; note: "AR-007 衍生; 现 SocketClient 发任意 shell 字符串疑 su/root; 问厂商权威命令清单+安全边界; 并入对厂商问询"
+  aggregated_package: ".state/inquiry-package-for-cto.md"
+  routing: "O-1→后端, O-2/O-3/O-4→厂商"
+  critic_verdict: "PASSED_WITH_MINOR (HIGH; A-4 枚举捕获正确, 无矛盾/漏问)"
+  state: "READY → 已呈 CTO 转发 (O-1 含 Q1-5+D-1/D-2/D-3, O-2/O-3/O-4 齐). 2026-05-27"
+  contents: "O-1(后端): Q1-5契约 + D-1无refresh端点 + D-2 form/userpwd + D-3 REST/WS state对齐. O-2(厂商):WS23问. O-3:x86_64.so. O-4:4521命令词表"
+
+# ── 团队标准 (本期立) ──
+team_standards:
+  - id: "STD-CRLF"; rule: "每次 Edit 后 git diff --stat; HEAD 为 LF 的文件若被翻成 CRLF 必须复原 (sed 's/\\r$//')。判据=与该文件 HEAD 的 EOL 一致"; reason: "Edit 工具本环境对 LF 文件可能引入 CRLF (AR-008/AR-006 各中一次), 制造假 diff + 共享文件 merge 冲突"; ref: "memory/edit-tool-crlf-gotcha.md"
+  - id: "STD-SHAREDFILE"; rule: "改 build.gradle / AndroidManifest.xml 等共享配置文件时, 交付物显式声明改动的确切行范围; diff 不得跨到他人的行; 每个改动行归属唯一任务, 由该任务的域评审把关"; reason: "AR-003+AR-008 并发编辑 build.gradle, AR-003 的 security-crypto 依赖差点从 AR-008 评审偷渡过审绕开 data 域 (§4 R→). Critic 拦下"; shared_files_watch: ["app/build.gradle (AR-003 deps / AR-008 ndk注释)", "AndroidManifest.xml (AR-006 / 未来权限 AR-010)"]
+  - id: "STD-COMPILABLE"; rule: "共享工作树无 per-task 分支隔离; 每轮收尾把树留在 :app 可编译状态 (WIP 用 TODO() 占位也要编译过); 必须瞬态破坏先知会 PM 协调时序"; reason: "AR-003 refresh 重设计瞬态致编译挂, 阻塞 AR-007 单测. 现已恢复(data 实测 BUILD SUCCESSFUL)"
+  - id: "STD-ICD-WRITE"; rule: "references/icd-contracts.md (ICD 注册表) 由 PM 维护统写; 各域在 deliverable 提 proposed ICD diff, PM 过 Critic 后串行写入"; reason: "legacy-native 更 §7 时撞并发写冲突(file modified since read); 注册表是热共享文件, 需 PM 串行化 (PM profile 明列 ICD Registry 职责)"
+  - id: "STD-CANONICAL-STATE"; rule: "权威任务状态 = .state/tasks.yaml(PM维护,gate-aware) + REVIEW_REQUEST/REVIEW_RESULT 消息链; harness TaskList 的 'completed' = teammate '已交付' 便利标记, ≠ 协议 COMPLETED(必须 Critic PASS + PM 确认). 判 gate 完整性以 .state + Critic REVIEW_RESULT 为准"; reason: "Critic 见 harness AR-002=completed 但未收 REVIEW_REQUEST, 疑 gate 被绕过. 实为 teammate 乐观自标超前于 gate. 制度: 无 Critic PASS, PM 不标 .state COMPLETED"
+  - id: "STD-DAEMON-STALE"; rule: "跨任务编译报错: 两方对编译态分歧时, 唯一权威裁决 = 中立方(Critic)在清缓存后 --rerun-tasks 的**新鲜编译**, 不信任任一方的'我这绿了'自报(自报只对其声称时刻的树有效, 树被改后即过时). PM 不得据自报反驳实测报错方."; reason: "AR-007/AR-002 是 stale(自报准); 但 AR-101 PM 据 data '16测绿'自报误判 fe-platform/fe-business 的真 BLOCKER 为 stale——自报是改接口前的, data 改后未重编. 教训: 自报green 会过时, Critic 亲跑编译才是裁决. PM 已向 fe-platform/fe-business 致歉更正"
+  - id: "STD-PERIODIC-TEST"; rule: "带周期 timer 的协程组件单测: 用 bounded advanceTimeBy()+runCurrent() (非 advanceUntilIdle, 会因无限周期 loop 永不返回→OOM) + 客户端 scope 用独立 Job(非 TestScope 子) + @After cancel"; reason: "fe-platform AR-103 RealtimeClient(心跳15s/轮询10s) 踩坑自修; 适用 AR-101/102 轮询 + WS + 任何周期组件"
+  - id: "STD-ICD-CLASS"; rule: "ICD 建立二分(CTO D-12): (1)可逆推类[AAR/TCP4521/旧栈已实现REST字段]→从v3代码逆推+每字段标来源(逆推自 file:line)→可直接 LIVE(code-fact); (2)需验证类[WS协议/v4新增端点]→逆推/Handoff出 DRAFT→必须后端实测对接才转 LIVE, 对接前下游 ignoreUnknownKeys 容错"; reason: "CTO 方向性指示; 区分'代码跑通的事实'vs'待外部确认的假设', 防把猜测当定稿"
+  - id: "STD-BUILD-SERIAL"; rule: "编译/测试验证一律 ./gradlew --no-daemon (隔离自己 build); 禁 ./gradlew --stop (杀全队共享 daemon in-flight build). **真错 vs 幽灵的判据=有无具体 compiler 诊断**: 有 'e: file:line ...' 诊断=真错必修; 仅 'daemon has been stopped: stop command received' 无诊断=被杀幽灵. **不得用 daemon 理论回溯解释掉有诊断的真错**(Critic 守此边界)"; reason: "data 实证 daemon 互杀是 AR-007/AR-002 幽灵 FAILED 根因; 但 AR-101 v1 是**真 BLOCKER**(有具体诊断 getTerminals overrides nothing), PM 曾误框为幽灵, Critic 纠正——--no-daemon 消歧义来源, 不抹真错"
+
+# ── 跨域 seam / ICD ──
+icd_in_flight:
+  - id: "ICD-AuthState-v2"; state: "LIVE (Critic PASSED, PM 已落 §3 + 注册表 line14 v1→v2 + 广播 fe-business/fe-platform 2026-05-27)"
+  - id: "ICD-DesignTokens-v1.1"; state: "LIVE (Critic DELTA PASSED, fe-platform 已写 §9/§1, PM 已广播 fe-business)"; note: "别名映射§9.1(非破坏)+bgBeige+派生*Soft+elevation 2/8"
+  - id: "ICD-LoginAuthenticator-v1"; state: "LIVE (PM 已登记 icd-contracts.md §3A + 注册表行 2026-05-27). fe 接口定稿 + data RetrofitLoginAuthenticator 真实 impl 均落地编译绿. @Binds 单点归 data(归属铁律). Critic 经 AR-005(消费)+AR-002(impl) 评审验证"
+  - id: "ICD-IPCSocket-v1 §7"; state: "AR-007 已过 Critic; connectionStateFlow 已对齐; ShellCommand Raw 注待 PM 统写(housekeeping)"; source: "legacy-native AR-007 v2 信封 proposed diff"
+  - id: "ICD-TerminalDto-v2 / ZoneDto-v2"; state: "LIVE (Critic v2 DELTA PASSED, PM 已落 §4/§5 + 注册表行 + 广播 fe-business 2026-05-27)"; note: "两层 wire/domain(4int→派生); Repository observe/refresh; sealed TerminalStatus+Unknown; Zone 嵌套. 派生/Fault/真值集候 O-1 D-3+O-2"
+  - id: "ICD-VoiceAAR-v1 §8"; state: "AR-104 过 Critic; §8(NativeTalkListener→CallBackIntf + 门控 + DRAFT→LIVE-pending-device) 待 PM 写入(housekeeping batch)"; source: "legacy-native AR-104 信封 proposed diff"
+  - id: "ICD-TaskRepository-v1 §13"; state: "LIVE (Critic 轻审 PASSED 与 Terminal 同构; PM 已落 icd-contracts.md §13 + 注册表行 + 广播 fe-business 2026-05-28). 接口契约(observe/refresh/setSchemeActive/getExecutionLog)+Domain Scheme嵌套/SchemeTaskStatus sealed+Unknown/TaskLog. OPEN: getExecutionLog 数据源 impl 时钉死(无独立日志端点,可能从 taskinfo 派生); SchemeTaskStatus 真值集候 v3 适配实测. impl=V3TaskRepository 待 PA-01 收尾后排"; source: ".state/icd-taskrepository-proposed.md (data 领域 owner)"
+
+# ── ICD 注册表 housekeeping (PM 待办, 非阻塞; 搭后续 ICD 编辑一并修) ──
+registry_housekeeping:
+  - id: "X-1"; issue: "注册表 ICD-TaskDto-v1 / ICD-MapLocation-v1 标 LIVE 但无 section 且未建 (G2-1 Critic INFO)"; fix: "DONE — 二者改 PLANNED(Phase1/2 落地时定义). LoginAuthenticator §3A 已存在(Critic 漏数非整数节号)"; status: "RESOLVED"
+  - id: "X-3"; issue: "AR-007 §7 ShellCommand Raw 骨架注 + 变更历史 待 PM 写入 (legacy-native 信封 proposed diff)"; status: "PENDING (低优, 搭后续 ICD 编辑)"
+  # X-2 (AuthState 注册表 line14 v1→v2) 已随 §3 落地同批修复
+
+# ── 升级/跨域观察项 (回执后处理) ──
+watch_items:
+  - id: "ESC-WATCH-1"; type: "potential_escalation"; ref: "INQ-O-1 D-1"
+    desc: "旧栈无 refresh 端点; 若后端确认无 → AuthStore 持久化密码 vs 违反'密码不落盘'冲突"
+    pm_action: "AR-003 按安全假设推进(密码不落盘+TokenRefresher 抽象+impl TODO); 回执若'无' 升级 CTO 带 3 选项(A 请暴露refresh端点/B 加密存密码/C 短会话重登)"
+    status: "TRACKING (待 O-1 回执)"
+  - id: "ESC-WATCH-2"; type: "cross_domain_icd"; ref: "INQ-O-2 A-4"
+    desc: "终端状态枚举不一致: Handoff §807 (online/offline/fault/playing/paging) vs ICD-TerminalDto-v1 (online/offline/paging/talking/casting/urgent/alarm)"
+    pm_action: "O-2 请厂商钉死 WS 真值; 回执后 PM 协调 fe-platform+data-integration 对齐 + ICD-TerminalDto-v1 ICD_UPDATE. Phase1 才落地, 不阻塞当前"
+    status: "TRACKING (待 O-2 回执)"
+
+# ── Deferred backlog ──
+backlog_deferred:
+  - placeholder_id: "BL-LAUNCHER-FIX"
+    title: "收敛启动入口: 删除 SignActivity 的 LAUNCHER intent-filter, 仅留 V4Activity"
+    domain: "frontend-business"   # 已纳入 Gate 1 package 为 TASK-AR-006 (纯 Manifest 部分)
+  - placeholder_id: "BL-GOLD-TOKEN"
+    title: "AeroTheme 补 gold 设计 token(迁移态/对调态金色); 现 TaskScreen.kt:300-301 硬编码 Gold=0xFFA8780A/GoldSoft (DSN-ERR)"
+    domain: "frontend-platform"   # fe-business AR-PA-03 报告; 低优, PA-02 PollingRefreshScheduler 之后再补, 不挤关键路径
+    folded_into: "TASK-AR-006"
+  - placeholder_id: "BL-DEADIMPORT-SIGNACT"
+    title: "删 SignActivity.java line16 死 import (utils.SocketClient, 零行为)"
+    domain: "legacy-native / 旧栈清理"
+    phase: "Phase 3 (旧栈清理批)"
+    note: "AR-007 现状核查发现 SocketClient 孤儿死码; 死import无live影响, 不值现在跨域动, 与其他死码一起清"
+  - placeholder_id: "BL-FONT-ASSETS"
+    title: "落地品牌字体 Noto Sans SC + JetBrains Mono → res/font → AeroSans/AeroMono"
+    domain: "frontend-platform"
+    phase: "Phase 3 (G4 发布前必须)"
+    note: "AR-009 R-5: 现占位 FontFamily.Default/Monospace. 均 OFL 开源, 无 licensing escalation. PM 自决建任务"
+  - placeholder_id: "BL-TOKEN-RENAME"
+    title: "设计 token 改名对齐 spec 权威名 (TabBroadcast/ModePage/MetricNum...)"
+    domain: "frontend-platform"
+    phase: "Phase 3"
+    needs_cto: true             # AR-009 R-1: breaking ICD change (消费方需迁移); Phase0 先用别名映射(ICD v1.1)非破坏
+    note: "现走非破坏别名路径; 真改名是 breaking, 届时 CTO 批 + 迁移窗 + 广播 fe-business"
+  - placeholder_id: "BL-EOL-RENORMALIZE"
+    title: "全树存量 EOL 归一 (git add --renormalize .)"
+    domain: "PM/指定人"
+    phase: "静默期 (phase 边界 commit 前, 无 agent WIP 时)"
+    note: "AR-107 已落 .gitattributes(根因堵住未来)+7 活跃屏; 余 ~417 休眠 legacy/androidTest content-zero CRLF 存量延后一次性归一. 必须无 WIP 时做(否则误 stage 他人活, 如 data AppModule). 纯归一独立 commit"
+
+# ── 基础设施动作 (PM 直接处理) ──
+infra_actions:
+  - id: "INFRA-GIT-WORKTREE"; date: "2026-05-27"
+    issue: "stale Windows-path worktree (.git/worktrees/loving-gagarin gitdir=C:/... + .claude/worktrees/loving-gagarin/.git 死 gitlink) 致 git status/diff fatal, 阻塞全队 git 校验"
+    fix: "git worktree prune + 重命名死 gitlink 为 .git.broken-windows-stub(可逆) + .claude/ 入 .gitignore. claude/loving-gagarin 分支ref(6bf0275)未动, 无工作丢失. git status 恢复"
+    by: "fe-business flag → PM 诊断+修复 (未擅删, 可逆中和)"
+    priority: "P1_HIGH"
+    state: "BACKLOG"
+    decision_ref: "decision-log.md#D-2026-05-27-02"
+    note: >
+      CTO 已决策保留 V4Activity 为唯一入口. 由 PM 统筹放进 Phase 0 第一批任务,
+      WBS 出炉时正式建任务. 需校验 V4Activity 启动后能正确衔接登录/会话状态.
