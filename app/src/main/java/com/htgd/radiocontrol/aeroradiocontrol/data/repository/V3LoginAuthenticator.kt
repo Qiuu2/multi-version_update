@@ -6,6 +6,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.constant.Constant
 import com.htgd.radiocontrol.aeroradiocontrol.constant.ServerToken
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.ServerAddress
 import com.htgd.radiocontrol.aeroradiocontrol.data.dto.TokenEnvelopeDto
+import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.ServerConfig
 import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.V3CallbackAdapter
 import com.htgd.radiocontrol.aeroradiocontrol.di.IoDispatcher
 import com.htgd.radiocontrol.aeroradiocontrol.httptask.MyRequestBuilder
@@ -33,15 +34,19 @@ import javax.inject.Singleton
  * helper via ServerAddress.parse). The ViewModel still receives an [AuthResult]
  * to drive its success state.
  *
- * Sets [Constant.serveraddress] from the typed [ServerAddress] before the call,
- * mirroring v3 LoginActivity.prelogin (which builds "http://host:port/api"), so
- * the v3 stack targets the right server from this point on.
+ * Sets the v3 base URL from the typed [ServerAddress] before the call, mirroring
+ * v3 LoginActivity.prelogin (which builds "http://host:port/api"), so the v3
+ * stack targets the right server from this point on. The write goes through the
+ * [ServerConfig] seam (not a direct `Constant.serveraddress =`) — same pattern as
+ * V3TerminalRepository — so this class is unit-testable without loading v3
+ * Constant (Android static-init); v3 Constant itself is unchanged (Plan A red line).
  */
 @Singleton
 class V3LoginAuthenticator @Inject constructor(
     @ApplicationContext private val context: Context,
     private val adapter: V3CallbackAdapter,
     private val gson: Gson,
+    private val serverConfig: ServerConfig,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : LoginAuthenticator {
 
@@ -52,8 +57,10 @@ class V3LoginAuthenticator @Inject constructor(
     ): Result<AuthResult> = withContext(ioDispatcher) {
         runCatching {
             // Point the v3 stack at this server (matches LoginActivity:495's
-            // "http://host:port/api"); subsequent v3 calls read Constant.serveraddress.
-            Constant.serveraddress = "http://${address.host}:${address.port}/api"
+            // "http://host:port/api"); subsequent v3 calls read it back via the
+            // ServerConfig seam (prod = Constant.serveraddress). F-2: write through
+            // the seam, not a direct Constant assignment (keeps this unit-testable).
+            serverConfig.setBaseUrl("http://${address.host}:${address.port}/api")
 
             // v3 login = POST form to /authorizations with username/userpwd.
             // MyRequestBuilder prepends Constant.serveraddress; no token needed yet.

@@ -13,7 +13,13 @@ import com.htgd.radiocontrol.aeroradiocontrol.data.auth.UnsupportedTokenRefreshe
 import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3LoginAuthenticator
 import com.htgd.radiocontrol.aeroradiocontrol.data.network.HttpStatusSuccessPolicy
 import com.htgd.radiocontrol.aeroradiocontrol.data.network.ResponseSuccessPolicy
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.MediaRepository
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.ServerStateRepository
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.TaskRepository
 import com.htgd.radiocontrol.aeroradiocontrol.data.repository.TerminalRepository
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3MediaRepository
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3ServerStateRepository
+import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3TaskRepository
 import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3TerminalRepository
 import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.ConstantServerConfig
 import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.ServerConfig
@@ -137,6 +143,49 @@ abstract class DataBindings {
     abstract fun bindTerminalRepository(
         impl: V3TerminalRepository,
     ): TerminalRepository
+
+    /**
+     * TaskRepository binding (ICD-TaskRepository-v1, TASK-PA-03b).
+     *
+     * Plan A: bound to [V3TaskRepository], currently a STUB returning empty/neutral
+     * values — it unblocks fe-business's Task Tab ViewModel compile against the LIVE
+     * contract before the real v3 adapter exists. The real impl (V3CallbackAdapter →
+     * SchemeDto → SSOT) swaps in later behind this same seam (no ViewModel change).
+     * Exactly ONE @Binds for TaskRepository app-wide.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindTaskRepository(
+        impl: V3TaskRepository,
+    ): TaskRepository
+
+    /**
+     * ServerStateRepository binding (ICD-ServerStateRepository-v1, TASK-PA-05).
+     *
+     * Plan A: bound to [V3ServerStateRepository] — a REAL impl (V3CallbackAdapter →
+     * ServerStateDto → SSOT), mirroring V3TerminalRepository. The dormant new-stack
+     * HealthApiService is NOT used. Exactly ONE @Binds for ServerStateRepository
+     * app-wide.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindServerStateRepository(
+        impl: V3ServerStateRepository,
+    ): ServerStateRepository
+
+    /**
+     * MediaRepository binding (ICD-MediaRepository-v1, TASK-PA-07, LIST half).
+     *
+     * Plan A: bound to [V3MediaRepository] — a REAL impl (V3CallbackAdapter →
+     * MediaDto/MediaFolderDto → SSOT), mirroring V3TerminalRepository. LIST/selection
+     * only; the 点播 CAST action is the HTIntf AAR cast-seam (legacy-native), not
+     * this repo. Exactly ONE @Binds for MediaRepository app-wide.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindMediaRepository(
+        impl: V3MediaRepository,
+    ): MediaRepository
 
     /**
      * ServerConfig binding (TASK-PA-01). Production reads/writes v3
