@@ -2,7 +2,9 @@ package com.htgd.radiocontrol.aeroradiocontrol.di
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.htgd.radiocontrol.aeroradiocontrol.data.api.AuthApi
 import com.htgd.radiocontrol.aeroradiocontrol.data.api.HealthApiService
+import com.htgd.radiocontrol.aeroradiocontrol.data.api.TerminalApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,15 +25,16 @@ import javax.inject.Singleton
  *   AppModule alone without dragging in API stubs.
  *
  * Base URL note:
- *   This project's server address is dynamic — it's set at login time
- *   into Constant.serveraddress and varies per customer's LAN setup.
- *   Retrofit requires a non-null baseUrl at construction time, so we
- *   pass a placeholder. Every API call uses @Url so the real address
- *   is supplied per-request at call time (see HealthApiService).
+ *   This project's server address is dynamic — each campus LAN has its own
+ *   host:port, set at login time. Retrofit requires a non-null baseUrl at
+ *   construction, so we pass [PLACEHOLDER_BASE_URL]. DynamicBaseUrlInterceptor
+ *   (AR-002, wired into AppModule's OkHttpClient) swaps the placeholder host for
+ *   the real address from AuthStore and prepends the `/api` base segment, so new
+ *   ApiService interfaces can use relative paths (`@POST("/authorizations")`)
+ *   matching the legacy Constant.java endpoints — no per-call @Url needed.
  *
- *   When Phase 1 introduces real endpoints, we'll add a request
- *   interceptor that injects Constant.serveraddress automatically,
- *   removing the per-call @Url requirement.
+ *   The legacy HealthApiService still uses @Url for its standalone reachability
+ *   probe (it runs before login, before any server address is stored).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -61,4 +64,14 @@ object NetworkModule {
     @Singleton
     fun provideHealthApiService(retrofit: Retrofit): HealthApiService =
         retrofit.create(HealthApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(retrofit: Retrofit): AuthApi =
+        retrofit.create(AuthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTerminalApi(retrofit: Retrofit): TerminalApi =
+        retrofit.create(TerminalApi::class.java)
 }

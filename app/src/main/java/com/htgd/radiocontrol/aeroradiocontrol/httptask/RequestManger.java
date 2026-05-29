@@ -36,16 +36,40 @@ public class RequestManger {
 
     public RequestManger()   {
 
-        mOkHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(20000L, TimeUnit.MILLISECONDS)
-                .readTimeout(20000L, TimeUnit.MILLISECONDS)
-                .hostnameVerifier(new HostnameVerifier() {
-                    @Override
-                    public boolean verify(String hostname, SSLSession session) {
-                        return true;
-                    }
-                })
-                .build();
+        // Fallback client, used only if setOkHttpClient() was never called
+        // (e.g. an isolated unit test not going through Hilt). In the running
+        // app, MyApplication.onCreate() injects the shared client via
+        // setOkHttpClient() so the old and new stacks share one connection pool
+        // + dispatcher (AR-004 / RISK-AUDIT-05). The config here mirrors the
+        // shared legacy client (LegacyNetworkModule) so behaviour is identical
+        // either way. Guard on null so injection (which may run before the first
+        // getInstance()) is not overwritten by a later constructor call.
+        if (mOkHttpClient == null) {
+            mOkHttpClient = new OkHttpClient.Builder()
+                    .connectTimeout(20000L, TimeUnit.MILLISECONDS)
+                    .readTimeout(20000L, TimeUnit.MILLISECONDS)
+                    .hostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    })
+                    .build();
+        }
+    }
+
+    /**
+     * Injects the shared OkHttpClient so the legacy stack reuses the new stack's
+     * connection pool + dispatcher (AR-004). Called once from
+     * MyApplication.onCreate() with the @LegacyOkHttpClient instance, before any
+     * request is issued. Replacing the client does not change request behaviour:
+     * the legacy client (LegacyNetworkModule) carries no new-stack interceptors
+     * and keeps the legacy timeouts + permissive hostname verifier.
+     */
+    public static synchronized void setOkHttpClient(OkHttpClient client) {
+        if (client != null) {
+            mOkHttpClient = client;
+        }
     }
 
     public static  RequestManger getInstance() {
