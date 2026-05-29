@@ -8,3 +8,9 @@
 /build
 /captures
 .externalNativeBuild
+# Claude Code local dir (worktrees/state); a stale Windows-path worktree here
+# broke `git status` until ignored — see PM ledger STD note.
+.claude/
+# IDE caches + agent runtime message inboxes (commit_hygiene: don't commit)
+/.idea/caches/
+.messages/
