@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.htgd.radiocontrol.aeroradiocontrol.data.model.Zone
 import com.htgd.radiocontrol.aeroradiocontrol.data.repository.TerminalRepository
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.AppForegroundState
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingCadence
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingRefreshScheduler
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +22,18 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * ViewModel for [ZoneDetailScreen] (TASK-AR-105).
+ * ViewModel for [ZoneDetailScreen] (TASK-AR-105; polling wired in PA-03).
  *
  * Reuses the AR-102 pattern: consumes [TerminalRepository] (the same SSOT as the
  * hub), projects the one zone matching [zoneId] into [ZoneDetailUiState]. The
  * zone id is supplied via [load] because the terminal Tab navigates by local
  * state (not a NavController arg), so it can't arrive through SavedStateHandle.
+ *
+ * Plan A polling (D-13, no WS): the detail page polls the v3 data path on the
+ * Handoff 详情 cadence (5s) via a [PollingRefreshScheduler] on [viewModelScope].
+ * Polling [start]s on the first [load] (we have no zone to refresh before then);
+ * [start] is idempotent so a re-[load] of the same id is a no-op. The loop dies
+ * with the scope (onCleared cancels viewModelScope).
  *
  * State derivation (combine of the matched zone Flow + the latest refresh result):
  *   - zone present, has terminals  → Success
@@ -36,10 +46,26 @@ import javax.inject.Inject
 @HiltViewModel
 class ZoneDetailViewModel @Inject constructor(
     private val repository: TerminalRepository,
+    foregroundState: AppForegroundState,
 ) : ViewModel() {
 
     private val zoneId = MutableStateFlow<String?>(null)
     private val refreshResult = MutableStateFlow<Result<Unit>?>(null)
+
+    /**
+     * Polling drives the periodic refresh once a zone is bound; each tick's outcome
+     * feeds [refreshResult] so the 5-state derivation resolves as in AR-105.
+     * Cadence = 详情 5s.
+     */
+    private val poller = PollingRefreshScheduler(
+        scope = viewModelScope,
+        refresh = { repository.refresh().also { refreshResult.value = it } },
+        cadence = PollingCadence.Detail,
+        foregroundState = foregroundState,
+    )
+
+    /** Light banner state (刷新中 / 刷新失败) — NOT a connection state (no WS). */
+    val pollingState: StateFlow<PollingState> = poller.state
 
     /** The zone whose id matches [zoneId], or null while unset / not found. */
     private val matchedZone: Flow<Zone?> =
@@ -57,14 +83,17 @@ class ZoneDetailViewModel @Inject constructor(
             initialValue = ZoneDetailUiState.Loading,
         )
 
-    /** Binds the screen's zone id and triggers a refresh. Idempotent per id. */
+    /** Binds the screen's zone id and begins 5s polling. Idempotent per id. */
     fun load(id: String) {
         if (zoneId.value == id) return
         zoneId.value = id
-        refresh()
+        poller.start() // immediate first refresh + 5s cadence; idempotent if running
     }
 
-    /** Re-fetches into the SSOT; drives Error/retry. */
+    /**
+     * Manual retry (error CTA): an out-of-band refresh independent of the polling
+     * cadence. Drives Error→Success/Empty/NotFound.
+     */
     fun refresh() {
         viewModelScope.launch {
             refreshResult.value = repository.refresh()

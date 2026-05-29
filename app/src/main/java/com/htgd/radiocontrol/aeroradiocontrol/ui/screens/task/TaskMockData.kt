@@ -1,10 +1,15 @@
 package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task
 
 /**
- * Mock data for the task Tab, still mock-backed until V3TaskRepository + the task
- * ViewModels land (TASK-PA-03b). The view types ([TaskItem]/[SchemeUi]/[LogEntry]/
- * [TaskCardState]) moved to TaskUiModels.kt; this file holds only the mock
- * instances and is deleted once the task screens are de-mocked.
+ * Mock data for the task Tab — RETAINED ONLY for the deferred [SchemeEditScreen]
+ * (TASK-PA-03c).
+ *
+ * The read+control screens (TaskScreen / SchemeDetailScreen / ExecutionLogScreen)
+ * were de-mocked onto TaskRepository in PA-03c — they no longer touch this file.
+ * SchemeEdit is CRUD, and there is no CRUD interface on TaskRepository yet (out of
+ * PA-03 scope → ICD_UPDATE), so it stays mock-backed until that increment lands;
+ * this file is deleted then. Trimmed to just the scheme lookup SchemeEdit uses
+ * (the `activeScheme`/`logs` mocks were dropped — nothing reads them anymore).
  */
 object TaskMock {
     val schemes: List<SchemeUi> = listOf(
@@ -29,13 +34,4 @@ object TaskMock {
     )
 
     fun scheme(id: String): SchemeUi? = schemes.firstOrNull { it.id == id }
-
-    val activeScheme: SchemeUi get() = schemes.firstOrNull { it.active } ?: schemes.first()
-
-    val logs: List<LogEntry> = listOf(
-        LogEntry("08:00:02", "上课铃", true, "教学楼 A · 4 个终端"),
-        LogEntry("09:50:00", "课间操音乐", true, "运动场 · 3 个终端"),
-        LogEntry("12:00:05", "午餐通知", false, "宿舍区 · 1 个终端离线"),
-        LogEntry("14:00:00", "下午预备", false, "已取消"),
-    )
 }

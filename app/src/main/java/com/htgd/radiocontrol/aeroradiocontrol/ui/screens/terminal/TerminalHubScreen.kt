@@ -41,6 +41,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.Notificati
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalHubSkeleton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalTile
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 /** Terminal tab root: swaps between the hub and a zone-detail page via local state. */
@@ -78,8 +79,10 @@ fun TerminalHubScreen(
     viewModel: TerminalHubViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pollingState by viewModel.pollingState.collectAsStateWithLifecycle()
     TerminalHubContent(
         state = state,
+        pollingState = pollingState,
         onOpenZone = onOpenZone,
         onRetry = viewModel::refresh,
         modifier = modifier,
@@ -93,6 +96,7 @@ fun TerminalHubContent(
     onOpenZone: (String) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    pollingState: PollingState = PollingState.IDLE,
 ) {
     val colors = AeroTheme.colors
 
@@ -117,13 +121,23 @@ fun TerminalHubContent(
             )
 
             is TerminalHubUiState.Success ->
-                TerminalHubList(zones = state.zones, staleMessage = null, onOpenZone = onOpenZone)
+                TerminalHubList(
+                    zones = state.zones,
+                    // Data is up; a background poll just failed → non-blocking notice,
+                    // not a hard Error (the list stays visible, retry happens on cadence).
+                    staleMessage = pollLapseMessage(pollingState),
+                    onOpenZone = onOpenZone,
+                )
 
             is TerminalHubUiState.Partial ->
                 TerminalHubList(zones = state.zones, staleMessage = state.staleMessage, onOpenZone = onOpenZone)
         }
     }
 }
+
+/** A warning banner message when polling is degraded while data is shown, else null. */
+private fun pollLapseMessage(pollingState: PollingState): String? =
+    if (pollingState == PollingState.ERROR) "刷新失败，正在自动重试…" else null
 
 /**
  * The populated hub: controls + fault banner + per-zone terminal grid + bulk FAB.

@@ -52,6 +52,11 @@ internal val StatusFaultSoft   = Color(0xFFFDECEC) // ← StatusFault   #DC2626 
 internal val StatusPlayingSoft = Color(0xFFE8EFFD) // ← StatusPlaying #2563EB tint
 internal val StatusPagingSoft  = Color(0xFFFDEEE2) // ← StatusPaging  #EA580C tint
 
+// ── Task migration / swap accent (ICD-DesignTokens-v1.2) ─────────────────────
+// 任务 迁移/对调 use a gold accent per Handoff §任务; refactor has no gold token.
+internal val Gold     = Color(0xFFA8780A) // 迁移/对调 accent (border + tag fg)
+internal val GoldSoft = Color(0xFFFAF0CC) // ← Gold soft tint (tag pill bg)
+
 /**
  * Public color palette used throughout the v4 UI.
  *
@@ -93,4 +98,7 @@ data class AeroColors(
     val statusFaultSoft: Color = StatusFaultSoft,
     val statusPlayingSoft: Color = StatusPlayingSoft,
     val statusPagingSoft: Color = StatusPagingSoft,
+
+    val gold: Color = Gold,
+    val goldSoft: Color = GoldSoft,
 )

@@ -1,18 +1,18 @@
 package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task
 
 /**
- * Presentation view models for the task Tab (TASK-PA-03b, interface-independent part).
+ * Presentation view models for the task Tab (TASK-PA-03b/c).
  *
- * The (future) ViewModels will map the data layer's V3TaskRepository domain models
- * into these UI types, so screens never touch DTOs. Extracted from TaskMockData so
- * the screens (and the de-mocked versions) depend on real UI models, not the mock
- * file — mirrors the terminal Tab's TerminalUiModels split (AR-102). The mock
- * instances stay in TaskMockData until the V3TaskRepository ViewModel lands.
+ * The task ViewModels map the data layer's domain models (Scheme/SchemeTask/
+ * SchemeTaskStatus/TaskLog) into these UI types at the VM boundary (see
+ * TaskUiMappers.kt), so screens never touch DTOs/domain types — mirrors the
+ * terminal Tab's TerminalUiModels split (AR-102). Only the deferred CRUD
+ * SchemeEditScreen still uses the mock instances in TaskMockData.
  */
 
 /** Visual lifecycle state of a task card. Domain→UI mapping (with Unknown
- *  fallback) happens at the ViewModel boundary once V3TaskRepository's sealed
- *  domain state arrives; the real value set is OPEN pending O-1. */
+ *  fallback) happens at the ViewModel boundary (TaskUiMappers); the real
+ *  SchemeTaskStatus value set is OPEN pending v3 适配实测 (O-1 void under D-13). */
 enum class TaskCardState { Normal, Running, Swapped, Migrated, Deleted, Cancelled }
 
 data class TaskItem(

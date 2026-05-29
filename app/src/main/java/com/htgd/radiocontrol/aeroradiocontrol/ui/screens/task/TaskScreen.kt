@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,11 +42,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.HeroStrip
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationBanner
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.SkeletonBox
+import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
-import kotlinx.coroutines.delay
 
 /** Task tab root: home timeline + 4 sub-pages, navigated via local state. */
 private sealed interface TaskRoute {
@@ -85,6 +88,13 @@ fun TaskTab(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Task home — stateful entry (TASK-PA-03c, de-mocked).
+ *
+ * Observes [TaskHomeViewModel] (→ [TaskRepository], real data; V3TaskRepository is a
+ * STUB so this shows Empty until the v3 adapter lands) and renders the
+ * [TaskHomeUiState] states. No more mock data.
+ */
 @Composable
 fun TaskScreen(
     onOpenSchemeDetail: (String) -> Unit,
@@ -92,20 +102,112 @@ fun TaskScreen(
     onOpenLog: () -> Unit,
     onOpenTempBroadcast: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: TaskHomeViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pollingState by viewModel.pollingState.collectAsStateWithLifecycle()
+    TaskHomeContent(
+        state = state,
+        pollingState = pollingState,
+        onOpenSchemeDetail = onOpenSchemeDetail,
+        onOpenSchemeEdit = onOpenSchemeEdit,
+        onOpenLog = onOpenLog,
+        onOpenTempBroadcast = onOpenTempBroadcast,
+        onRetry = viewModel::refresh,
+        modifier = modifier,
+    )
+}
+
+/** Stateless renderer for the home states (previewable / testable without Hilt). */
+@Composable
+fun TaskHomeContent(
+    state: TaskHomeUiState,
+    onOpenSchemeDetail: (String) -> Unit,
+    onOpenSchemeEdit: (String) -> Unit,
+    onOpenLog: () -> Unit,
+    onOpenTempBroadcast: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+    pollingState: PollingState = PollingState.IDLE,
+) {
+    Box(modifier = modifier.fillMaxSize().background(AeroTheme.colors.bg)) {
+        when (state) {
+            is TaskHomeUiState.Loading -> TaskHomeSkeleton()
+
+            is TaskHomeUiState.Empty -> EmptyState(
+                icon = Icons.AutoMirrored.Filled.ListAlt,
+                title = "暂无作息方案",
+                description = "还没有作息方案数据，点击重试刷新。",
+                actionLabel = "重试",
+                onAction = onRetry,
+            )
+
+            is TaskHomeUiState.Error -> EmptyState(
+                icon = Icons.AutoMirrored.Filled.ListAlt,
+                title = "加载失败",
+                description = state.message,
+                actionLabel = "重试",
+                onAction = onRetry,
+            )
+
+            is TaskHomeUiState.Success -> TaskHomeList(
+                scheme = state.scheme,
+                staleMessage = pollLapseMessage(pollingState),
+                onOpenSchemeDetail = onOpenSchemeDetail,
+                onOpenSchemeEdit = onOpenSchemeEdit,
+                onOpenLog = onOpenLog,
+                onOpenTempBroadcast = onOpenTempBroadcast,
+            )
+
+            is TaskHomeUiState.Partial -> TaskHomeList(
+                scheme = state.scheme,
+                staleMessage = state.staleMessage,
+                onOpenSchemeDetail = onOpenSchemeDetail,
+                onOpenSchemeEdit = onOpenSchemeEdit,
+                onOpenLog = onOpenLog,
+                onOpenTempBroadcast = onOpenTempBroadcast,
+            )
+        }
+    }
+}
+
+/** A warning banner message when polling is degraded while data is shown, else null. */
+private fun pollLapseMessage(pollingState: PollingState): String? =
+    if (pollingState == PollingState.ERROR) "刷新失败，正在自动重试…" else null
+
+@Composable
+private fun TaskHomeSkeleton() {
+    val spacing = AeroTheme.spacing
+    Column(
+        modifier = Modifier.fillMaxSize().padding(spacing.pageH),
+        verticalArrangement = Arrangement.spacedBy(spacing.md),
+    ) {
+        repeat(4) {
+            SkeletonBox(modifier = Modifier.fillMaxWidth().height(72.dp), shape = AeroTheme.shapes.rCard)
+        }
+    }
+}
+
+@Composable
+private fun TaskHomeList(
+    scheme: SchemeUi,
+    staleMessage: String?,
+    onOpenSchemeDetail: (String) -> Unit,
+    onOpenSchemeEdit: (String) -> Unit,
+    onOpenLog: () -> Unit,
+    onOpenTempBroadcast: () -> Unit,
 ) {
     val spacing = AeroTheme.spacing
-    val scheme = TaskMock.activeScheme
-    var loading by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(1400)
-        loading = false
-    }
-
     LazyColumn(
-        modifier = modifier.fillMaxSize().background(AeroTheme.colors.bg),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(spacing.pageH),
         verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
+        if (staleMessage != null) {
+            item(key = "stale") {
+                NotificationBanner(type = NotificationType.Warning, message = staleMessage)
+            }
+        }
         item(key = "hero") {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 HeroStrip(kicker = "当前作息方案 · ${scheme.tasks.size} 项任务", title = scheme.name)
@@ -117,11 +219,8 @@ fun TaskScreen(
                 }
             }
         }
-        when {
-            loading -> items(4) {
-                SkeletonBox(modifier = Modifier.fillMaxWidth().height(72.dp), shape = AeroTheme.shapes.rCard)
-            }
-            scheme.tasks.isEmpty() -> item(key = "empty") {
+        if (scheme.tasks.isEmpty()) {
+            item(key = "empty") {
                 EmptyState(
                     icon = Icons.AutoMirrored.Filled.ListAlt,
                     title = "暂无任务",
@@ -130,20 +229,19 @@ fun TaskScreen(
                     onAction = { onOpenSchemeEdit(scheme.id) },
                 )
             }
-            else -> {
-                listOf("上午", "下午", "晚上").forEach { period ->
-                    val inPeriod = scheme.tasks.filter { periodOf(it.time) == period }
-                    if (inPeriod.isNotEmpty()) {
-                        item(key = "period-$period") {
-                            Text(
-                                period,
-                                style = AeroTheme.typography.label,
-                                color = AeroTheme.colors.ink3,
-                                modifier = Modifier.padding(top = spacing.sm, start = 56.dp),
-                            )
-                        }
-                        items(inPeriod, key = { it.id }) { task -> TimelineRow(task = task) }
+        } else {
+            listOf("上午", "下午", "晚上").forEach { period ->
+                val inPeriod = scheme.tasks.filter { periodOf(it.time) == period }
+                if (inPeriod.isNotEmpty()) {
+                    item(key = "period-$period") {
+                        Text(
+                            period,
+                            style = AeroTheme.typography.label,
+                            color = AeroTheme.colors.ink3,
+                            modifier = Modifier.padding(top = spacing.sm, start = 56.dp),
+                        )
                     }
+                    items(inPeriod, key = { it.id }) { task -> TimelineRow(task = task) }
                 }
             }
         }
@@ -203,8 +301,8 @@ private fun dotColor(state: TaskCardState): Color {
     val c = AeroTheme.colors
     return when (state) {
         TaskCardState.Running -> c.statusPaging
-        TaskCardState.Swapped -> Gold
-        TaskCardState.Migrated -> Gold
+        TaskCardState.Swapped -> c.gold
+        TaskCardState.Migrated -> c.gold
         TaskCardState.Deleted, TaskCardState.Cancelled -> c.ink3
         TaskCardState.Normal -> c.primary
     }
@@ -231,10 +329,10 @@ private fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
 
     box = when (task.state) {
         TaskCardState.Running -> box.border(1.5.dp, runningBorder, shape)
-        TaskCardState.Swapped -> box.border(1.dp, Gold, shape)
+        TaskCardState.Swapped -> box.border(1.dp, colors.gold, shape)
         TaskCardState.Migrated -> box.drawBehind {
             drawRoundRect(
-                color = Gold,
+                color = colors.gold,
                 style = Stroke(
                     width = 1.5.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)),
@@ -268,8 +366,8 @@ private fun StateTag(state: TaskCardState) {
     val c = AeroTheme.colors
     val (label, fg, bg, icon) = when (state) {
         TaskCardState.Running -> Quad("进行中", c.statusPaging, c.statusPagingSoft, null)
-        TaskCardState.Swapped -> Quad("对调", Gold, GoldSoft, Icons.Filled.SwapHoriz)
-        TaskCardState.Migrated -> Quad("迁移", Gold, GoldSoft, null)
+        TaskCardState.Swapped -> Quad("对调", c.gold, c.goldSoft, Icons.Filled.SwapHoriz)
+        TaskCardState.Migrated -> Quad("迁移", c.gold, c.goldSoft, null)
         TaskCardState.Deleted -> Quad("已删除", c.ink3, c.surface3, null)
         TaskCardState.Cancelled -> Quad("已取消", c.ink3, c.surface3, null)
         TaskCardState.Normal -> return
@@ -295,10 +393,6 @@ private data class Quad(
     val bg: Color,
     val icon: ImageVector?,
 )
-
-// 迁移 / 对调 use a gold accent per Handoff §任务; refactor has no gold token.
-private val Gold = Color(0xFFA8780A)
-private val GoldSoft = Color(0xFFFAF0CC)
 
 private fun periodOf(time: String): String {
     val hour = time.substringBefore(":").toIntOrNull() ?: 0

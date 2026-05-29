@@ -1,13 +1,10 @@
 package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.broadcast
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,12 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -34,13 +30,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,37 +45,72 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButtonVariant
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MChip
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.StatusPill
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.TerminalStatus
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.ListSkeleton
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationBanner
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroGradients
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
-import kotlinx.coroutines.delay
 
 enum class BroadcastMode(val label: String) { Page("寻呼"), Talk("对讲"), Cast("点播") }
 
-private data class MediaFile(val id: String, val name: String, val duration: String)
-
-private val mockMedia = listOf(
-    MediaFile("m1", "上课铃声", "00:08"),
-    MediaFile("m2", "课间操音乐", "03:20"),
-    MediaFile("m3", "放学通知", "00:15"),
-)
-
 /**
- * Broadcast tab. Segmented switch over three modes; the target-terminal
- * selection is shared across all modes. Page mode uses push-to-talk with a
- * pulsing button while pressed.
+ * Broadcast tab. Segmented switch over three modes; the target-zone selection is
+ * shared across all modes (so switching mode does NOT reset the chosen targets).
+ *
+ * Mode wiring (de-mocked onto real seams):
+ *   - 点播 (Cast) → [CastViewModel] (MediaRepository + OnDemandCastAdapter, NO mic).
+ *   - 寻呼 (Page) / 对讲 (Talk) → [VoiceViewModel] (VoiceTalkAdapter; mic-gated). The
+ *     RECORD_AUDIO prompt is driven HERE on [VoiceEffect.RequestMicPermission] (the
+ *     adapter re-checks the grant at call time and fails closed; fe owns the prompt,
+ *     never the gate). A device-connection banner is driven from deviceEvents.
  */
 @Composable
 fun BroadcastScreen(
     modifier: Modifier = Modifier,
     targetsViewModel: BroadcastTargetsViewModel = hiltViewModel(),
+    castViewModel: CastViewModel = hiltViewModel(),
+    voiceViewModel: VoiceViewModel = hiltViewModel(),
 ) {
     val spacing = AeroTheme.spacing
     val zones by targetsViewModel.zones.collectAsStateWithLifecycle()
+    val voiceState by voiceViewModel.uiState.collectAsStateWithLifecycle()
+    val connection by voiceViewModel.connection.collectAsStateWithLifecycle()
 
     var mode by remember { mutableStateOf(BroadcastMode.Page) }
     // Start with nothing selected; the zone list arrives asynchronously and may
     // be empty, so never index into it (defensive — was zones.first()).
     var selectedZones by remember { mutableStateOf(setOf<String>()) }
+    // Selection is shared across modes (hoisted here, not per-panel) so the switch
+    // keeps the chosen targets.
+    val activeSelection = selectedZones.intersect(zones.map { it.id }.toSet())
+    // rememberUpdatedState so the permission-result callback (created once) always
+    // retries against the LATEST selection, not a stale snapshot.
+    val currentSelection by rememberUpdatedState(activeSelection)
+
+    // The kind to retry after the RECORD_AUDIO prompt resolves (set when the VM asks).
+    var pendingMicKind by remember { mutableStateOf<VoiceKind?>(null) }
+    val micLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        pendingMicKind?.let { kind ->
+            voiceViewModel.onMicPermissionResult(granted, kind, currentSelection)
+            pendingMicKind = null
+        }
+    }
+
+    // fe drives the mic prompt off the VM's one-shot effect (adapter owns the gate).
+    LaunchedEffect(Unit) {
+        voiceViewModel.effects.collect { effect ->
+            when (effect) {
+                is VoiceEffect.RequestMicPermission -> {
+                    pendingMicKind = effect.retryKind
+                    micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+                is VoiceEffect.Message -> { /* targets-empty etc.: panel reflects state; no-op toast hook */ }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -90,11 +120,16 @@ fun BroadcastScreen(
             .padding(spacing.pageH),
         verticalArrangement = Arrangement.spacedBy(spacing.lg),
     ) {
+        // Tab-level device-connection banner (寻呼/对讲 only — voice device link).
+        if (mode != BroadcastMode.Cast && connection == VoiceConnection.Disconnected) {
+            NotificationBanner(type = NotificationType.Warning, message = "语音设备已离线")
+        }
+
         ModeSegmented(selected = mode, onSelect = { mode = it })
 
         TargetSection(
             zoneLabels = zones.map { it.id to it.name },
-            selectedIds = selectedZones.intersect(zones.map { it.id }.toSet()),
+            selectedIds = activeSelection,
             onToggle = { id ->
                 selectedZones =
                     if (id in selectedZones) selectedZones - id else selectedZones + id
@@ -102,9 +137,26 @@ fun BroadcastScreen(
         )
 
         when (mode) {
-            BroadcastMode.Page -> PagePanel(targetCount = selectedZones.size)
-            BroadcastMode.Talk -> TalkPanel()
-            BroadcastMode.Cast -> CastPanel()
+            BroadcastMode.Page -> VoicePanel(
+                kind = VoiceKind.Page,
+                state = voiceState,
+                targetCount = activeSelection.size,
+                onStart = { voiceViewModel.start(VoiceKind.Page, activeSelection) },
+                onStop = voiceViewModel::stop,
+                onDismiss = voiceViewModel::dismiss,
+            )
+            BroadcastMode.Talk -> VoicePanel(
+                kind = VoiceKind.Talk,
+                state = voiceState,
+                targetCount = activeSelection.size,
+                onStart = { voiceViewModel.start(VoiceKind.Talk, activeSelection) },
+                onStop = voiceViewModel::stop,
+                onDismiss = voiceViewModel::dismiss,
+            )
+            BroadcastMode.Cast -> CastPanel(
+                viewModel = castViewModel,
+                selectedZoneIds = activeSelection,
+            )
         }
     }
 }
@@ -164,138 +216,178 @@ private fun TargetSection(
     }
 }
 
+/**
+ * Unified 寻呼/对讲 panel — de-mocked onto [VoiceViewModel] (SD2). Renders the
+ * [VoiceUiState] for the active [kind]; start is gated by isAvailable() (Unavailable
+ * fallback) + non-empty targets, and the mic prompt is driven at the screen root.
+ */
 @Composable
-private fun PagePanel(targetCount: Int) {
+private fun VoicePanel(
+    kind: VoiceKind,
+    state: VoiceUiState,
+    targetCount: Int,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
-    var pressing by remember { mutableStateOf(false) }
-    var seconds by remember { mutableStateOf(0) }
-    LaunchedEffect(pressing) {
-        if (pressing) {
-            seconds = 0
-            while (true) {
-                delay(1000)
-                seconds++
-            }
-        }
-    }
+    val verb = if (kind == VoiceKind.Page) "寻呼" else "对讲"
 
-    val transition = rememberInfiniteTransition(label = "ptt")
-    val pulse by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse),
-        label = "pulse",
-    )
-    val scale = if (pressing) pulse else 1f
+    if (state is VoiceUiState.Unavailable) {
+        EmptyState(
+            icon = Icons.Filled.MicOff,
+            title = "$verb 不可用",
+            description = "此设备不支持语音功能（缺少音频原生库或 ABI 不兼容）。",
+        )
+        return
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.lg),
     ) {
-        if (pressing) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-            ) {
-                StatusPill(status = TerminalStatus.Paging)
-                Text(
-                    "正在寻呼 $targetCount 区 · %02d:%02d".format(seconds / 60, seconds % 60),
-                    style = AeroTheme.typography.bodySmall,
-                    color = colors.statusPaging,
-                )
-            }
-        } else {
-            Text(
-                "按住下方按钮开始寻呼",
+        // Status line for the live/terminal states.
+        when (state) {
+            is VoiceUiState.Connecting ->
+                VoiceStatusLine(TerminalStatus.Paging, "正在连接…", colors.statusPaging)
+            is VoiceUiState.Waiting ->
+                VoiceStatusLine(TerminalStatus.Paging, "等待对方接听…", colors.statusPaging)
+            is VoiceUiState.Active ->
+                VoiceStatusLine(TerminalStatus.Playing, "正在$verb $targetCount 区", colors.statusOnline)
+            is VoiceUiState.Refused ->
+                VoiceStatusLine(TerminalStatus.Offline, "对方已拒绝", colors.ink3)
+            is VoiceUiState.Error ->
+                VoiceStatusLine(TerminalStatus.Fault, state.message, colors.statusFault)
+            else -> Text(
+                "选择目标终端后，点击下方按钮开始$verb",
                 style = AeroTheme.typography.body,
                 color = colors.ink3,
                 textAlign = TextAlign.Center,
             )
         }
-        Box(
-            modifier = Modifier
-                .size(180.dp)
-                .scale(scale)
-                .clip(CircleShape)
-                .background(if (pressing) AeroGradients.Warm else AeroGradients.Primary)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            pressing = true
-                            tryAwaitRelease()
-                            pressing = false
-                        },
+
+        when (state) {
+            is VoiceUiState.Idle -> MButton(
+                text = "开始$verb",
+                variant = MButtonVariant.Success,
+                leading = { Icon(Icons.Filled.Mic, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                enabled = targetCount > 0,
+                onClick = onStart,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            is VoiceUiState.Refused, is VoiceUiState.Error -> MButton(
+                text = "好的",
+                variant = MButtonVariant.Tonal,
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            else -> MButton( // Connecting / Waiting / Active → end the session
+                text = "结束$verb",
+                variant = MButtonVariant.Danger,
+                leading = { Icon(Icons.Filled.Mic, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                onClick = onStop,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun VoiceStatusLine(status: TerminalStatus, label: String, labelColor: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AeroTheme.spacing.sm),
+    ) {
+        StatusPill(status = status)
+        Text(label, style = AeroTheme.typography.bodySmall, color = labelColor)
+    }
+}
+
+/**
+ * 点播 (Cast) mode — de-mocked onto [CastViewModel] (MediaRepository + OnDemandCast,
+ * NO mic). Renders the library states; cast targets the shared [selectedZoneIds].
+ */
+@Composable
+private fun CastPanel(
+    viewModel: CastViewModel,
+    selectedZoneIds: Set<String>,
+) {
+    val colors = AeroTheme.colors
+    val spacing = AeroTheme.spacing
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val castResult by viewModel.castResult.collectAsStateWithLifecycle()
+
+    var selectedMedia by remember { mutableStateOf(setOf<String>()) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
+        castResult?.let { result ->
+            val (type, msg) = when (result) {
+                is CastResult.Success -> NotificationType.Success to "已开始点播"
+                is CastResult.Failure -> NotificationType.Error to result.message
+            }
+            NotificationBanner(type = type, message = msg)
+        }
+
+        when (val s = state) {
+            is CastUiState.Loading -> ListSkeleton(rows = 4)
+
+            is CastUiState.Unavailable -> EmptyState(
+                icon = Icons.Filled.MusicNote,
+                title = "点播不可用",
+                description = "此设备不支持点播功能（缺少音频原生库）。",
+            )
+
+            is CastUiState.Error -> EmptyState(
+                icon = Icons.Filled.MusicNote,
+                title = "加载失败",
+                description = s.message,
+                actionLabel = "重试",
+                onAction = viewModel::refresh,
+            )
+
+            is CastUiState.Ready -> {
+                Text("选择音频", style = AeroTheme.typography.sectionTitle, color = colors.ink)
+                if (s.media.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Filled.MusicNote,
+                        title = "暂无媒体",
+                        description = "媒体库中还没有音频文件。",
                     )
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Filled.Mic, contentDescription = "寻呼", tint = Color.White, modifier = Modifier.size(48.dp))
-                Text(if (pressing) "松开结束" else "按住说话", style = AeroTheme.typography.bodyLarge, color = Color.White)
+                } else {
+                    s.media.forEach { file ->
+                        MediaRow(
+                            file = file,
+                            selected = file.id in selectedMedia,
+                            onClick = {
+                                selectedMedia =
+                                    if (file.id in selectedMedia) selectedMedia - file.id
+                                    else selectedMedia + file.id
+                            },
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(spacing.sm))
+                    MButton(
+                        text = "开始点播",
+                        variant = MButtonVariant.Filled,
+                        leading = {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        enabled = selectedMedia.isNotEmpty() && selectedZoneIds.isNotEmpty(),
+                        onClick = {
+                            viewModel.castMedia(selectedMedia, selectedZoneIds)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun TalkPanel() {
-    val spacing = AeroTheme.spacing
-    var talking by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = spacing.xl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.lg),
-    ) {
-        StatusPill(status = if (talking) TerminalStatus.Playing else TerminalStatus.Offline)
-        MButton(
-            text = if (talking) "结束对讲" else "开始对讲",
-            variant = if (talking) MButtonVariant.Danger else MButtonVariant.Success,
-            leading = { Icon(Icons.Filled.Mic, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            onClick = { talking = !talking },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun CastPanel() {
-    val colors = AeroTheme.colors
-    val spacing = AeroTheme.spacing
-    var selectedId by remember { mutableStateOf<String?>(null) }
-    var playing by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-        Text("选择音频", style = AeroTheme.typography.sectionTitle, color = colors.ink)
-        mockMedia.forEach { file ->
-            MediaRow(
-                file = file,
-                selected = file.id == selectedId,
-                onClick = { selectedId = file.id },
-            )
-        }
-        Spacer(modifier = Modifier.height(spacing.sm))
-        MButton(
-            text = if (playing) "停止播放" else "开始点播",
-            variant = if (playing) MButtonVariant.Danger else MButtonVariant.Filled,
-            leading = {
-                Icon(
-                    if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-            enabled = selectedId != null,
-            onClick = { playing = !playing },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun MediaRow(file: MediaFile, selected: Boolean, onClick: () -> Unit) {
+private fun MediaRow(file: MediaUi, selected: Boolean, onClick: () -> Unit) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
     Row(
