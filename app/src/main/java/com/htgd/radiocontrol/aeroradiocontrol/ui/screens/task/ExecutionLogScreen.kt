@@ -61,7 +61,7 @@ fun ExecutionLogContent(
             is ExecutionLogUiState.Empty -> EmptyState(
                 icon = Icons.AutoMirrored.Filled.ListAlt,
                 title = "暂无执行日志",
-                description = "任务执行后会在这里留下记录。",
+                description = "当前服务器暂未提供执行日志，后续接入后将在此展示。",
             )
 
             is ExecutionLogUiState.Error -> EmptyState(

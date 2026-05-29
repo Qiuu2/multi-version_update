@@ -105,13 +105,20 @@ class VoiceViewModel @Inject constructor(
         }
         if (_uiState.value.isInSession) return // one session at a time
 
+        // Flip to Connecting SYNCHRONOUSLY (before the launch) so a same-frame second
+        // start() is caught by the isInSession guard above — the previous version set
+        // Connecting inside the coroutine, so two synchronous calls both slipped past
+        // the guard before either ran (BL-VOICE-DOUBLESTART). If targets resolve empty
+        // below, we revert to Idle.
+        _uiState.value = VoiceUiState.Connecting
+
         viewModelScope.launch {
             val terminalIds = targetResolver.resolveTerminalIds(selectedZoneIds)
             if (terminalIds.isEmpty()) {
+                _uiState.value = VoiceUiState.Idle // revert the pre-emptive Connecting
                 _effects.tryEmit(VoiceEffect.Message("请选择目标终端"))
                 return@launch
             }
-            _uiState.value = VoiceUiState.Connecting
             val result = when (kind) {
                 VoiceKind.Page -> adapter.startPaging(terminalIds)
                 VoiceKind.Talk -> adapter.startTalk(terminalIds)

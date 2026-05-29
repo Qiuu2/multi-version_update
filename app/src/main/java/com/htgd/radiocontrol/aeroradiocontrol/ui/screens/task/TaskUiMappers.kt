@@ -20,9 +20,11 @@ import com.htgd.radiocontrol.aeroradiocontrol.data.model.TaskLog
  *    Real data only ever produces Normal / Running / Cancelled, plus the Unknown→
  *    Normal fallback. The unused enum values stay valid but are simply never emitted
  *    (same as terminal statuses the v3 stack doesn't drive).
- *  - [SchemeTask] has no zone field (v3 `TaskZuoxiModel` has none); [TaskItem.zone]
- *    therefore maps to the media name when present, else "" (UI renders it as a
- *    secondary line and tolerates blank). Pinned at impl time if v3 exposes a zone.
+ *  - [SchemeTask] has no zone field — confirmed at real-impl (PA-10): the v3 scheme/
+ *    task wire (TaskZuoxiModel / TaskGuangboModel) carries NO zone column. So
+ *    [TaskItem.zone] is left blank rather than borrowing the media name (which would
+ *    show a song title in a zone slot — a visible mismatch on real data). The UI
+ *    tolerates the blank secondary line.
  */
 
 /** SchemeTaskStatus → the card's visual lifecycle state. Unknown-tolerant. */
@@ -38,8 +40,8 @@ fun SchemeTask.toTaskItem(): TaskItem = TaskItem(
     // 时间轴/详情 show the start time; blank-tolerant ("--" handled downstream).
     time = startTime.orEmpty(),
     title = name,
-    // No domain zone (see file header); fall back to media name, else blank.
-    zone = mediaName.orEmpty(),
+    // No domain zone on the v3 wire (PA-10 confirmed) → blank, not the media name.
+    zone = "",
     state = status.toCardState(),
 )
 
@@ -53,8 +55,10 @@ fun Scheme.toSchemeUi(): SchemeUi = SchemeUi(
 fun TaskLog.toLogEntry(): LogEntry = LogEntry(
     time = timestamp,
     title = taskName,
-    // The domain log has no success flag yet (v3 source TBD at impl); treat every
-    // recorded entry as a neutral/success row until the real field is confirmed.
+    // The domain log has no success flag. PA-10 confirmed v3 exposes NO execution-log
+    // endpoint, so getExecutionLog() returns empty and this mapper is never exercised
+    // on real data (success is moot / never rendered). Kept defaulting to true so the
+    // shape stays valid if a log source is ever added.
     success = true,
     detail = message,
 )
