@@ -43,12 +43,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButtonVariant
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MChip
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.StatusPill
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.TerminalStatus
-import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalMock
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroGradients
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 import kotlinx.coroutines.delay
@@ -69,12 +70,17 @@ private val mockMedia = listOf(
  * pulsing button while pressed.
  */
 @Composable
-fun BroadcastScreen(modifier: Modifier = Modifier) {
+fun BroadcastScreen(
+    modifier: Modifier = Modifier,
+    targetsViewModel: BroadcastTargetsViewModel = hiltViewModel(),
+) {
     val spacing = AeroTheme.spacing
-    val zones = TerminalMock.zones
+    val zones by targetsViewModel.zones.collectAsStateWithLifecycle()
 
     var mode by remember { mutableStateOf(BroadcastMode.Page) }
-    var selectedZones by remember { mutableStateOf(setOf(zones.first().id)) }
+    // Start with nothing selected; the zone list arrives asynchronously and may
+    // be empty, so never index into it (defensive — was zones.first()).
+    var selectedZones by remember { mutableStateOf(setOf<String>()) }
 
     Column(
         modifier = modifier
@@ -88,7 +94,7 @@ fun BroadcastScreen(modifier: Modifier = Modifier) {
 
         TargetSection(
             zoneLabels = zones.map { it.id to it.name },
-            selectedIds = selectedZones,
+            selectedIds = selectedZones.intersect(zones.map { it.id }.toSet()),
             onToggle = { id ->
                 selectedZones =
                     if (id in selectedZones) selectedZones - id else selectedZones + id

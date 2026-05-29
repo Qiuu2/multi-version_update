@@ -1,30 +1,11 @@
 package com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task
 
-/** Visual lifecycle states of a task card. */
-enum class TaskCardState { Normal, Running, Swapped, Migrated, Deleted, Cancelled }
-
-data class TaskItem(
-    val id: String,
-    val time: String,
-    val title: String,
-    val zone: String,
-    val state: TaskCardState,
-)
-
-data class SchemeUi(
-    val id: String,
-    val name: String,
-    val active: Boolean,
-    val tasks: List<TaskItem>,
-)
-
-data class LogEntry(
-    val time: String,
-    val title: String,
-    val success: Boolean,
-    val detail: String,
-)
-
+/**
+ * Mock data for the task Tab, still mock-backed until V3TaskRepository + the task
+ * ViewModels land (TASK-PA-03b). The view types ([TaskItem]/[SchemeUi]/[LogEntry]/
+ * [TaskCardState]) moved to TaskUiModels.kt; this file holds only the mock
+ * instances and is deleted once the task screens are de-mocked.
+ */
 object TaskMock {
     val schemes: List<SchemeUi> = listOf(
         SchemeUi(

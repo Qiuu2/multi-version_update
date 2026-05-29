@@ -9,12 +9,12 @@ import com.htgd.radiocontrol.screanadaption.CancelAdapt
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * Entry point for the v4 Compose UI.
+ * Entry point for the v4 Compose UI — the app's single MAIN/LAUNCHER activity
+ * (consolidated from the legacy double-launcher, RISK-AUDIT-02 / D-2026-05-27-03).
  *
- * Lives side-by-side with the legacy [com.htgd.radiocontrol.aeroradiocontrol.activity.SignActivity]
- * during the gradual migration. Manifest declares this with its own LAUNCHER
- * filter under a distinct app label ("AeroRadio v4") so QA can install both
- * UIs on the same device and toggle between them.
+ * The legacy [com.htgd.radiocontrol.aeroradiocontrol.activity.SignActivity] still
+ * exists for in-progress migration but is no longer a launcher; it is reached by
+ * explicit Intent only. Hosts the v4 nav graph (splash → login → main).
  *
  * Annotated with [AndroidEntryPoint] so Compose-side ViewModels can use Hilt
  * via `hiltViewModel()`.

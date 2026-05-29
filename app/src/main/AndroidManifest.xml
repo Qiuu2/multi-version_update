@@ -63,17 +63,26 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:replace="android:label">
 
+        <!--
+            Legacy v3 splash/permission screen. Demoted from LAUNCHER as part of
+            the v4 entry-point consolidation (RISK-AUDIT-02 / D-2026-05-27-03):
+            ui.V4Activity below is now the single MAIN/LAUNCHER.
+
+            SignActivity is currently unreferenced — no startActivity/setClass
+            in the codebase targets it (verified during TASK-AR-006). It is kept
+            declared (exported=false) only to ease the in-progress v3→v4 migration
+            and is intended-dead; remove it once the legacy stack is retired. If a
+            v4 logout ever needs to return to the legacy login flow, that routing
+            wiring does not exist yet and would be added by the owning task.
+        -->
         <activity
             android:name=".activity.SignActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:launchMode="singleInstance"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:screenOrientation="portrait" />
+
+
 
         <activity
             android:name=".ui.V4Activity"

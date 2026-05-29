@@ -39,6 +39,8 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButtonVariant
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MInput
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MSwitch
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationBanner
+import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroGradients
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
@@ -46,33 +48,52 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
  * Login — Handoff.html §05 spec-card #00 (LoginScreen).
  *
  * Layout (top → bottom):
+ *   - Optional form-level error banner ([LoginUiState.formError]).
  *   - Brand mark + product name (no surrounding TopBar).
  *   - Username input.
  *   - Password input + visibility toggle.
  *   - "Remember me" switch.
  *   - Server address collapsible (IP + port).
- *   - Login button (filled, primary CTA).
+ *   - Login button (filled, primary CTA — shows progress while submitting).
  *   - Scan QR shortcut.
  *
- * The screen is stateless besides local UI fields — actual auth wiring goes
- * into a `LoginViewModel` in a follow-up. Pass [error] from outside to show
- * the error state (red border + caption under the affected fields).
+ * Field text stays local UI state; everything that a future `LoginViewModel`
+ * decides — submit phase, field validation, form-level errors — arrives via
+ * [state]. This renders all five login states (idle / submitting / success /
+ * field-error / form-error) with NO network/data-layer wiring yet (auth call +
+ * AuthStore.saveLogin land when AR-005's data layer is unblocked). [validateServer]
+ * defaults to [validateServerAddress], which delegates to data-integration's
+ * `ServerAddress.parse()` (ICD-AuthState consumption approved) to produce the
+ * 地址校验失败 state — pure UI validation, no network.
  */
 @Composable
 fun LoginScreen(
-    error: String? = null,
-    onLogin: (account: String, password: String, server: String, remember: Boolean) -> Unit = { _, _, _, _ -> },
+    state: LoginUiState = LoginUiState.Idle,
+    onLogin: (account: String, password: String, ip: String, port: String, remember: Boolean) -> Unit = { _, _, _, _, _ -> },
     onScanClick: () -> Unit = {},
+    onDismissError: () -> Unit = {},
+    /** Pre-fill values from a prior session (survive logout); null = blank. */
+    initialAccount: String = "",
+    initialIp: String = "",
+    initialPort: String = "",
+    /** Returns an error message for "ip:port", or null when valid. */
+    validateServer: (ip: String, port: String) -> String? = ::validateServerAddress,
 ) {
     val colors = AeroTheme.colors
 
-    var account     by remember { mutableStateOf("") }
+    var account     by remember { mutableStateOf(initialAccount) }
     var password    by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var remember_   by remember { mutableStateOf(true) }
-    var serverExpanded by remember { mutableStateOf(false) }
-    var serverIp   by remember { mutableStateOf("") }
-    var serverPort by remember { mutableStateOf("") }
+    var serverExpanded by remember { mutableStateOf(initialIp.isNotBlank() || initialPort.isNotBlank()) }
+    var serverIp   by remember { mutableStateOf(initialIp) }
+    var serverPort by remember { mutableStateOf(initialPort) }
+    // Local server-validation error, surfaced inline; merged with any error the
+    // host already put in state.fieldErrors.server.
+    var localServerError by remember { mutableStateOf<String?>(null) }
+
+    val submitting = state.isSubmitting
+    val serverError = localServerError ?: state.fieldErrors.server
 
     Column(
         modifier = Modifier
@@ -82,6 +103,15 @@ fun LoginScreen(
             .padding(horizontal = 28.dp, vertical = 48.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
+        if (state.formError != null) {
+            NotificationBanner(
+                type = NotificationType.Error,
+                message = state.formError,
+                onDismiss = onDismissError,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
         Brand(modifier = Modifier.padding(top = 24.dp, bottom = 16.dp))
 
         MInput(
@@ -91,7 +121,7 @@ fun LoginScreen(
             placeholder = "请输入账号",
             keyboardType = KeyboardType.Text,
             leading = { Icon(Icons.Filled.AccountCircle, contentDescription = null, tint = colors.ink3) },
-            error = error,
+            error = state.fieldErrors.account,
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -112,7 +142,7 @@ fun LoginScreen(
                     )
                 }
             },
-            error = error,
+            error = state.fieldErrors.password,
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -122,7 +152,7 @@ fun LoginScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("记住我", style = AeroTheme.typography.bodySmall, color = colors.ink2, modifier = Modifier.weight(1f))
-            MSwitch(checked = remember_, onCheckedChange = { remember_ = it })
+            MSwitch(checked = remember_, onCheckedChange = { remember_ = it }, enabled = !submitting)
         }
 
         // Server address collapsible
@@ -131,15 +161,20 @@ fun LoginScreen(
             onToggle = { serverExpanded = !serverExpanded },
             ip   = serverIp,
             port = serverPort,
-            onIpChange   = { serverIp = it },
-            onPortChange = { serverPort = it },
+            onIpChange   = { serverIp = it; localServerError = null },
+            onPortChange = { serverPort = it; localServerError = null },
+            error = serverError,
         )
 
         MButton(
-            text     = "登 录",
-            onClick  = { onLogin(account, password, "$serverIp:$serverPort", remember_) },
+            text     = if (submitting) "登录中…" else "登 录",
+            onClick  = {
+                val err = validateServer(serverIp, serverPort)
+                localServerError = err
+                if (err == null) onLogin(account, password, serverIp, serverPort, remember_)
+            },
             variant  = MButtonVariant.Filled,
-            enabled  = account.isNotBlank() && password.isNotBlank(),
+            enabled  = !submitting && account.isNotBlank() && password.isNotBlank(),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         )
 
@@ -152,6 +187,7 @@ fun LoginScreen(
                 text    = "扫码登录",
                 onClick = onScanClick,
                 variant = MButtonVariant.Text,
+                enabled = !submitting,
                 leading = { Icon(Icons.Filled.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp)) },
             )
         }
@@ -189,6 +225,7 @@ private fun ServerAddressSection(
     port: String,
     onIpChange: (String) -> Unit,
     onPortChange: (String) -> Unit,
+    error: String? = null,
 ) {
     val colors = AeroTheme.colors
 
@@ -204,7 +241,7 @@ private fun ServerAddressSection(
             Text(
                 text  = "服务器地址",
                 style = AeroTheme.typography.bodySmall,
-                color = colors.ink2,
+                color = if (error != null) colors.statusFault else colors.ink2,
                 modifier = Modifier.weight(1f),
             )
             Icon(
@@ -214,6 +251,7 @@ private fun ServerAddressSection(
             )
         }
 
+        // When collapsed but invalid, still surface the error so it isn't hidden.
         if (expanded) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -233,9 +271,17 @@ private fun ServerAddressSection(
                     label = "端口",
                     placeholder = "8080",
                     keyboardType = KeyboardType.Number,
+                    error = error,
                     modifier = Modifier.weight(0.5f),
                 )
             }
+        } else if (error != null) {
+            Text(
+                text = error,
+                style = AeroTheme.typography.bodySmall,
+                color = colors.statusFault,
+                modifier = Modifier.padding(start = 12.dp, top = 4.dp),
+            )
         }
     }
 }

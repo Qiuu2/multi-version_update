@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButtonVariant
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MChip
@@ -63,120 +64,182 @@ private val filters = listOf(
     StatusFilter("故障", TerminalStatus.Fault),
 )
 
+/**
+ * Terminal hub — stateful entry (TASK-AR-102).
+ *
+ * Observes [TerminalHubViewModel] (→ [TerminalRepository], real data) and renders
+ * the five [TerminalHubUiState] states. The success/partial branch keeps the
+ * existing filter / bulk-select / zone-expand controls. No more mock data.
+ */
 @Composable
 fun TerminalHubScreen(
     onOpenZone: (String) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: TerminalHubViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TerminalHubContent(
+        state = state,
+        onOpenZone = onOpenZone,
+        onRetry = viewModel::refresh,
+        modifier = modifier,
+    )
+}
+
+/** Stateless renderer for the five states (previewable / testable without Hilt). */
+@Composable
+fun TerminalHubContent(
+    state: TerminalHubUiState,
+    onOpenZone: (String) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AeroTheme.colors
+
+    Box(modifier = modifier.fillMaxSize().background(colors.bg)) {
+        when (state) {
+            is TerminalHubUiState.Loading -> TerminalHubSkeleton()
+
+            is TerminalHubUiState.Empty -> EmptyState(
+                icon = Icons.Filled.Search,
+                title = "暂无终端",
+                description = "还没有终端数据，点击重试刷新。",
+                actionLabel = "重试",
+                onAction = onRetry,
+            )
+
+            is TerminalHubUiState.Error -> EmptyState(
+                icon = Icons.Filled.Search,
+                title = "加载失败",
+                description = state.message,
+                actionLabel = "重试",
+                onAction = onRetry,
+            )
+
+            is TerminalHubUiState.Success ->
+                TerminalHubList(zones = state.zones, staleMessage = null, onOpenZone = onOpenZone)
+
+            is TerminalHubUiState.Partial ->
+                TerminalHubList(zones = state.zones, staleMessage = state.staleMessage, onOpenZone = onOpenZone)
+        }
+    }
+}
+
+/**
+ * The populated hub: controls + fault banner + per-zone terminal grid + bulk FAB.
+ * [staleMessage] (non-null only for [TerminalHubUiState.Partial]) shows a warning
+ * banner above the list (e.g. realtime disconnected, data may be stale).
+ */
+@Composable
+private fun TerminalHubList(
+    zones: List<ZoneUi>,
+    staleMessage: String?,
+    onOpenZone: (String) -> Unit,
 ) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
-    val zones = TerminalMock.zones
-    val faultCount = remember { TerminalMock.faultCount() }
+    val faultCount = remember(zones) { zones.sumOf { it.faultCount } }
 
     var filter by remember { mutableStateOf<TerminalStatus?>(null) }
     var expandedZones by remember { mutableStateOf(setOf<String>()) }
     var bulkMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
-    var loading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(1600)
-        loading = false
-    }
 
     fun matches(t: TerminalUi) = filter == null || t.status == filter
     val anyVisible = zones.any { z -> z.terminals.any { matches(it) } }
 
-    Box(modifier = modifier.fillMaxSize().background(colors.bg)) {
-        if (loading) {
-            TerminalHubSkeleton()
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(spacing.pageH),
-                verticalArrangement = Arrangement.spacedBy(spacing.md),
-            ) {
-                item(key = "controls") {
-                    Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
-                        ) {
-                            filters.forEach { f ->
-                                MChip(label = f.label, active = filter == f.status, onClick = { filter = f.status })
-                            }
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                if (bulkMode) "已选 ${selectedIds.size} 台" else "长按或点「多选」批量操作",
-                                style = AeroTheme.typography.bodySmall,
-                                color = colors.ink3,
-                                modifier = Modifier.weight(1f),
-                            )
-                            MButton(
-                                text = if (bulkMode) "完成" else "多选",
-                                variant = MButtonVariant.Text,
-                                onClick = {
-                                    bulkMode = !bulkMode
-                                    if (!bulkMode) selectedIds = emptySet()
-                                },
-                            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(spacing.pageH),
+            verticalArrangement = Arrangement.spacedBy(spacing.md),
+        ) {
+            if (staleMessage != null) {
+                item(key = "stale") {
+                    NotificationBanner(type = NotificationType.Warning, message = staleMessage)
+                }
+            }
+
+            item(key = "controls") {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                    ) {
+                        filters.forEach { f ->
+                            MChip(label = f.label, active = filter == f.status, onClick = { filter = f.status })
                         }
                     }
-                }
-
-                if (faultCount > 0) {
-                    item(key = "fault") {
-                        NotificationBanner(type = NotificationType.Error, message = "$faultCount 个终端故障，请尽快检查")
-                    }
-                }
-
-                if (!anyVisible) {
-                    item(key = "empty") {
-                        EmptyState(
-                            icon = Icons.Filled.Search,
-                            title = "没有匹配的终端",
-                            description = "当前筛选条件下没有终端，试试切换筛选。",
-                            actionLabel = "清除筛选",
-                            onAction = { filter = null },
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (bulkMode) "已选 ${selectedIds.size} 台" else "长按或点「多选」批量操作",
+                            style = AeroTheme.typography.bodySmall,
+                            color = colors.ink3,
+                            modifier = Modifier.weight(1f),
                         )
-                    }
-                }
-
-                zones.forEach { zone ->
-                    val visible = zone.terminals
-                        .filter { matches(it) }
-                        .sortedByDescending { it.status == TerminalStatus.Fault }
-                    if (visible.isEmpty()) return@forEach
-                    val expanded = zone.id in expandedZones
-                    item(key = "zone-${zone.id}") {
-                        ZoneHeader(
-                            name = zone.name,
-                            online = zone.onlineCount,
-                            total = zone.terminals.size,
-                            fault = zone.faultCount,
-                            expanded = expanded,
-                            onToggle = {
-                                expandedZones = if (expanded) expandedZones - zone.id else expandedZones + zone.id
+                        MButton(
+                            text = if (bulkMode) "完成" else "多选",
+                            variant = MButtonVariant.Text,
+                            onClick = {
+                                bulkMode = !bulkMode
+                                if (!bulkMode) selectedIds = emptySet()
                             },
-                            onOpenDetail = { onOpenZone(zone.id) },
                         )
                     }
-                    if (expanded) {
-                        items(visible.chunked(2), key = { it.first().id }) { rowItems ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
-                                rowItems.forEach { t ->
-                                    TerminalTile(
-                                        name = t.name,
-                                        status = t.status,
-                                        selected = t.id in selectedIds,
-                                        onClick = {
-                                            if (bulkMode) {
-                                                selectedIds = if (t.id in selectedIds) selectedIds - t.id else selectedIds + t.id
-                                            }
-                                        },
-                                    )
-                                }
+                }
+            }
+
+            if (faultCount > 0) {
+                item(key = "fault") {
+                    NotificationBanner(type = NotificationType.Error, message = "$faultCount 个终端故障，请尽快检查")
+                }
+            }
+
+            if (!anyVisible) {
+                item(key = "empty-filter") {
+                    EmptyState(
+                        icon = Icons.Filled.Search,
+                        title = "没有匹配的终端",
+                        description = "当前筛选条件下没有终端，试试切换筛选。",
+                        actionLabel = "清除筛选",
+                        onAction = { filter = null },
+                    )
+                }
+            }
+
+            zones.forEach { zone ->
+                val visible = zone.terminals
+                    .filter { matches(it) }
+                    .sortedByDescending { it.status == TerminalStatus.Fault }
+                if (visible.isEmpty()) return@forEach
+                val expanded = zone.id in expandedZones
+                item(key = "zone-${zone.id}") {
+                    ZoneHeader(
+                        name = zone.name,
+                        online = zone.onlineCount,
+                        total = zone.terminals.size,
+                        fault = zone.faultCount,
+                        expanded = expanded,
+                        onToggle = {
+                            expandedZones = if (expanded) expandedZones - zone.id else expandedZones + zone.id
+                        },
+                        onOpenDetail = { onOpenZone(zone.id) },
+                    )
+                }
+                if (expanded) {
+                    items(visible.chunked(2), key = { it.first().id }) { rowItems ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
+                            rowItems.forEach { t ->
+                                TerminalTile(
+                                    name = t.name,
+                                    status = t.status,
+                                    selected = t.id in selectedIds,
+                                    onClick = {
+                                        if (bulkMode) {
+                                            selectedIds = if (t.id in selectedIds) selectedIds - t.id else selectedIds + t.id
+                                        }
+                                    },
+                                )
                             }
                         }
                     }

@@ -72,13 +72,23 @@ public class MyApplication extends Application {
     private TimerTask mTimerTask;
     private String mTag = "MyApplication";
 
-
+    // AR-004: the shared OkHttpClient (new + legacy stacks share one connection
+    // pool + dispatcher, RISK-AUDIT-05). Field-injected by Hilt during
+    // super.onCreate(); pushed into the legacy RequestManger below. Qualified
+    // with @LegacyOkHttpClient so the legacy stack gets the interceptor-free
+    // variant (it builds absolute URLs + adds its own auth header).
+    @javax.inject.Inject
+    @com.htgd.radiocontrol.aeroradiocontrol.di.LegacyOkHttpClient
+    okhttp3.OkHttpClient legacyOkHttpClient;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instances = this;
         MultiDex.install(this);
+        // Hand the shared client to the legacy stack before any request is made.
+        com.htgd.radiocontrol.aeroradiocontrol.httptask.RequestManger
+                .setOkHttpClient(legacyOkHttpClient);
         configUnits();
         setDefault();
          initBaiduMap();

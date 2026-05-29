@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.sp
  *   - Mono  → JetBrains Mono. Same story — [FontFamily.Monospace] is the
  *            placeholder; res/font swap upgrades to JetBrains Mono.
  *
- * Numbers use `Mono` + `tabular-nums` semantics (in Compose: just rely on the
- * monospace family — every glyph is the same width by definition).
+ * Numbers use `Mono` + `tabular-nums`. The monospace family already fixes glyph
+ * advance, and [numeric] additionally sets `fontFeatureSettings = "tnum"` so the
+ * tabular-figure feature is requested explicitly per design-system-spec §4 — this
+ * keeps proportional-digit fallback fonts (if [AeroMono] is ever swapped) honest.
  */
 
 internal val AeroSans: FontFamily = FontFamily.Default
@@ -31,8 +33,8 @@ data class AeroTypography(
     val bodyLarge:  TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 15.sp, fontWeight = FontWeight.Medium),
     val body:       TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 14.sp, fontWeight = FontWeight.Normal),
     val bodySmall:  TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 13.sp, fontWeight = FontWeight.Normal),
-    val kicker:     TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 11.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.6.sp),
-    val numeric:    TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 22.sp, fontWeight = FontWeight.Bold),
+    val kicker:     TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 11.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.6.sp),
+    val numeric:    TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
     val label:      TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 12.sp, fontWeight = FontWeight.Medium),
     val button:     TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 14.sp, fontWeight = FontWeight.Medium),
 )

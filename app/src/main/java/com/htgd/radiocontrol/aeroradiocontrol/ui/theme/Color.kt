@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 
 // ── Surfaces & neutrals ─────────────────────────────────────────────────────
 internal val Bg          = Color(0xFFF4F5F7)
+internal val BgBeige     = Color(0xFFF0EEE9) // 米色背景 — AeroRadio v4.html line 11/200; spec §1.1
 internal val Surface1    = Color(0xFFFFFFFF)
 internal val Surface2    = Color(0xFFF8FAFB)
 internal val Surface3    = Color(0xFFEEF0F3)
@@ -19,9 +20,10 @@ internal val Ink         = Color(0xFF0D1117)
 internal val Ink2        = Color(0xFF4A5260)
 internal val Ink3        = Color(0xFF8A929F)
 internal val Ink4        = Color(0xFFB8BEC8)
-internal val Line        = Color(0x0F0D1117) // rgba(13,17,23,0.06)
-internal val LineStrong  = Color(0x1F0D1117) // rgba(13,17,23,0.12)
-internal val Divider     = Color(0xFFE8EBEF)
+// Derived neutrals (ICD-DesignTokens-v1.1 §1.5, R-3): line/lineStrong are Ink alpha tints.
+internal val Line        = Color(0x0F0D1117) // derived: Ink @ 6% alpha  — rgba(13,17,23,0.06)
+internal val LineStrong  = Color(0x1F0D1117) // derived: Ink @ 12% alpha — rgba(13,17,23,0.12)
+internal val Divider     = Color(0xFFE8EBEF) // neutral hairline between bg(F4F5F7) and surface-3(EEF0F3)
 
 // ── Brand ───────────────────────────────────────────────────────────────────
 internal val Primary     = Color(0xFF0E7C70)
@@ -42,12 +44,13 @@ internal val StatusFault   = Color(0xFFDC2626)
 internal val StatusPlaying = Color(0xFF2563EB)
 internal val StatusPaging  = Color(0xFFEA580C)
 
-// ── Status soft backgrounds (for pills) ─────────────────────────────────────
-internal val StatusOnlineSoft  = Color(0xFFE8F7EC)
-internal val StatusOfflineSoft = Color(0xFFEEF0F3)
-internal val StatusFaultSoft   = Color(0xFFFDECEC)
-internal val StatusPlayingSoft = Color(0xFFE8EFFD)
-internal val StatusPagingSoft  = Color(0xFFFDEEE2)
+// ── Status soft backgrounds for pills (ICD-DesignTokens-v1.1 §1.5, R-3) ──────
+// Each is a light tint of the matching status base color (same hue, no new hue):
+internal val StatusOnlineSoft  = Color(0xFFE8F7EC) // ← StatusOnline  #16A34A tint
+internal val StatusOfflineSoft = Color(0xFFEEF0F3) // ← StatusOffline #8A929F tint (= surface-3)
+internal val StatusFaultSoft   = Color(0xFFFDECEC) // ← StatusFault   #DC2626 tint
+internal val StatusPlayingSoft = Color(0xFFE8EFFD) // ← StatusPlaying #2563EB tint
+internal val StatusPagingSoft  = Color(0xFFFDEEE2) // ← StatusPaging  #EA580C tint
 
 /**
  * Public color palette used throughout the v4 UI.
@@ -57,6 +60,7 @@ internal val StatusPagingSoft  = Color(0xFFFDEEE2)
  */
 data class AeroColors(
     val bg: Color = Bg,
+    val bgBeige: Color = BgBeige,
     val surface: Color = Surface1,
     val surface2: Color = Surface2,
     val surface3: Color = Surface3,

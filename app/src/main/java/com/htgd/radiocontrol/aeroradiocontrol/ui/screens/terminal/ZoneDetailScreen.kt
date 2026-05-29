@@ -17,10 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.TerminalStatus
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.BackTopBar
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
@@ -30,70 +29,109 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalHu
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TerminalTile
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
+/**
+ * Zone detail — stateful entry (TASK-AR-105).
+ *
+ * Observes [ZoneDetailViewModel] (→ [TerminalRepository], real data; same SSOT as
+ * the hub) and renders the five [ZoneDetailUiState] states. No more mock data.
+ */
 @Composable
 fun ZoneDetailScreen(
     zoneId: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: ZoneDetailViewModel = hiltViewModel(),
+) {
+    LaunchedEffect(zoneId) { viewModel.load(zoneId) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    ZoneDetailContent(
+        state = state,
+        onBack = onBack,
+        onRetry = viewModel::refresh,
+        modifier = modifier,
+    )
+}
+
+/** Stateless renderer (previewable / testable without Hilt). */
+@Composable
+fun ZoneDetailContent(
+    state: ZoneDetailUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = AeroTheme.colors
-    val spacing = AeroTheme.spacing
-    val zone = TerminalMock.zone(zoneId)
-    var loading by remember { mutableStateOf(true) }
-    LaunchedEffect(zoneId) {
-        loading = true
-        kotlinx.coroutines.delay(1400)
-        loading = false
+    val title = when (state) {
+        is ZoneDetailUiState.Empty -> state.zone.name
+        is ZoneDetailUiState.Success -> state.zone.name
+        else -> "分区"
     }
 
     Column(modifier = modifier.fillMaxSize().background(colors.bg)) {
-        BackTopBar(title = zone?.name ?: "分区", onBack = onBack)
-        when {
-            loading -> TerminalHubSkeleton()
-            zone == null -> EmptyState(
+        BackTopBar(title = title, onBack = onBack)
+        when (state) {
+            is ZoneDetailUiState.Loading -> TerminalHubSkeleton()
+
+            is ZoneDetailUiState.Error -> EmptyState(
+                icon = Icons.Filled.Warning,
+                title = "加载失败",
+                description = state.message,
+                actionLabel = "重试",
+                onAction = onRetry,
+            )
+
+            is ZoneDetailUiState.NotFound -> EmptyState(
                 icon = Icons.Filled.Warning,
                 title = "未找到该分区",
                 description = "该分区可能已被删除。",
             )
-            zone.terminals.isEmpty() -> EmptyState(
+
+            is ZoneDetailUiState.Empty -> EmptyState(
                 icon = Icons.Filled.Speaker,
                 title = "该分区暂无终端",
                 description = "为该分区添加终端后会显示在这里。",
             )
-            else -> {
-                val terminals = zone.terminals.sortedByDescending { it.status == TerminalStatus.Fault }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(spacing.pageH),
-                    verticalArrangement = Arrangement.spacedBy(spacing.md),
-                ) {
-                    item(key = "summary") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(colors.surface, AeroTheme.shapes.rCard)
-                                .padding(spacing.cardPad),
-                            verticalArrangement = Arrangement.spacedBy(spacing.xs),
-                        ) {
-                            Text(zone.name, style = AeroTheme.typography.sectionTitle, color = colors.ink)
-                            Text(
-                                "在线 ${zone.onlineCount}/${zone.terminals.size}",
-                                style = AeroTheme.typography.bodySmall,
-                                color = colors.ink3,
-                            )
-                        }
-                    }
-                    if (zone.faultCount > 0) {
-                        item(key = "fault") {
-                            NotificationBanner(type = NotificationType.Error, message = "本分区 ${zone.faultCount} 个终端故障")
-                        }
-                    }
-                    items(terminals.chunked(2), key = { it.first().id }) { rowItems ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
-                            rowItems.forEach { t -> TerminalTile(name = t.name, status = t.status) }
-                        }
-                    }
-                }
+
+            is ZoneDetailUiState.Success -> ZoneTerminalList(zone = state.zone)
+        }
+    }
+}
+
+@Composable
+private fun ZoneTerminalList(zone: ZoneUi) {
+    val colors = AeroTheme.colors
+    val spacing = AeroTheme.spacing
+    val terminals = zone.terminals.sortedByDescending { it.status == TerminalStatus.Fault }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(spacing.pageH),
+        verticalArrangement = Arrangement.spacedBy(spacing.md),
+    ) {
+        item(key = "summary") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.surface, AeroTheme.shapes.rCard)
+                    .padding(spacing.cardPad),
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
+            ) {
+                Text(zone.name, style = AeroTheme.typography.sectionTitle, color = colors.ink)
+                Text(
+                    "在线 ${zone.onlineCount}/${zone.terminals.size}",
+                    style = AeroTheme.typography.bodySmall,
+                    color = colors.ink3,
+                )
+            }
+        }
+        if (zone.faultCount > 0) {
+            item(key = "fault") {
+                NotificationBanner(type = NotificationType.Error, message = "本分区 ${zone.faultCount} 个终端故障")
+            }
+        }
+        items(terminals.chunked(2), key = { it.first().id }) { rowItems ->
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
+                rowItems.forEach { t -> TerminalTile(name = t.name, status = t.status) }
             }
         }
     }

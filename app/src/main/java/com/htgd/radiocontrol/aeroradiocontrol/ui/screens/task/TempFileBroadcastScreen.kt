@@ -26,10 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MButton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.atoms.MChip
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.BackTopBar
-import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalMock
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.broadcast.BroadcastTargetsViewModel
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 private val tempFiles = listOf("紧急通知.mp3", "防疫广播.wav", "校长讲话.mp3")
@@ -38,10 +40,11 @@ private val tempFiles = listOf("紧急通知.mp3", "防疫广播.wav", "校长�
 fun TempFileBroadcastScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    targetsViewModel: BroadcastTargetsViewModel = hiltViewModel(),
 ) {
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
-    val zones = TerminalMock.zones
+    val zones by targetsViewModel.zones.collectAsStateWithLifecycle()
 
     var selectedFile by remember { mutableStateOf<String?>(null) }
     var selectedZones by remember { mutableStateOf(setOf<String>()) }
