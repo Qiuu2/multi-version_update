@@ -1,126 +1,161 @@
-# NEXT-2 data audit dispatch — DRAFT (PM 待 CTO GO 后 SendMessage)
+# NEXT-2 data audit dispatch — v2 D-16 升级（PM 待 CTO GO 后 SendMessage）
 
-> Pre-staged dispatch message for data-integration-2 once CTO confirms PA-15 manual verify
-> + GO on NEXT-2 auth split-brain audit. Copy verbatim into SendMessage.
+> v2 反映 CTO 2026-06-01 D-16 决策 + kill-app 新路径。替代 v1（uninstall 单路径）。
 
 ---
 
 ## Dispatch message body
 
 To: data-integration-2  
-Summary: NEXT-2 audit auth split-brain (uninstall residual + dual-source)
+Summary: NEXT-2 audit auth split-brain D-16 (kill-app + uninstall + 方案 C)
 
 ```
-## NEXT-2 dispatch — 鉴权 split-brain audit (read-only, no edits)
+## NEXT-2 dispatch — 鉴权 split-brain audit (read-only)
 
-### 症状（CTO 实测 2026-05-30 demo）
+### ⚠ 紧急升级 2026-06-01：路径 B kill-app 普通日常触发
 
-adb uninstall com.htgd.radiocontrol.aeroradiocontrol + adb install app-debug.apk 后，
-App 启动跳过登录页直接进主页，token 仍生效。本应回到"请登录"。
+之前以为 BLOCKER-3 只 uninstall 重装路径触发（已严重）。
+今天 CTO 复现 **kill-app 路径**（更严重，日常即触发）：
+  1. 第一次登录成功 → 进入主界面 ✓
+  2. 后台滑掉杀 app
+  3. 重新打开 → 直接进内部页 + "加载失败 serveraddress must not be null"
 
-### PM 5-min grep 已实证的两根因
+这是 P0_BLOCKER 升级到 P0_CRITICAL。
 
-**根因 A (allowBackup auto-restore)**: 
-- AndroidManifest.xml:57 `android:allowBackup="true"`
-- res/xml/ 无 backup_rules.xml / data_extraction_rules.xml (只有 accessibility + network_security_config)
-- → Android Auto Backup 把 shared_prefs + DataStore 全量备份+restore，uninstall 后 install 自动回填 token
+### CTO D-16 决策（2026-06-01）— 方案 C "记住我" toggle 式
 
-**根因 B (双源持久化 split-brain)**:
-- ReFreshTokenUtil.java:43 旧栈用 PreferencesUtil.getInstance().getEntity(Constant.key_tokenModel, GetTokenModel.class)
-- TaskManageUtils.java:201 旧栈用 PreferencesUtil.getInstance().getField("serverAddress", mContext)
-- 新栈 AuthStore (DataStore) 与旧栈 PreferencesUtil (SharedPreferences) 是两条独立通路
+详见 `.state/auth-split-brain-framing.md` v2 §3。核心：
 
-### CTO 决策的 fix scope（CTO 已 AskUserQuestion 选 "双修 a+b+c"）
+**两层存储分清**：
+- L1 凭据（rememberMe 控制，明文）：`account / serverHost / serverPort / rememberMe(bool)`
+- L2 鉴权（token 控制，加密）：`token / refreshToken? / tokenExpiry`
 
-(a) Manifest `allowBackup="false"` OR `backup_rules.xml` exclude — 不动旧栈 ✓
-(b) Logout 流程加清 PreferencesUtil 的 token + serverAddress — 不动旧栈代码 ✓ (新栈侧 API 调用)
-(c-1) 如旧栈死路 → 证明并文档化 → 不动旧栈 ✓
-(c-2) 如旧栈活路 → 改旧栈读取 PreferencesUtil 改为读 AuthStore → 变更 D-13 ⚠
+**启动两步判断**（V4Activity.onCreate 或 SplashActivity）：
+1. 读 L2 + 检 token + serverAddress + account 三件齐全 + tokenExpiry 未过 → 进 MainScreen
+2. 否则 → atomic clear L2 残留 + 读 L1 → 跳 LoginScreen 带 prefill
 
-(c) 走 c-1 还是 c-2 由你的 audit 死路/活路结果决定，不预判。
+**原子不变量**：L2 三件全有或全无。任一缺失 = clearL2Atomically + 回 LoginScreen。
 
-### 你这一轮的任务 — L2 Code audit (read-only)
+**退出语义**：
+- 主动登出 / token 过期 / 401 → 清 L2，留 L1
+- rememberMe 切关 → 清 L1 account 字段，不动 L2
+- 登录成功 → 写 L2 + (rememberMe 开则) 写 L1
+- 各自独立 path，绝不混淆
 
-read-only：不改代码、不出 patch、不动 git、不 build。这一轮只是定位。
+### 你这一轮 — L2 Code audit (read-only)
+
+read-only：不改代码 / 不出 patch / 不动 git / 不 build。这一轮只是定位。
 
 ### 输入
 
-- 框架文档：`.state/auth-split-brain-framing.md` (9 节，PM 已落)
-- 上下文 memory：[[serveraddress-owned-by-data-integration]] / [[loginauthenticator-impl-owned-by-data]] / [[login-authenticator-seam]] / [[consumer-seam-binding-rule]] / [[ar010-permission-gate-on-v4]]
+- **必读**：`.state/auth-split-brain-framing.md` v2（9 节，D-16 全部）
+- 上下文 memory：[[serveraddress-owned-by-data-integration]] / [[loginauthenticator-impl-owned-by-data]] / [[login-authenticator-seam]] / [[consumer-seam-binding-rule]] / [[ar010-permission-gate-on-v4]] / [[constraint-vs-artifact-rule]]
 - 代码侧重点：
   - `app/.../data/repository/V3LoginAuthenticator.kt` — 登录 impl
-  - `app/.../data/auth/AuthStore.kt` (或类似名) — DataStore 持久化
+  - `app/.../data/auth/AuthStore.kt`（或 ServerConfig / similar）— DataStore 持久化
   - `app/.../data/auth/AuthInterceptor.kt` — 自动加 token 拦截
   - `app/.../data/network/DynamicBaseUrlInterceptor.kt` — base URL 注入
-  - `app/.../utils/PreferencesUtil.java` — 旧栈 SharedPreferences 通用读写 (line 28-29 weird-but-not-bug: key 即 prefs file name)
-  - `app/.../utils/ReFreshTokenUtil.java` — 旧栈 token model 读取入口
+  - `app/.../ServerConfig.kt` — serverAddress 持久化路径
+  - `app/.../ui/V4Activity.kt` (`.ui.V4Activity`) — nav 启动入口 — **重点查 onCreate / Composable 哪个 check 决定进 MainScreen vs LoginScreen**
+  - 可能有 SplashActivity / EntryActivity / 类似启动屏
+  - `app/.../utils/PreferencesUtil.java` — 旧栈 SharedPreferences 通用读写
+  - `app/.../utils/ReFreshTokenUtil.java` — 旧栈 token 读取入口
   - `app/.../utils/TaskManageUtils.java` — 旧栈 serverAddress 读取入口
-  - `app/.../utils/Constant.java` — 端点 + key 常量 (key_tokenModel)
-  - Logout 流程：grep 找退出登录代码（新栈 fe + 任何旧栈调用方）
-  - v4 sole-launcher 后旧栈 activity 进入图：grep 找 startActivity / 反查 ReFreshTokenUtil / TaskManageUtils / 同 PreferencesUtil token reader 的 caller chain
+  - `app/.../utils/Constant.java` — 端点 + key 常量
+  - Logout 流程：grep 退出登录代码
+  - DataStore 写盘点：grep `dataStore.edit` / `.commit()` / `.first()` — 看每个 saveLogin 是否 await commit 完成
 
 ### 输出 — `.state/api-snapshots/auth-split-brain-rootcause.md`
 
-强制 6 段:
+**强制 8 段（v2 D-16 扩展）**：
 
-1. **根因 A (allowBackup) audit**:
-   - AndroidManifest.xml 当前配置摘要 + line:N
-   - data_extraction_rules.xml + backup_rules.xml 应有内容草案（exclude AuthStore preferences_pb 文件名 + 含 token 的 SharedPreferences files）
-   - 推荐 fix 方案 A1 (allowBackup="false" 最简) vs A2 (xml exclude 精细) 利弊 + 推荐 + 提议
+1. **根因 A audit（allowBackup uninstall 路径）**:
+   - AndroidManifest.xml 当前 line:N
+   - data_extraction_rules.xml + backup_rules.xml 设计草案（exclude L2 加密区，可包含 L1 明文区是 UX 友好的；让 CTO 选）
+   - 推荐 fix 方案 A1 (`allowBackup="false"` 最简) vs A2 (xml exclude 精细) 利弊 + 推荐
 
-2. **根因 B audit — 双源真实情况**:
-   - 列出新栈 AuthStore 的存档 key + DataStore 文件路径
-   - 列出旧栈 PreferencesUtil 实际写入 / 读取 token + serverAddress 的全部 call sites (grep file:line)
-   - 验证 V3LoginAuthenticator 登录成功后是否 mirror-write PreferencesUtil — 实际是 / 否
-   - 验证 Logout 流程清几条源 — 实际清几条
-   - 列出 in-memory cache 形态 (AuthStore StateFlow vs DataStore)
+2. **根因 B audit（双源持久化）**:
+   - 新栈 AuthStore 的存档 key + DataStore 文件路径
+   - 旧栈 PreferencesUtil 实际写入 / 读取 token + serverAddress 的全部 call sites
+   - 验证 V3LoginAuthenticator 是否 mirror-write PreferencesUtil — 实际是 / 否
+   - 验证 Logout 是否清几条源 — 实际清几条
+   - in-memory cache 形态 (AuthStore StateFlow vs DataStore vs ViewModel scope)
 
-3. **(c-1) vs (c-2) 决断 — 旧栈死路 / 活路证据**:
-   - 把 v4 sole-launcher 下旧栈 activity 调用图扫一遍（Manifest grep + 新栈 fe screen 的所有跳转 grep + intent target 反查）
+3. **★★ 根因 C audit（kill-app 状态丢失 — NEW, 路径 B 实证）**：
+   - DataStore commit 路径：grep `dataStore.edit { ... }` 每个 saveLogin 写入点；DataStore 是 fire-and-forget? saveLogin 是否 await write completion（用 `.collect { }` first emit 或 `dataStore.data.first()` rerun）？
+   - V4Activity / SplashActivity nav 启动入口：grep 哪个 Composable / Activity / Fragment 决定首屏；它 check 哪几个 AuthStore 字段；是否 atomic（所有 L2 三件都齐）；过期 check 有无
+   - StateFlow scope：AuthStore singleton 是 ApplicationScope 还是 ProcessLifecycle scope？kill app 后重启 ApplicationScope 新创建，StateFlow 是空（必须从 DataStore 重读）；如果 nav 在 DataStore 读完前 evaluate → 命中
+   - serverAddress 落到 DataStore 还是仅在 in-memory ServerConfig singleton？grep ServerConfig setter / getter
+   - **生死判断 split-brain 真锤**：grep 启动入口 nav 决策代码 + 列出 file:line + 写"实际 check 了 X 字段 / 应 check 三件 + expiry"
+
+4. **(c-1) vs (c-2) 决断 — 旧栈死路 / 活路**:
+   - v4 sole-launcher 下旧栈 activity 调用图（同 v1）
    - ReFreshTokenUtil / TaskManageUtils / PreferencesUtil token 读取 caller chain
-   - 列每个 caller "live / dead"，给具体引用 file:line
-   - 总裁判 **(c-1) 旧栈死路** 或 **(c-2) 旧栈活路** 或 **(c-mixed) 部分活部分死**
-   - **如 c-2 → 升级 PM "需 CTO 确认是否变更 D-13"，audit 不动手**
+   - 列每个 caller "live / dead" + file:line
+   - **(c-1) 死路** OR **(c-2) 活路** OR **(c-mixed)**
+   - 如 c-2 → 升 PM "需 CTO 确认 D-13 变更"
 
-4. **配合 7 候选清单** (per framing.md §4):
-   - 7 候选每条标 CONFIRMED / RULED_OUT / IRRELEVANT，给 file:line 证据
-   - #2 in-memory cache 不同步 / #4 server-address race / #5 Logout 不全清 / #7 JWT TTL 60h refresh 错触发
+5. **10 候选清单（v1 7 个 + v2 3 个）每条 CONFIRMED / RULED_OUT / IRRELEVANT + file:line**：
+   - #1-7 同 v1 framing
+   - #8 DataStore async 异步写盘未完成 + kill — 路径 B 实证
+   - #9 Nav 启动入口 check 不全 — 路径 B 实证
+   - #10 StateFlow in-memory cache 在 kill 时全丢 — 路径 B 推论
 
-5. **fix design**:
-   - 根因 A fix 设计（含 data_extraction_rules.xml 草案如选 A2 路径）
-   - 根因 B fix 设计 (b) Logout-side mirror-clear (新栈代码改) + (c) 死路证明 OR 活路改旧栈
-   - 测试设计：reinstall-cycle test (uninstall → install → check token state)，Logout-clear test
+6. **fix design**:
+   - 根因 A：Manifest allowBackup=false 或 backup_rules.xml exclude
+   - 根因 B：Logout-side mirror-clear 旧栈 PreferencesUtil（新栈代码加调用）
+   - 根因 C：
+     * AuthStore 分层重写：L1 明文 DataStore "prefs_remember" + L2 加密 EncryptedSharedPreferences (现有 androidx.security:security-crypto:1.1.0-alpha06 已在依赖)
+     * ServerAddress 落 L1，从 ServerConfig in-memory cache 升级到 L1 DataStore 持久化（grep `ServerConfig` 当前持久化是否仅 in-memory）
+     * V4Activity / SplashActivity startup nav 改写：阻塞同步读 L2（不要在 Composable 内异步 collect — 先 await），三件 atomic check + expiry check，fork MainScreen / LoginScreen
+     * LoginScreen 加 rememberMe prefill 行为
+     * Logout 分两路径：L2-only (主动登出 + 401) vs L1-only (toggle 关)
+     * 登录成功：写 L2 + (rememberMe 开则) 写 L1
+   - 测试设计：
+     * KillAppStateRecoveryTest（NEW）：模拟"写 L1+L2 → 模拟进程死（清 in-memory StateFlow，但 DataStore 残留）→ 重读 → assert nav 决策"
+     * UninstallReinstallTest（concept）：用文件 system clear 模拟 uninstall + 验 allowBackup fix
+     * LogoutPartialClearTest：assert L2 清 + L1 留 / L1 清 + L2 留 各自独立
+     * RememberMeToggleTest：开/关切换 + 预填行为 + 登录成功后写入
 
-6. **5-leg gate 标定**:
-   - 本 audit 是 L1+L2，L3 fix 之后补，L4 由 CTO 实测 install/uninstall cycle 补，L5 critic emulator install cycle smoke
-   - 列出 CTO ground truth 操作清单（adb logcat / curl /authorizations 看 token state）
+7. **5-leg gate 标定**：
+   - L1+L2 本 audit + fix 后写代码（你 audit + fix 都做）
+   - L3 fix 之后补 tests
+   - L4 由 CTO 实测 5 cycle（install/kill/restart/uninstall/install/toggle）补 ground truth
+   - L5 critic emulator install/launch/login/kill/launch automation + screencap
+   - 列 CTO ground truth 操作清单（adb logcat / adb shell ps / curl /authorizations 看 token state）
+
+8. **ICD 影响范围**:
+   - ICD-AuthState v2.1 → v2.2 bump 提议（写 `.state/api-snapshots/icd-proposals-next2.md`）
+     * L1/L2 分层
+     * StartupNavDecider 接口（启动两步判断契约化）
+     * 退出语义 4 path
+     * rememberMe toggle 契约
+   - 不直接落 icd-contracts.md（PM 串行落）
 
 ### ICD 处理
 
-- 如 fix 落地后需要 ICD bump（AuthState 持久化语义、Logout 清单契约）→ 写 proposed diff 到 `.state/api-snapshots/icd-proposals-next2.md`
-- 不直接落 icd-contracts.md（同 PA-14/15 staging 纪律）
+- 4-5 条 ICD bump proposal 写 `.state/api-snapshots/icd-proposals-next2.md`
+- 不直接落 icd-contracts.md
 
-### 时限
+### 时限（v2 D-16 范围扩大）
 
-- P0_BLOCKER (重装行为 = 鉴权回归)
-- 估时 audit code ~2h + 7-candidate triage ~0.5h + fix design ~0.5h = 3h raw
-- calibrated 4.8h
-- ETA 4.8h
+- P0_CRITICAL（升级，日常触发）
+- 估时 audit code ~3h + 10-候选 triage ~0.5h + fix design ~1.5h = 5h raw
+- calibrated 8h（data domain 1.6）
+- ETA 8h
+- 完成后立刻接 fix（如 c-1）或 escalate（如 c-2）
 
 ### 约束
 
-- read-only：不改代码、不出 patch、不动 git、不 build
-- 不持 build-slot（audit 不需 build）
+- read-only：不改代码、不出 patch、不动 git、不 build（audit 只）
+- 不持 build-slot
 - 不 escalate (c-2) 决策，**只是报 PM**，PM 升 CTO
 
 ### 交回流程
 
-audit 完写 `.state/api-snapshots/auth-split-brain-rootcause.md` → SendMessage team-lead + verdict (c-1 / c-2 / c-mixed) + 7-candidate triage 总结。PM 看完后：
-- (c-1) → 直接 dispatch fix
-- (c-2) → 升 CTO 决策变更 D-13
-- (c-mixed) → 升 CTO 决策范围
+audit 完写 `.state/api-snapshots/auth-split-brain-rootcause.md` → SendMessage team-lead + verdict (c-1 / c-2 / c-mixed) + 10-候选 triage + 三根因实证总结。
 
-明白请回 ACK + ETA + 第一步动作。GO。
+明白请回 ACK + ETA + 第一步动作（建议从 V4Activity.onCreate 启动入口 grep 开始 — 因为 C-3 决断在 nav 决策一行字）。GO。
 
 — team-lead
 ```
@@ -129,10 +164,9 @@ audit 完写 `.state/api-snapshots/auth-split-brain-rootcause.md` → SendMessag
 
 ## PM checklist 在 SendMessage 之前
 
-1. CTO 实测 PA-15 任务 Tab → confirm 14 task render + Hero "海王作息"
-2. CTO GO NEXT-2
-3. (可选) PM 先落 8 条 ICD bump 到 icd-contracts.md（PA-14 4 + PA-15 4），让 NEXT-2 audit 时有权威版可引
-4. PM SendMessage data-integration-2 以上消息
-5. ledger 开新 next2 节段（同 pa15 模板）
+1. CTO 确认 D-16 决策已写入本文档 + framing v2 — DONE
+2. CTO 给 GO NEXT-2 立刻 dispatch
+3. PM SendMessage data-integration-2 以上消息
+4. ledger 开新 next2 节段（同 pa15 模板，含 D-16 reference）
 
-— Drafted by PM 2026-05-30，待 CTO GO 后激活
+— Drafted by PM v2 2026-06-01，待 CTO GO 后激活

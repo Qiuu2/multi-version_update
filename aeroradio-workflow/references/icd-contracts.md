@@ -11,8 +11,9 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD ID | Interface | Producer | Consumers | Status |
 |--------|-----------|----------|-----------|--------|
 | ICD-NetworkModule-v1 | 动态 baseUrl 拦截器接口 | data-integration | 所有 frontend agent | LIVE |
-| ICD-AuthState-v2.1 | JWT 60h ★ TTL 实测 + 登录响应 data:[{token,priority,userid}] array shape + refresh/delete /authorizations/current endpoints（PA-14 实读校正） | data-integration | frontend-business, frontend-platform | LIVE |
+| ICD-AuthState-v2.2 | L1/L2 两层存储（L1 凭据明文 + L2 鉴权加密）+ tokenExpiry + rememberMe + 4-path logout matrix + L2 atomic invariant（D-16 NEXT-2 fix）| data-integration | frontend-business, frontend-platform | LIVE |
 | ICD-LoginAuthenticator-v1 | 登录鉴权 seam（fe 定义接口、data 实现 /authorizations） | frontend-business（consumer-defined） | data-integration（impl） | LIVE |
+| ICD-StartupAuthDecider-v1 | 启动鉴权 atomic check + ServerConfig rehydrate seam（V4Activity.onCreate 前 synchronous; D-16 kill-app fix）| data-integration | frontend-business（V4Activity inject） | LIVE |
 | ICD-TerminalDto-v2.1 | 终端 DTO（28 wire 字段，+14 PA-14）+ Domain TerminalStatus（sealed+Unknown）+ Repository（observe/refresh）+ ★ `terminal.zone` 字段 NOT membership FK | data-integration | frontend-business | LIVE |
 | ICD-ZoneDto-v2.1 | Domain Zone（嵌套 terminals SSOT，`/terminal/terzone` 唯一权威，多对多保留，envelope-meta） | data-integration | frontend-business | LIVE |
 | ICD-TaskRepository-v2.1 | 作息/任务 Repository（observe/refresh **二步 sechinfo→并发 sechetaskinfo→原子 publish**/setSchemeActive/getExecutionLog）+ Domain Scheme（嵌套 tasks）/SchemeTask/SchemeTaskStatus（sealed+Unknown）/TaskLog + 多 active option-A + 4 status int 派生规则 | data-integration（领域 owner） | frontend-business | LIVE（real impl V3TaskRepository，PA-15 Critic PASS_HIGH） |
@@ -91,9 +92,21 @@ class DynamicBaseUrlInterceptor @Inject constructor(
 | serverAddress 格式错误 | 登录时校验，禁止存入 |
 | 网络层 IOException | 由上层 Repository 转换为 `Result.Failure(NetworkError)` |
 
+### Constant.serveraddress truth model（PA-15 / NEXT-2 D-16，doc-only 不 bump 版本）
+
+- **SOURCE OF TRUTH**: `AuthStore.serverAddress` (persisted in plain SharedPreferences `auth_plain.xml` via `KeyValueStore.commit()`)。
+- **DERIVED CACHE**: `Constant.serveraddress` (Java `static String`)。Cache 在 app start 由 `StartupAuthDecider.resumeSessionIfValid()` 从 AuthStore rehydrate (§3B)；登录成功由 `V3LoginAuthenticator.authenticate()` 写入；401 由 `AuthInterceptor` clearLogin + 同步 `serverConfig.setBaseUrl("")` 联动清空。
+- **INVARIANT** (post-NEXT-2): 对任何 Plan A repo 调用，`Constant.serveraddress == AuthStore.serverAddress.value.let { "http://${it.host}:${it.port}/api" }` when AuthStore reports `isLoggedIn=true`。违反 = NEXT-2 regression。
+- **`setBaseUrl("") fail-fast > null`**: NEXT-2 design judgment — empty string 让 OkHttp 直接 reject 非绝对 URL（throws `IllegalArgumentException` 而非 `NullPointerException` on `.contains()`）。AuthInterceptor 401 path 用 `""` 不 `null`。
+
+**`DynamicBaseUrlInterceptor`** (Retrofit/OkHttp 链) 直接从 `AuthStore.serverAddress` 读，**Plan A 下 dormant**（V3CallbackAdapter 绕过 Retrofit）。Plan B 迁移时该 interceptor 直接 pick up 真值，不需要 `Constant.serveraddress`。
+
+**`PreferencesUtil("serverAddress")`** legacy 旧栈 slot（被 `MyRequestBuilder.setUrl(String)` 1-arg + 若干 legacy Activity 读取）= **R-ADDR-SLOT post-NEXT-2 CLOSED**。所有 reader 在 V4Activity sole-launcher 下不可达（legacy Activity 已被 AR-006 demote）；NEXT-2 fix 不写该 slot（Plan A D-13 red line）。
+
 ### 变更历史
 
 - v1.0 (2026-05-27): 初始版本
+- v1.0 doc-only (2026-06-01, NEXT-2 D-16): 加 Constant.serveraddress truth-model 子节 — derived cache vs source of truth 形式化；setBaseUrl("") fail-fast 比 null safer design judgment；DynamicBaseUrlInterceptor dormant 说明；R-ADDR-SLOT CLOSED。**无版本 bump**（接口契约未变，仅 doc 形式化已存在的不变量）。
 
 ---
 
@@ -172,8 +185,75 @@ data class ServerAddress(val host: String, val port: Int) {
 - AR-002 AuthInterceptor：401 时调 `refresh(knownStaleJwt = 本次请求所附 jwt)`。
 - 登录网络调用经 `LoginAuthenticator` seam（fe 定义、data 实现，见 ICD-LoginAuthenticator）。
 
+### ★ v2.2 L1/L2 两层存储（D-16 / NEXT-2 fix）
+
+> **AuthStore 形式上分两层**：
+> - **L1 凭据**（rememberMe-controlled, 明文 `auth_plain.xml`）：`account / serverHost / serverPort / rememberMe(bool)`。Survives logout iff rememberMe=true。用于 LoginScreen prefill UX。
+> - **L2 鉴权**（加密 `auth_secure.xml` via EncryptedSharedPreferences AES256）：`jwt / refreshToken? / tokenExpiry`。`serverAddress` 实际落 L1（plain）但语义上参与 L2 four-tuple invariant — `StartupAuthDecider.resumeSessionIfValid()` 把它纳入 atomic check。
+>
+> **L2 atomic invariant**：`{jwt, serverAddress, account, tokenExpiry-not-past}` 四件原子组。全部 valid → resume session + ServerConfig rehydrate；任一缺失/过期 → `clearL2Atomically()` + route to LoginScreen。**Clear 必须在单个 `SharedPreferences.commit()` 事务内完成**（避免第二次 kill-app 撞同样 partial-state 问题）。
+>
+> **`Constant.serveraddress` 是 derived cache，不是 source of truth**。真值在 `AuthStore.serverAddress`。Cache 在 app start 时由 `StartupAuthDecider.resumeSessionIfValid()` 从 AuthStore rehydrate；登录成功由 `V3LoginAuthenticator.authenticate()` 写入；401/logout 由 `AuthInterceptor` 联动清空 (`serverConfig.setBaseUrl("")` fail-fast 比 null safer — OkHttp 直接 reject 非绝对 URL，不 NPE)。详见 §2 NetworkModule。
+
+### v2.2 4-path logout matrix（verbatim from framing v2 §3.3）
+
+| Trigger | Clears L2 | Clears L1 | Notes |
+|---|---|---|---|
+| 用户主动 logout | ✓ | ✗ | 保留 rememberMe 用于 re-login prefill |
+| Token expiry 检测 | ✓ | ✗ | 同主动 logout |
+| 401 from network layer | ✓ | ✗ | AuthInterceptor 调 clearLogin() + setBaseUrl("") |
+| User toggles rememberMe = OFF | ✗ | ✓ (account/host/port + rememberMe=false) | L1-only |
+| User toggles rememberMe = ON + login success | 写新 L2 | 写新 L1 (account/host/port + rememberMe=true) | 双层 |
+
+**纪律**：L1 / L2 paths 独立，**绝不混淆**。每个 path 由独立 AuthStore method (clearLogin / clearL2Atomically / clearL1Account / setRememberMe) 实现，consumer 不应跨 path。
+
+### v2.2 interface additions（additive，零 break）
+
+```kotlin
+interface AuthStore {
+    // ── EXISTING (v2.1) ────────────────────────────────────────────────
+    val serverAddress: StateFlow<ServerAddress?>
+    val jwt: StateFlow<String?>
+    val refreshToken: StateFlow<String?>
+    val account: StateFlow<String?>
+    val isLoggedIn: StateFlow<Boolean>
+    suspend fun saveLogin(address: ServerAddress, account: String, jwt: String, refreshToken: String?)
+    suspend fun clearLogin()
+    suspend fun reset()
+    suspend fun refresh(knownStaleJwt: String?): Result<String>
+
+    // ── NEW (v2.2) ─────────────────────────────────────────────────────
+    /** Epoch-millis when [jwt] becomes invalid. Null = no expiry known
+     *  (legacy 60h-from-issue is the documented-assumption default). */
+    val tokenExpiry: StateFlow<Long?>
+
+    /** Whether user opted to remember L1 prefill (account+host+port).
+     *  Independent of [isLoggedIn] — survives logout. */
+    val rememberMe: StateFlow<Boolean>
+
+    /** Extended saveLogin: tokenExpiry + rememberMe metadata.
+     *  Default values preserve v2.1 callers (zero break). */
+    suspend fun saveLogin(
+        address: ServerAddress, account: String, jwt: String, refreshToken: String?,
+        tokenExpiry: Long? = null,
+        rememberMe: Boolean = true,
+    )
+
+    /** Atomically clears L2 four-tuple in a single SharedPreferences
+     *  transaction. Used by [StartupAuthDecider] when four-tuple partial. */
+    suspend fun clearL2Atomically()
+
+    /** Clears L1 only; L2 untouched. Triggered by rememberMe toggle OFF. */
+    suspend fun clearL1Account()
+
+    /** Sets rememberMe flag without touching credentials. Persists L1. */
+    suspend fun setRememberMe(enabled: Boolean)
+}
+```
+
 ### 变更历史
 
+- v2.2 (2026-06-01, D-16 / NEXT-2 fix; Critic PASS_W_MINOR HIGH 5-cycle emulator): L1/L2 两层存储语义化 + tokenExpiry (Long?, legacy 60h-from-issue documented-assumption default) + rememberMe (Boolean) + clearL2Atomically (single-transaction per store) + clearL1Account + setRememberMe + extended saveLogin (additive 2 default params)。LoginAuthenticator + StartupAuthDecider (NEW §3B) 是 v2.2 的两个主消费方。kill-app BLOCKER 闭环 (Cycle 2 logcat URL rehydrate + Main render + 无 crash 实证)。
 - v2.1 (2026-05-30, PA-14 实读校正): JWT TTL **~60h**（CTO 实测；旧文档 24h 作废）。登录响应实读为 array shape `{"data":[{"token":"...","priority":<int>,"userid":<int>}]}` — 当前 `TokenEnvelopeDto.data.firstOrNull().token` 形状正确；建议增 `priority/userid` 为 wire-only 字段以备 v4 admin gate（domain 暂不暴露）。Refresh 端点 `POST /authorizations/current` + Logout 端点 `DELETE /authorizations/current` 已 swagger 确认存在（当前 UnsupportedTokenRefresher 未接线；接 OPEN INQ-O-1 D-1）。
 - v2.0 (2026-05-27): 首次真实定义（TASK-AR-003 落地，Critic PASSED）。去 Flow 后缀 / +isLoggedIn / refreshToken 可空 / refresh(knownStaleJwt) / +reset()。v1 模板作废（无实现无消费者，hard cutover 零迁移）。
 - v1.0 (2026-05-27): 模板草案（从未实现）。
@@ -204,6 +284,117 @@ data class AuthResult(
 - **归属铁律**：`@Binds` 单点归 data（DataModule）；fe 不得自建 binding（Missing↔Duplicate 竞态教训，STD-COMPILABLE/Hilt 图单点）。fe 侧 `UnconfiguredLoginAuthenticator` 仅作 fallback/测试替身，不绑定。
 - AuthResult 字段 1:1 映射 `AuthStore.saveLogin(address,account,jwt,refreshToken?)`（address 由 ViewModel 从表单出，不在 AuthResult 回显）。
 - 真实刷新/重登语义仍受 OPEN(D-1) 影响（见 §3 刷新去重契约 + TokenRefresher）。
+
+---
+
+## 3B. ICD-StartupAuthDecider-v1（启动鉴权 atomic check seam）
+
+**Producer**: Data-Integration（领域 owner — `data/auth/StartupAuthDecider.kt`）
+**Consumer**: Frontend-Business（V4Activity.onCreate 注入 + 调用）
+**Status**: LIVE（2026-06-01；NEXT-2 D-16 fix 落地，Critic PASS_W_MINOR HIGH 5-cycle emulator automation 验证）
+
+### 接口定义
+
+```kotlin
+/**
+ * Atomic startup auth check, called from V4Activity.onCreate BEFORE the Compose
+ * tree is set. Synchronous, side-effecting:
+ *  - On valid L2: rehydrates Constant.serveraddress (via ServerConfig.setBaseUrl)
+ *    from AuthStore.serverAddress before returning true.
+ *  - On invalid L2: calls AuthStore.clearL2Atomically() and returns false.
+ *
+ * Idempotent: safe to call multiple times. Thread-safe via ServerConfig seam.
+ *
+ * The contract is INTENTIONALLY synchronous — V4Activity needs the answer
+ * before setContent so AppNavGraph receives the right startDestination.
+ * Implementation reads AuthStore's StateFlows via .value (initialized
+ * synchronously in AuthStoreImpl's ctor from persisted SharedPreferences).
+ */
+interface StartupAuthDecider {
+    fun resumeSessionIfValid(): Boolean
+}
+```
+
+### Impl (DefaultStartupAuthDecider)
+
+```kotlin
+@Singleton
+class DefaultStartupAuthDecider @Inject constructor(
+    private val authStore: AuthStore,
+    private val serverConfig: ServerConfig,
+    private val clock: Clock,           // fun interface — System::currentTimeMillis default
+) : StartupAuthDecider {
+    override fun resumeSessionIfValid(): Boolean {
+        val jwt = authStore.jwt.value
+        val addr = authStore.serverAddress.value
+        val account = authStore.account.value
+        val expiry = authStore.tokenExpiry.value
+
+        val valid = !jwt.isNullOrBlank()
+            && addr != null
+            && !account.isNullOrBlank()
+            && (expiry == null || expiry > clock.now())
+
+        if (!valid) {
+            runBlocking { authStore.clearL2Atomically() }
+            return false
+        }
+        serverConfig.setBaseUrl("http://${addr.host}:${addr.port}/api")
+        return true
+    }
+}
+```
+
+### 单 @Binds（consumer-seam-binding-rule）
+
+```kotlin
+// DataModule.kt
+@Binds @Singleton
+abstract fun bindStartupAuthDecider(impl: DefaultStartupAuthDecider): StartupAuthDecider
+
+@Provides @Singleton
+fun provideClock(): Clock = SystemClock   // production
+```
+
+### V4Activity 集成
+
+```kotlin
+@AndroidEntryPoint
+class V4Activity : ComponentActivity(), CancelAdapt {
+    @Inject lateinit var startupAuthDecider: StartupAuthDecider
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val start = if (startupAuthDecider.resumeSessionIfValid()) AppRoutes.Main else AppRoutes.Login
+        setContent { AeroTheme { AppNavGraph(startDestination = start) } }
+    }
+}
+```
+
+`AppNavGraph` 已接受 `startDestination: String` 参数（line 33）。AppNavGraph 内的 Splash hack `// No real token check yet — always send to Login` **已删除**（NEXT-2 fix）。Default `startDestination = AppRoutes.Login` 作 safer fallback（V4Activity 用 decider verdict override）。
+
+### 3 design judgments（落代码 + Critic 5-leg 验证）
+
+1. **Decider 返 `Boolean` 而非 sealed `Result`** — 单 boolean 覆盖两 branch；KDoc 注明 "clear residue + return false" 语义。比 4-case sealed type 对 V4Activity caller 更简洁。
+2. **`fun interface Clock { fun now(): Long }` + 注入** — 比 `() -> Long` lambda 更明确，可 mock，符合 TokenRefresher idiom。DataModule provides SystemClock 默认；tests 直接 construct decider with own Clock。
+3. **`runBlocking` 包 `clearL2Atomically`** — V4Activity.onCreate 已在 main thread，clear 是单次 SharedPreferences commit (microsecond-scale)，对齐 AuthInterceptor + DynamicBaseUrlInterceptor 现有 runBlocking pattern（RISK-AR-001）。Synchronous storage commit() 在 publish StateFlow 前返回。
+
+### 测试契约
+
+- `KillAppStateRecoveryTest`：seed FakeKeyValueStore prior {jwt, host, port, account, tokenExpiry-future} → 新构造 AuthStoreImpl (mimics Hilt SingletonComponent rebuild after process kill) → `decider.resumeSessionIfValid()` → assert returns true + `cfg.writes == ["http://${host}:${port}/api"]`（rehydration 真验）+ 5 negative cases (each L2 field individually missing → false + clearL2Atomically called)。
+- `LogoutPartialClearTest`：assert `clearL2Atomically` 单 commit per store + 不动 L1 / `clearL1Account` 不动 L2。
+- `RememberMeToggleTest`：开/关切换 + saveLogin(rememberMe=true/false) variant + StateFlow 转换。
+- `UninstallReinstallTest`：post-A2 backup_rules state（L2 cleared + L1 restored）→ decider false + L1 prefill 可读。
+
+### Constraint-vs-artifact (PA-12/13 family)
+
+NEXT-2 fix 同时 land 两个 deployment artifact（同 `[[constraint-vs-artifact-rule]]` memory）：
+- `app/src/main/res/xml/backup_rules.xml` (308 bytes, pre-API-31): `<full-backup-content><exclude domain="sharedpref" path="auth_secure.xml"/></full-backup-content>`
+- `app/src/main/res/xml/data_extraction_rules.xml` (572 bytes, API 31+): `<cloud-backup><exclude .../></cloud-backup><device-transfer><exclude .../></device-transfer>`
+- `AndroidManifest.xml` line 58-59 `<application>` attrs: `android:dataExtractionRules="@xml/data_extraction_rules"` + `android:fullBackupContent="@xml/backup_rules"`（保留 `android:allowBackup="true"` 让 L1 restorable，仅 exclude L2 加密区）
+
+### 变更历史
+
+- v1.0 (2026-06-01, NEXT-2 D-16 fix): 首次定义 + impl 落地。`resumeSessionIfValid(): Boolean` synchronous atomic check + rehydrate ServerConfig。Critic 5-leg PASS_W_MINOR HIGH (5-cycle emulator, kill-app Cycle 2 BLOCKER 闭环 logcat 验证)。consumer = V4Activity。3 design judgments 落代码：Boolean over Result / Clock fun interface / runBlocking pattern。
 
 ---
 

@@ -3,7 +3,164 @@
 # 状态机见 SKILL.md §4 / communication-protocol.md §3.
 
 project: "aeroradio-v4"
-last_updated: "2026-05-30 (PA-15 REVIEW_PASSED_HIGH; +retroactive closure on PA-14 C-1 / PA-12 / PA-13 / PA-14 V3TerminalRepo)"
+last_updated: "2026-06-01 (NEXT-2 D-16 COMPLETE: data audit+fix+Critic PASS_W_MINOR HIGH + fe rememberMe MAJOR fix + 3 ICD bump + R-ADDR-SLOT CLOSED; 3 atomic commits)"
+
+# ── NEXT-2 D-16 完整闭环 2026-06-01 ──
+next2_d16_2026_06_01:
+  status: "COMPLETE"
+  audit:
+    by: "data-integration-2"
+    actual_h: 2
+    calibrated_h: 8
+    savings_pct: 75
+    verdict: "(c-1) DEAD-LEGACY + One sharp C-3 bug"
+    framing_corrections:
+      - "NO DataStore — SharedPrefsKeyValueStore + editor.commit() SYNCHRONOUS; candidate #8 RULED_OUT"
+      - "ReFreshTokenUtil / TaskManageUtils carcass; root cause B 双源 OVERSTATED; (c-1) 确认 D-13 不变"
+      - "ServerAddress race 不是并发问题 — missing rehydration of Constant.serveraddress on app restart"
+    real_culprit:
+      - "LoginRoute.kt:32 if (loggedIn) onLoggedIn() — 仅检 JWT 不检 L2 atomic + 不 rehydrate Constant.serveraddress"
+      - "AppNavGraph.kt:42 // No real token check yet — always send to Login — documented TODO 暴露真凶"
+    rootcause_doc: ".state/api-snapshots/auth-split-brain-rootcause.md (8 sections, 32 KB)"
+  fix:
+    by: "data-integration-2"
+    actual_h: 3.5
+    calibrated_h: 5.5
+    savings_pct: 36
+    files: 19  # 13 modified + 6 new (10 source + 2 xml + 4 tests + 3 modified tests)
+    tests: "54/0/0/0 across 7 classes"
+    apk: "app/build/outputs/apk/debug/app-debug.apk 56,785,878 bytes mtime 2026-06-01 13:02"
+    design_judgments:
+      - "clearL2Atomically single-commit per store (atomicity within each encrypted file; cross-store enforced by decider re-check)"
+      - "setBaseUrl(\"\") fail-fast > null (OkHttp rejects empty as not absolute, no NPE on .contains())"
+      - "tokenExpiry == null = legacy 60h-from-issue documented-assumption (PA-15 SchemeTaskStatus idiom)"
+  critic_verdict:
+    by: "critic-2"
+    verdict: "PASSED_WITH_MINOR Confidence HIGH"
+    severity_counts: { BLOCKER: 0, MAJOR: 1, MINOR: 2, INFO: 1 }
+    cycle2_blocker_closure: |
+      Cycle 2 (load-bearing kill-app axis) PASSED:
+      - logcat: GET http://183.216.51.204:99/api/terminal/terzone (URL 正确 rehydrate; pre-fix 这里是 null/terminal/terzone)
+      - uiautomator dump: TabBar 终端/广播/AI/任务/服务 — MainScreen 不 LoginScreen
+      - No FATAL/AndroidRuntime crash/Compose exception
+      - V4Activity.onCreate 跑通 StartupAuthDecider clean
+    cycles_passed:
+      - "Cycle 1: 24-cycle1-fresh-login.png — clean install → LoginScreen 全空 ✓"
+      - "Cycle 2: 25-cycle2-killapp-MAIN.png — login → kill → restart → MainScreen ✓ ★"
+      - "Cycle 3: 26-cycle3-logout-LOGIN.png — adb simulate logout → LoginScreen prefill account ✓"
+      - "Cycle 4: 27-cycle4-uninstall-LOGIN-empty.png — uninstall+install → LoginScreen 全空 ✓ (A2 backup_rules works)"
+      - "Cycle 5: NOT exercisable via UI — discovered rememberMe wiring gap MAJOR"
+    major_finding: |
+      rememberMe UI toggle value silently dropped in LoginRoute (`_` discard).
+      Pre-existing pre-NEXT-2 bug, surfaced by 5-cycle automation.
+      fe-business follow-up PA-NEXT2-FE: LoginRoute + LoginViewModel + tests.
+  fe_business_fix:
+    pa: "PA-NEXT2-FE"
+    by: "fe-business-2"
+    actual_min: 30
+    calibrated_h: 1.2
+    savings_pct: 75
+    files: 3
+    tests: "10/0/0/0 LoginViewModelTest (8 migrated + 2 NEW regression-lock)"
+    apk_delta: "≈0 (pure source rewiring, 55MB unchanged)"
+    verification: "PM quick-verify — Critic L5 skipped (17 lines + 2 regression locks + scoped test pass)"
+  icd_landing:
+    files_changed:
+      - "aeroradio-workflow/references/icd-contracts.md +191 lines (3 bump)"
+    bumps:
+      - "§3 AuthState v2.1 → v2.2 (L1/L2 + tokenExpiry + rememberMe + 4-path logout + L2 atomic invariant + interface adds)"
+      - "NEW §3B ICD-StartupAuthDecider-v1 (synchronous atomic check seam + 3 design judgments + tests + constraint-vs-artifact)"
+      - "§2 NetworkModule-v1 doc-only Constant.serveraddress truth-model + R-ADDR-SLOT CLOSED"
+    icd_proposals_doc: ".state/api-snapshots/icd-proposals-next2.md (12 KB, audit phase output)"
+  commit_batch:
+    branch: "claude/v4-screens-on-refactor"
+    base: "c6ea974"
+    commits:
+      - title: "data: NEXT-2 D-16 fix — AuthStore v2.2 + StartupAuthDecider + A2 backup rules + 4 new tests"
+        files: 19
+      - title: "ui: NEXT-2-FE rememberMe wiring — LoginRoute destructure + LoginViewModel onSubmit"
+        files: 3
+      - title: "workflow: 3 ICD bump + Critic skill RTM 5-cycle + ledger NEXT-2 + R-ADDR-SLOT CLOSED + smoke evidence"
+        files: "varied"
+  closures:
+    - "R-ADDR-SLOT: DORMANT-TRACKED → CLOSED (ServerConfig is canonical write path; legacy PreferencesUtil slot stays dormant by routing; all callers v4-unreachable)"
+    - "BLOCKER-3 (kill-app + uninstall split-brain): CLOSED (Cycle 2 logcat 验证)"
+    - "ESC-WATCH-1 (旧栈无 refresh): downgraded to LOW (60h tokenExpiry + 401 → clearLogin → relogin strategy)"
+  cto_next_action:
+    - "装新 APK 真机验 cycle 2 (kill-app + restart → MainScreen 不 NPE) — belt-and-suspenders 闭 BLOCKER"
+    - "若 cycle 2 真机 PASS → 整 BLOCKER-3 关闭"
+    - "Logout UI affordance (5-tab scaffold 退出登录 menu) — future fe PA，非 BLOCKER"
+
+# ── D-16 CTO decision 2026-06-01 ──
+d16_2026_06_01:
+  trigger: "CTO 2026-06-01 实测发现 BLOCKER-3 鉴权 split-brain 不仅 uninstall 路径触发，**kill-app 路径**普通日常使用即触发 (登录→后台滑掉→重启→直接进内部页+NPE 'serveraddress must not be null')。"
+  severity_upgrade: "P0_BLOCKER → P0_CRITICAL（日常触发）"
+  cto_chosen_solution: "方案 C — 记住我 toggle 式两层存储 + 启动两步判断 + 退出独立 path + 原子不变量"
+  two_layer_storage:
+    L1_credentials_plaintext: ["account", "serverHost", "serverPort", "rememberMe(bool)"]
+    L2_auth_encrypted: ["token", "refreshToken?", "tokenExpiry"]
+  startup_two_step_decision: |
+    onAppStart:
+      val authState = readL2()  // atomic check 三件
+      if (authState 全有 && tokenExpiry 未过) → MainScreen
+      else → clearL2Atomically + 读 L1 → LoginScreen(prefill_based_on_rememberMe, password=空)
+  atomic_invariant: "L2 三件 (token+serverAddress+账号) 要么全有要么全无；任一缺失=clearL2Atomically+回 LoginScreen"
+  exit_semantics:
+    user_logout: "清 L2，留 L1"
+    token_expired: "同上"
+    api_401: "同上"
+    rememberMe_toggle_off: "清 L1 account/host/port + 标 rememberMe=false，不动 L2"
+    login_success: "写 L2 + (rememberMe 开则) 写 L1"
+  blocks: "BL-AUTH-SPLIT-BRAIN-FIX (NEXT-2)"
+  pm_artifacts_updated:
+    - ".state/auth-split-brain-framing.md v2 (D-16 + 三根因 + 10 候选 + 6-stage sequencing)"
+    - ".state/next2-data-audit-dispatch-draft.md v2 (D-16 + 8-section audit template)"
+  next_action: "等 CTO GO NEXT-2 → PM SendMessage data-integration-2 dispatch"
+
+# ── PA-12 → Phase C commit batch 7 commits 2026-06-01 land ──
+commit_batch_2026_06_01:
+  branch: "claude/v4-screens-on-refactor"
+  base: "5ed351f"
+  commits:
+    - sha: "9b14303"
+      title: "fix: PA-12 cleartext + PA-13 ActivityLifecycle.foregroundState.register"
+      files: 3
+      lines_delta: "+40"
+    - sha: "2549b1e"
+      title: "data: PA-14 V3TerminalRepo terzone-only + TerminalDto 28-field + ★ terminal.zone NOT membership"
+      files: 10
+      lines_delta: "+9573/-147"
+    - sha: "865b426"
+      title: "ui: Phase B LoginScreen rebuild + PA-14 C-1 TabBar identity centralized"
+      files: 2
+      lines_delta: "+268/-126"
+    - sha: "2532c2e"
+      title: "data: PA-15 V3TaskRepo two-step refresh + SchemeDto split + ★ name not taskname"
+      files: 8
+      lines_delta: "+1368/-240"
+    - sha: "d07c1a5"
+      title: "ui: Phase C base — Color.kt v1.3 16 semantic alias + Noto Sans SC subset + JetBrains Mono"
+      files: 9
+      lines_delta: "+255/-9"
+    - sha: "05f4a56"
+      title: "ui: Phase C app — 4 screens consume v1.3 tokens (broadcast 3-mode / terminal 6-chip / task pill+zone+HH:mm)"
+      files: 8
+      lines_delta: "+369/-32"
+    - sha: "c6ea974"
+      title: "workflow: 8 ICD v1.3 land + Critic skill RTM-ERR-003/4/5/6 + ledger PA-14/15/Phase C + evidence trail"
+      files: 80
+      lines_delta: "+1318/-20"
+  total: "120 files / +13.2K / -574"
+  icd_landed:
+    - "§1 注册表 7 行 version bump"
+    - "§3 AuthState v2 → v2.1 (60h + array + priority/userid + refresh/delete endpoints)"
+    - "§4 TerminalDto v2 → v2.1 (24+envelope wire + ★ terminal.zone NOT membership)"
+    - "§5 ZoneDto v2 → v2.1 (terzone SOLE source + 多对多 + envelope-meta)"
+    - "§9 DesignTokens v1.2 → v1.3 (16 alias + Noto Sans SC + JetBrains Mono subset)"
+    - "§10 Endpoints v1 → v1.1 (+sechetaskinfo/sechetask CRUD/authorizations refresh/delete)"
+    - "§12 SchemeDto v1 → v2 (2 形分裂 + name not taskname)"
+    - "§13 TaskRepository v1 → v2.1 (two-step refresh + multi-active + 4 status int 派生)"
+  apk: "app/build/outputs/apk/debug/app-debug.apk 55MB mtime 2026-05-30 18:36"
 
 # ── SESSION RESUME 2026-05-29 (PM /clear 后接手, CTO go) ──
 session_resume_2026_05_29:
