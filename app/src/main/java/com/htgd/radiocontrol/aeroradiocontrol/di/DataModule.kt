@@ -6,8 +6,10 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.AuthStore
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.AuthStoreImpl
+import com.htgd.radiocontrol.aeroradiocontrol.data.auth.DefaultStartupAuthDecider
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.KeyValueStore
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.SharedPrefsKeyValueStore
+import com.htgd.radiocontrol.aeroradiocontrol.data.auth.StartupAuthDecider
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.TokenRefresher
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.UnsupportedTokenRefresher
 import com.htgd.radiocontrol.aeroradiocontrol.data.repository.V3LoginAuthenticator
@@ -78,6 +80,17 @@ object DataModule {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
         )
     }
+
+    /**
+     * ★ NEXT-2: production [Clock] = `System.currentTimeMillis()`. Tests inject
+     * their own Clock by constructing [DefaultStartupAuthDecider] directly (the
+     * @Inject constructor is `internal`-accessible, but DI tests typically
+     * bypass Hilt entirely). Marked @Singleton so the same instance is shared.
+     */
+    @Provides
+    @Singleton
+    fun provideClock(): com.htgd.radiocontrol.aeroradiocontrol.data.auth.Clock =
+        com.htgd.radiocontrol.aeroradiocontrol.data.auth.SystemClock
 }
 
 /**
@@ -196,6 +209,20 @@ abstract class DataBindings {
     @Binds
     @Singleton
     abstract fun bindServerConfig(impl: ConstantServerConfig): ServerConfig
+
+    /**
+     * StartupAuthDecider binding (★ NEXT-2 D-16 root-cause-C fix). The single
+     * synchronous atomic check called from V4Activity.onCreate BEFORE setContent
+     * to decide Main vs Login + rehydrate `Constant.serveraddress` via
+     * ServerConfig. Exactly ONE @Binds for StartupAuthDecider app-wide
+     * (consumer-seam-binding-rule). See
+     * `data/auth/StartupAuthDecider.kt` for the contract.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindStartupAuthDecider(
+        impl: DefaultStartupAuthDecider,
+    ): StartupAuthDecider
 }
 
 /** Qualifies the EncryptedSharedPreferences-backed [KeyValueStore]. */

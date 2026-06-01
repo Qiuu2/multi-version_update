@@ -1,6 +1,7 @@
 package com.htgd.radiocontrol.aeroradiocontrol.data.network
 
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.AuthStore
+import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.ServerConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -23,11 +24,15 @@ import javax.inject.Singleton
  *   carried (`knownStaleJwt`). AuthStore serializes refresh and dedups by that
  *   token, so a burst of parallel 401s costs one network refresh. If refresh
  *   succeeds we retry once with the new token; if it fails AuthStore has already
- *   cleared the session and we return the original 401 for the UI to handle.
+ *   cleared the session AND ★ NEXT-2: we additionally call
+ *   `serverConfig.setBaseUrl("")` so the static `Constant.serveraddress` cache
+ *   is cleared in lockstep with the session — without this, a stale URL would
+ *   linger and any unauthenticated retry could still build URLs against it.
  */
 @Singleton
 class AuthInterceptor @Inject constructor(
     private val authStore: AuthStore,
+    private val serverConfig: ServerConfig,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -51,10 +56,17 @@ class AuthInterceptor @Inject constructor(
         val refreshed = runBlocking { authStore.refresh(knownStaleJwt = jwt) }
         return refreshed.fold(
             onSuccess = { newJwt -> chain.proceed(request.withBearer(newJwt)) },
-            // refresh() already cleared the session on failure; surface a fresh
-            // 401 by re-issuing without a token (the server will 401 again,
-            // which the UI maps to "session expired → login").
-            onFailure = { chain.proceed(request.withBearer(null)) },
+            // refresh() already cleared the session on failure. ★ NEXT-2: also
+            // clear the static Constant.serveraddress cache so the next repo
+            // call after the inevitable UI route-to-login sees a consistent
+            // "no session" state instead of an URL that points at a server
+            // we can no longer auth against.
+            onFailure = {
+                serverConfig.setBaseUrl("")
+                // Surface a fresh 401 by re-issuing without a token (the server
+                // will 401 again, which the UI maps to "session expired → login").
+                chain.proceed(request.withBearer(null))
+            },
         )
     }
 

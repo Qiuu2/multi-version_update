@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ★ NEXT-2 (2026-06-01) — Auto Backup exclusion rules for API <31.
+    Companion file `data_extraction_rules.xml` covers API 31+.
+
+    Purpose: exclude the EncryptedSharedPreferences "auth_secure.xml" file
+    from Auto Backup. The encrypted JWT must NOT survive uninstall/reinstall —
+    see the companion file's header for the full rationale. The plain
+    "auth_plain.xml" (L1 prefill) is intentionally NOT excluded.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="auth_secure.xml" />
+</full-backup-content>

@@ -19,6 +19,11 @@ class SharedPrefsKeyValueStore(
 
     override fun getInt(key: String, default: Int): Int = prefs.getInt(key, default)
 
+    override fun getLong(key: String, default: Long): Long = prefs.getLong(key, default)
+
+    override fun getBoolean(key: String, default: Boolean): Boolean =
+        prefs.getBoolean(key, default)
+
     override fun put(vararg entries: Pair<String, Any?>) {
         val editor = prefs.edit()
         for ((key, value) in entries) {

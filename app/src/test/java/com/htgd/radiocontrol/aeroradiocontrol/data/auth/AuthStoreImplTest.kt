@@ -28,6 +28,9 @@ class AuthStoreImplTest {
         val map = mutableMapOf<String, Any?>()
         override fun getString(key: String): String? = map[key] as? String
         override fun getInt(key: String, default: Int): Int = map[key] as? Int ?: default
+        override fun getLong(key: String, default: Long): Long = map[key] as? Long ?: default
+        override fun getBoolean(key: String, default: Boolean): Boolean =
+            map[key] as? Boolean ?: default
         override fun put(vararg entries: Pair<String, Any?>) {
             for ((k, v) in entries) if (v == null) map.remove(k) else map[k] = v
         }
@@ -115,6 +118,69 @@ class AuthStoreImplTest {
         assertEquals("jwt-1", store.jwt.value)
         assertNull(store.refreshToken.value)
         assertTrue(store.isLoggedIn.value)
+    }
+
+    // ── ★ NEXT-2: tokenExpiry round-trip + default-args back-compat ───────
+
+    @Test
+    fun saveLogin_tokenExpiry_roundTripsThroughSecureStore() = runTest {
+        val secure = FakeKeyValueStore()
+        val plain = FakeKeyValueStore()
+        val store = newStore(secure, plain)
+        val exp = 1_700_000_000_000L
+
+        store.saveLogin(
+            address = sampleAddress, account = "op",
+            jwt = "j", refreshToken = "r",
+            tokenExpiry = exp, rememberMe = true,
+        )
+
+        // Live read.
+        assertEquals(exp, store.tokenExpiry.value)
+        // Ctor-read on a fresh impl over the same stores (process restart).
+        val restarted = newStore(secure, plain)
+        assertEquals(exp, restarted.tokenExpiry.value)
+    }
+
+    @Test
+    fun ctor_tokenExpiry_zeroSentinel_isExposedAsNull() = runTest {
+        // Plain SharedPreferences stores 0L when the key is absent (the
+        // KEY_TOKEN_EXPIRY default in AuthStoreImpl). The impl must expose
+        // that as null on the StateFlow so consumers don't see a fake "epoch
+        // 1970" expiry.
+        val secure = FakeKeyValueStore()
+        val plain = FakeKeyValueStore()
+        val store = newStore(secure, plain)
+        assertNull(store.tokenExpiry.value)
+    }
+
+    @Test
+    fun saveLogin_defaultArgs_preserveV21BackwardCompat() = runTest {
+        // v2.1 callers passed 4 args; v2.2 default args (tokenExpiry=null,
+        // rememberMe=true) must keep their semantics working.
+        val store = newStore()
+        store.saveLogin(sampleAddress, "op", "j", refreshToken = "r")
+
+        assertEquals("j", store.jwt.value)
+        assertEquals("r", store.refreshToken.value)
+        assertEquals(sampleAddress, store.serverAddress.value)
+        assertEquals("op", store.account.value)
+        // Default rememberMe=true.
+        assertTrue(store.rememberMe.value)
+        // Default tokenExpiry=null.
+        assertNull(store.tokenExpiry.value)
+        assertTrue(store.isLoggedIn.value)
+    }
+
+    @Test
+    fun clearLogin_dropsTokenExpiryAlongsideJwt() = runTest {
+        val store = newStore()
+        store.saveLogin(sampleAddress, "op", "j", "r", tokenExpiry = 999L, rememberMe = true)
+        assertEquals(999L, store.tokenExpiry.value)
+
+        store.clearLogin()
+
+        assertNull(store.tokenExpiry.value)
     }
 
     // ── refresh: success / failure ──────────────────────────────────────────

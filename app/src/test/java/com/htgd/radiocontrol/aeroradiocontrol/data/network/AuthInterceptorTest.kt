@@ -1,10 +1,12 @@
 package com.htgd.radiocontrol.aeroradiocontrol.data.network
 
 import com.htgd.radiocontrol.aeroradiocontrol.data.auth.AuthStore
+import com.htgd.radiocontrol.aeroradiocontrol.data.v3bridge.ServerConfig
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import okhttp3.Interceptor
 import okhttp3.Protocol
@@ -17,7 +19,9 @@ import org.junit.Test
 
 /**
  * Unit tests for [AuthInterceptor]: Bearer injection, login exemption, and the
- * 401 → refresh → retry-once chain (success and failure).
+ * 401 → refresh → retry-once chain (success and failure). ★ NEXT-2: the
+ * refresh-failure path additionally clears `ServerConfig.baseUrl` so the static
+ * `Constant.serveraddress` cache goes null in lockstep with the dead session.
  */
 class AuthInterceptorTest {
 
@@ -25,13 +29,16 @@ class AuthInterceptorTest {
         every { this@mockk.jwt } returns MutableStateFlow(jwt)
     }
 
+    /** ★ NEXT-2: relaxed ServerConfig fake — most tests don't assert on it. */
+    private fun serverConfig(): ServerConfig = mockk(relaxed = true)
+
     private fun request(path: String) =
         Request.Builder().url("http://server/api$path").build()
 
     @Test
     fun attachesBearerForNonLoginRequest() {
         val store = authStore("jwt-1")
-        val interceptor = AuthInterceptor(store)
+        val interceptor = AuthInterceptor(store, serverConfig())
         val chain = SequencedChain(request("/terminal/terminalinfo"), listOf(200))
 
         interceptor.intercept(chain)
@@ -42,7 +49,7 @@ class AuthInterceptorTest {
     @Test
     fun skipsAuthHeaderForLoginRequest() {
         val store = authStore("jwt-1")
-        val interceptor = AuthInterceptor(store)
+        val interceptor = AuthInterceptor(store, serverConfig())
         val chain = SequencedChain(request("/authorizations"), listOf(200))
 
         interceptor.intercept(chain)
@@ -54,7 +61,8 @@ class AuthInterceptorTest {
     fun on401_refreshesWithStaleJwtAndRetriesWithNewToken() {
         val store = authStore("jwt-stale")
         coEvery { store.refresh(knownStaleJwt = "jwt-stale") } returns Result.success("jwt-fresh")
-        val interceptor = AuthInterceptor(store)
+        val config = serverConfig()
+        val interceptor = AuthInterceptor(store, config)
         // First call 401, retry 200.
         val chain = SequencedChain(request("/terminal/terminalinfo"), listOf(401, 200))
 
@@ -65,14 +73,17 @@ class AuthInterceptorTest {
         assertEquals("Bearer jwt-stale", chain.proceeded[0].header("Authorization"))
         assertEquals("Bearer jwt-fresh", chain.proceeded[1].header("Authorization"))
         coVerify(exactly = 1) { store.refresh(knownStaleJwt = "jwt-stale") }
+        // ★ NEXT-2: refresh SUCCESS → serverConfig is NOT cleared (session is alive).
+        verify(exactly = 0) { config.setBaseUrl("") }
     }
 
     @Test
-    fun on401_refreshFailure_retriesWithoutToken() {
+    fun on401_refreshFailure_retriesWithoutToken_andClearsServerConfig() {
         val store = authStore("jwt-stale")
         coEvery { store.refresh(knownStaleJwt = "jwt-stale") } returns
             Result.failure(IllegalStateException("refresh failed"))
-        val interceptor = AuthInterceptor(store)
+        val config = serverConfig()
+        val interceptor = AuthInterceptor(store, config)
         val chain = SequencedChain(request("/terminal/terminalinfo"), listOf(401, 401))
 
         val response = interceptor.intercept(chain)
@@ -81,12 +92,15 @@ class AuthInterceptorTest {
         assertEquals(401, response.code)
         assertEquals(2, chain.proceeded.size)
         assertNull(chain.proceeded[1].header("Authorization"))
+        // ★ NEXT-2: refresh failure → static Constant.serveraddress cache cleared
+        // in lockstep with the cleared session so no later repo races on stale URL.
+        verify(exactly = 1) { config.setBaseUrl("") }
     }
 
     @Test
     fun non401_passesThroughWithoutRefresh() {
         val store = authStore("jwt-1")
-        val interceptor = AuthInterceptor(store)
+        val interceptor = AuthInterceptor(store, serverConfig())
         val chain = SequencedChain(request("/terminal/terminalinfo"), listOf(500))
 
         val response = interceptor.intercept(chain)

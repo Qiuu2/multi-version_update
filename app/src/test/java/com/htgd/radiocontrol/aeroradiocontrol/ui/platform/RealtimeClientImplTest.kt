@@ -82,17 +82,31 @@ class RealtimeClientImplTest {
         override val isForeground: StateFlow<Boolean> = flow.asStateFlow()
     }
 
-    /** Minimal AuthStore with a session preset; only the read flows matter here. */
+    /** Minimal AuthStore with a session preset; only the read flows matter here.
+     *  ★ NEXT-2 v2.2: additive members default to neutral (null/false) — this
+     *  test does not exercise the L1/L2 split. */
     private class FakeAuthStore(loggedIn: Boolean = true) : AuthStore {
         private val _serverAddress = MutableStateFlow(if (loggedIn) ServerAddress("10.0.0.1", 8080) else null)
         private val _jwt = MutableStateFlow(if (loggedIn) "jwt-abc" else null)
         override val serverAddress: StateFlow<ServerAddress?> = _serverAddress.asStateFlow()
         override val jwt: StateFlow<String?> = _jwt.asStateFlow()
         override val refreshToken: StateFlow<String?> = MutableStateFlow(null).asStateFlow()
+        override val tokenExpiry: StateFlow<Long?> = MutableStateFlow<Long?>(null).asStateFlow()
         override val account: StateFlow<String?> = MutableStateFlow(null).asStateFlow()
+        override val rememberMe: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
         override val isLoggedIn: StateFlow<Boolean> = MutableStateFlow(loggedIn).asStateFlow()
-        override suspend fun saveLogin(address: ServerAddress, account: String, jwt: String, refreshToken: String?) = Unit
+        override suspend fun saveLogin(
+            address: ServerAddress,
+            account: String,
+            jwt: String,
+            refreshToken: String?,
+            tokenExpiry: Long?,
+            rememberMe: Boolean,
+        ) = Unit
         override suspend fun clearLogin() = Unit
+        override suspend fun clearL2Atomically() = Unit
+        override suspend fun clearL1Account() = Unit
+        override suspend fun setRememberMe(enabled: Boolean) = Unit
         override suspend fun reset() = Unit
         override suspend fun refresh(knownStaleJwt: String?): Result<String> = Result.failure(IllegalStateException())
     }
