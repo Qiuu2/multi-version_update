@@ -58,6 +58,32 @@ class TaskUiMappersTest {
     }
 
     @Test
+    fun `startTime HH-mm-ss is trimmed to HH-mm`() {
+        // PA-14 Phase C: v3 sends "07:50:00" but bells ring on the minute; mapper
+        // truncates to HH:mm so the timeline reads "07:50" not "07:50:00".
+        val scheme = Scheme(
+            id = "s1", name = "海王作息", active = true,
+            tasks = listOf(
+                SchemeTask(id = "t1", name = "早读开始铃", status = SchemeTaskStatus.Idle, startTime = "07:50:00"),
+            ),
+        )
+        assertEquals("07:50", scheme.toSchemeUi().tasks.single().time)
+    }
+
+    @Test
+    fun `startTime already in HH-mm is idempotent (backward compat)`() {
+        // Existing callers passing "HH:mm" (or the test suite's own fixtures) must
+        // still produce "HH:mm" — locks the no-double-trim regression.
+        val scheme = Scheme(
+            id = "s1", name = "x", active = true,
+            tasks = listOf(
+                SchemeTask(id = "t1", name = "x", status = SchemeTaskStatus.Idle, startTime = "08:00"),
+            ),
+        )
+        assertEquals("08:00", scheme.toSchemeUi().tasks.single().time)
+    }
+
+    @Test
     fun `task log maps to a UI log entry`() {
         val log = TaskLog(id = "l1", taskName = "上课铃", timestamp = "08:00:02", message = "教学楼 A · 4 个终端")
         val entry = log.toLogEntry()

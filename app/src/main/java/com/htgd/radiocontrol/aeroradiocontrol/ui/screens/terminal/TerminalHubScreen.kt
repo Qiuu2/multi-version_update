@@ -58,11 +58,20 @@ fun TerminalTab(modifier: Modifier = Modifier) {
 
 private data class StatusFilter(val label: String, val status: TerminalStatus?)
 
+/**
+ * Terminal status filter set — PA-14 C-3 / Phase C residual extension from 4 to 6
+ * chips. Spec §1.2 + Handoff.html:807 list 5 terminal states (online/offline/fault/
+ * playing/paging); the "全部" all-pass is the 6th. The row container already uses
+ * `Modifier.horizontalScroll` so the chip strip scrolls on narrow phones (per spec
+ * §1.2 I-2 overflow guidance).
+ */
 private val filters = listOf(
     StatusFilter("全部", null),
     StatusFilter("在线", TerminalStatus.Online),
     StatusFilter("离线", TerminalStatus.Offline),
     StatusFilter("故障", TerminalStatus.Fault),
+    StatusFilter("播放中", TerminalStatus.Playing),
+    StatusFilter("寻呼中", TerminalStatus.Paging),
 )
 
 /**

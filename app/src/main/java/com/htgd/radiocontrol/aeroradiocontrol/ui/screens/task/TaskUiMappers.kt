@@ -37,13 +37,28 @@ fun SchemeTaskStatus.toCardState(): TaskCardState = when (this) {
 
 fun SchemeTask.toTaskItem(): TaskItem = TaskItem(
     id = id,
-    // 时间轴/详情 show the start time; blank-tolerant ("--" handled downstream).
-    time = startTime.orEmpty(),
+    // 时间轴/详情 show the start time at minute precision (PA-14 Phase C — schools
+    // ring bells on the minute; the v3 wire sends "HH:mm:ss" — trim the seconds so
+    // we don't read "07:50:00" when "07:50" is the operational truth).
+    time = truncateToHourMinute(startTime),
     title = name,
     // No domain zone on the v3 wire (PA-10 confirmed) → blank, not the media name.
     zone = "",
     state = status.toCardState(),
 )
+
+/** Truncate "HH:mm:ss" / "HH:mm" → "HH:mm"; null/blank → empty. Tolerant of any
+ *  trailing fragment after the second colon. */
+private fun truncateToHourMinute(t: String?): String {
+    if (t.isNullOrBlank()) return ""
+    // Keep only the first two ':' segments — "07:50:00" → "07:50", "07:50" → "07:50",
+    // "07" → "07" (no parse failure on partial input).
+    val parts = t.split(':')
+    return when (parts.size) {
+        0, 1 -> t
+        else -> parts[0] + ":" + parts[1]
+    }
+}
 
 fun Scheme.toSchemeUi(): SchemeUi = SchemeUi(
     id = id,

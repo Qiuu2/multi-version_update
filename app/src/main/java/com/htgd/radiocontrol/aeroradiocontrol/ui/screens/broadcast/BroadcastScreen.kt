@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,10 +51,29 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.EmptyState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.ListSkeleton
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationBanner
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.NotificationType
-import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroGradients
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 enum class BroadcastMode(val label: String) { Page("寻呼"), Talk("对讲"), Cast("点播") }
+
+/**
+ * Resolves a [BroadcastMode] to its identity color (design-system-spec §1.3 mode-
+ * colors + Handoff.html:883-885). Same three-leg-trace pattern as `AeroTab.identityColor`
+ * (PA-14 C-1) — pixels in [ModeSegmented] / [VoicePanel] CTA / [CastPanel] CTA all
+ * inherit from here, so a token rename / new mode inserts in one place.
+ *
+ *   spec row                   spec hex     → AeroColors field    (internal value)
+ *   ────────────────────────── ──────────── ──────────────────── ───────────────────
+ *   寻呼 (Page)  / modePaging  #EA580C      → colors.modePaging    (PageWarm  = #EA580C)
+ *   对讲 (Talk)  / modeIntercom #2563EB     → colors.modeIntercom  (TalkBlue  = #2563EB)
+ *   点播 (Cast)  / modeCast    #0E7C70      → colors.modeCast      (Primary   = #0E7C70)
+ */
+private fun BroadcastMode.identityColor(
+    colors: com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroColors,
+) = when (this) {
+    BroadcastMode.Page -> colors.modePaging    // spec §1.3 寻呼 #EA580C
+    BroadcastMode.Talk -> colors.modeIntercom  // spec §1.3 对讲 #2563EB
+    BroadcastMode.Cast -> colors.modeCast      // spec §1.3 点播 #0E7C70
+}
 
 /**
  * Broadcast tab. Segmented switch over three modes; the target-zone selection is
@@ -64,6 +85,14 @@ enum class BroadcastMode(val label: String) { Page("寻呼"), Talk("对讲"), Ca
  *     RECORD_AUDIO prompt is driven HERE on [VoiceEffect.RequestMicPermission] (the
  *     adapter re-checks the grant at call time and fails closed; fe owns the prompt,
  *     never the gate). A device-connection banner is driven from deviceEvents.
+ *
+ * Mode-color identity (PA-14 Phase C-2, design-system-spec §1.3 + Handoff:883-885):
+ *   each of the 3 modes carries its own identity color across the segmented control,
+ *   the status line tint, AND the primary CTA — so a glance at any panel says which
+ *   mode is active. Pre-C-2 the active mode bg was always `AeroGradients.Primary`
+ *   (teal) and the CTA was `MButtonVariant.Success` (green #16A34A), so every mode
+ *   rendered the same teal/green regardless of identity (CTO 2026-05-30 real-device
+ *   screencap `.state/cto-verify/02-broadcast-tab-huawei-2026-05-30.jpg`).
  */
 @Composable
 fun BroadcastScreen(
@@ -161,6 +190,13 @@ fun BroadcastScreen(
     }
 }
 
+/**
+ * Segmented mode-switcher (寻呼 / 对讲 / 点播) — each segment carries its OWN identity
+ * color so the strip reads as 3 distinct modes even at rest (Handoff:883-885 + spec
+ * §1.3): selected → solid mode-color bg + white label; resting → transparent + mode-
+ * color label dimmed via the secondary `bodySmall` weight. Pre-C-2 the active bg was
+ * `AeroGradients.Primary` (teal) for ALL three modes — see class KDoc.
+ */
 @Composable
 private fun ModeSegmented(selected: BroadcastMode, onSelect: (BroadcastMode) -> Unit) {
     val colors = AeroTheme.colors
@@ -173,11 +209,12 @@ private fun ModeSegmented(selected: BroadcastMode, onSelect: (BroadcastMode) -> 
     ) {
         BroadcastMode.values().forEach { m ->
             val active = m == selected
+            val modeColor = m.identityColor(colors)
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clip(AeroTheme.shapes.rChip)
-                    .then(if (active) Modifier.background(AeroGradients.Primary) else Modifier)
+                    .then(if (active) Modifier.background(modeColor) else Modifier)
                     .clickable { onSelect(m) }
                     .padding(vertical = AeroTheme.spacing.sm),
                 contentAlignment = Alignment.Center,
@@ -185,7 +222,9 @@ private fun ModeSegmented(selected: BroadcastMode, onSelect: (BroadcastMode) -> 
                 Text(
                     text = m.label,
                     style = AeroTheme.typography.bodyLarge,
-                    color = if (active) Color.White else colors.ink3,
+                    // Selected = white on mode-color; resting = mode-color label so
+                    // the chip carries identity even before selection (spec row 12-13).
+                    color = if (active) Color.White else modeColor,
                 )
             }
         }
@@ -220,6 +259,12 @@ private fun TargetSection(
  * Unified 寻呼/对讲 panel — de-mocked onto [VoiceViewModel] (SD2). Renders the
  * [VoiceUiState] for the active [kind]; start is gated by isAvailable() (Unavailable
  * fallback) + non-empty targets, and the mic prompt is driven at the screen root.
+ *
+ * Mode-color identity (PA-14 C-2): the Idle CTA and the Connecting/Waiting/Active
+ * status-line tint follow the active mode's identity color — Page → modePaging
+ * orange, Talk → modeIntercom blue (resolved via [BroadcastMode.identityColor]).
+ * Terminal states (Refused / Error) stay neutral / fault — they are functional
+ * states, not mode identity.
  */
 @Composable
 private fun VoicePanel(
@@ -233,6 +278,9 @@ private fun VoicePanel(
     val colors = AeroTheme.colors
     val spacing = AeroTheme.spacing
     val verb = if (kind == VoiceKind.Page) "寻呼" else "对讲"
+    // VoiceKind maps 1:1 onto the segmented BroadcastMode that drives this panel.
+    val mode = if (kind == VoiceKind.Page) BroadcastMode.Page else BroadcastMode.Talk
+    val modeColor = mode.identityColor(colors)
 
     if (state is VoiceUiState.Unavailable) {
         EmptyState(
@@ -248,14 +296,15 @@ private fun VoicePanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.lg),
     ) {
-        // Status line for the live/terminal states.
+        // Status line for the live/terminal states — Connecting/Waiting/Active tint
+        // follows the mode identity; Refused/Error stay neutral/fault per spec.
         when (state) {
             is VoiceUiState.Connecting ->
-                VoiceStatusLine(TerminalStatus.Paging, "正在连接…", colors.statusPaging)
+                VoiceStatusLine(TerminalStatus.Paging, "正在连接…", modeColor)
             is VoiceUiState.Waiting ->
-                VoiceStatusLine(TerminalStatus.Paging, "等待对方接听…", colors.statusPaging)
+                VoiceStatusLine(TerminalStatus.Paging, "等待对方接听…", modeColor)
             is VoiceUiState.Active ->
-                VoiceStatusLine(TerminalStatus.Playing, "正在$verb $targetCount 区", colors.statusOnline)
+                VoiceStatusLine(TerminalStatus.Playing, "正在$verb $targetCount 区", modeColor)
             is VoiceUiState.Refused ->
                 VoiceStatusLine(TerminalStatus.Offline, "对方已拒绝", colors.ink3)
             is VoiceUiState.Error ->
@@ -269,10 +318,10 @@ private fun VoicePanel(
         }
 
         when (state) {
-            is VoiceUiState.Idle -> MButton(
+            is VoiceUiState.Idle -> ModeCtaButton(
                 text = "开始$verb",
-                variant = MButtonVariant.Success,
-                leading = { Icon(Icons.Filled.Mic, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modeColor = modeColor,
+                leadingIcon = Icons.Filled.Mic,
                 enabled = targetCount > 0,
                 onClick = onStart,
                 modifier = Modifier.fillMaxWidth(),
@@ -302,6 +351,53 @@ private fun VoiceStatusLine(status: TerminalStatus, label: String, labelColor: C
     ) {
         StatusPill(status = status)
         Text(label, style = AeroTheme.typography.bodySmall, color = labelColor)
+    }
+}
+
+/**
+ * Inline mode-tinted CTA button (PA-14 C-2) — Box+Background pattern (same shape as
+ * LoginScreen's `GradientLoginButton`, PA-14 Phase B). Bound to a mode-identity color
+ * so the 3 broadcast modes have visually distinct CTAs without enlarging the `MButton`
+ * variant set. Disabled state drops the mode color → `surface3` + `ink4` (matches the
+ * `MButton.disabled` visual treatment).
+ */
+@Composable
+private fun ModeCtaButton(
+    text: String,
+    modeColor: Color,
+    leadingIcon: ImageVector,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AeroTheme.colors
+    val spacing = AeroTheme.spacing
+    val shape = AeroTheme.shapes.rChip
+    Box(
+        modifier = modifier
+            .defaultMinSize(minHeight = 48.dp)
+            .clip(shape)
+            .background(if (enabled) modeColor else colors.surface3)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = AeroTheme.spacing.btnPadH, vertical = AeroTheme.spacing.btnPadV),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+        ) {
+            Icon(
+                leadingIcon,
+                contentDescription = null,
+                tint = if (enabled) Color.White else colors.ink4,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = text,
+                style = AeroTheme.typography.button,
+                color = if (enabled) Color.White else colors.ink4,
+            )
+        }
     }
 }
 
@@ -368,16 +464,15 @@ private fun CastPanel(
                         )
                     }
                     Spacer(modifier = Modifier.height(spacing.sm))
-                    MButton(
+                    // Cast CTA tinted with 点播 modeCast identity (PA-14 C-2). Visually
+                    // teal — same as primary by spec coincidence — but bound to the
+                    // mode role so a future hex change to modeCast propagates here too.
+                    ModeCtaButton(
                         text = "开始点播",
-                        variant = MButtonVariant.Filled,
-                        leading = {
-                            Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                        },
+                        modeColor = BroadcastMode.Cast.identityColor(colors),
+                        leadingIcon = Icons.Filled.PlayArrow,
                         enabled = selectedMedia.isNotEmpty() && selectedZoneIds.isNotEmpty(),
-                        onClick = {
-                            viewModel.castMedia(selectedMedia, selectedZoneIds)
-                        },
+                        onClick = { viewModel.castMedia(selectedMedia, selectedZoneIds) },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

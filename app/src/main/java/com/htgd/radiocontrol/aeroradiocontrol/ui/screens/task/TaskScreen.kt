@@ -51,6 +51,7 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.Notificati
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.SkeletonBox
 import com.htgd.radiocontrol.aeroradiocontrol.ui.platform.PollingState
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
+import java.time.LocalTime
 
 /** Task tab root: home timeline + 4 sub-pages, navigated via local state. */
 private sealed interface TaskRoute {
@@ -343,6 +344,10 @@ private fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
         else -> box.border(1.dp, colors.line, shape)
     }
 
+    // PA-14 Phase C — 3-state timeliness pill derived from now() vs task.time
+    // ("已完成 / 进行中 / 待执行"). Pure presentation derivation — domain unchanged.
+    val temporalState = remember(task.time) { temporalStateOf(task.time, LocalTime.now()) }
+
     Column(
         modifier = box.padding(spacing.lg),
         verticalArrangement = Arrangement.spacedBy(spacing.xs),
@@ -355,9 +360,90 @@ private fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
                 textDecoration = if (faded) TextDecoration.LineThrough else null,
                 modifier = Modifier.weight(1f),
             )
+            // 进行中/已完成/待执行 — PA-14 Phase C v1.3 `c.taskCardState*` tokens.
+            TemporalPill(state = temporalState)
+            // Existing design-showcase state (Swapped/Migrated/Deleted/Cancelled/Running)
+            // stays alongside — they're disjoint from the temporal pill.
             StateTag(task.state)
         }
-        Text(task.zone, style = AeroTheme.typography.bodySmall, color = colors.ink3)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+        ) {
+            // Target-zone tag — placeholder "—" until the v3 wire exposes a target
+            // zone for tasks (PA-10 confirmed SchemeTask domain has NO zone field;
+            // fe-business INFO for backlog, do NOT add a domain field unilaterally).
+            TargetZoneTag(label = task.zone.ifBlank { "—" })
+        }
+    }
+}
+
+/** Timeliness of a task vs the current time — derived in fe at render time. */
+internal enum class TemporalState { Done, Running, Pending }
+
+/**
+ * Derives the 3-state timeliness from a "HH:mm" task time vs the current [now]:
+ *   - past               → [TemporalState.Done]      (已完成)
+ *   - within ±1 minute   → [TemporalState.Running]   (进行中) — bells ring on the minute
+ *   - future / unparsable → [TemporalState.Pending]  (待执行) safe default
+ *
+ * Pure function (visible-for-testing); see [TemporalPill] for the rendered pill.
+ */
+internal fun temporalStateOf(taskTime: String, now: LocalTime): TemporalState {
+    val parts = taskTime.split(':')
+    val hh = parts.getOrNull(0)?.toIntOrNull()
+    val mm = parts.getOrNull(1)?.toIntOrNull()
+    if (hh == null || mm == null) return TemporalState.Pending
+    val taskMinutes = hh * 60 + mm
+    val nowMinutes = now.hour * 60 + now.minute
+    return when {
+        nowMinutes < taskMinutes - 1 -> TemporalState.Pending
+        nowMinutes > taskMinutes + 1 -> TemporalState.Done
+        else -> TemporalState.Running
+    }
+}
+
+/**
+ * Temporal-state pill — PA-14 Phase C row 19. Bound to the v1.3 role tokens
+ * `c.taskCardStateDone / Running / Pending` (#8A929F / #EA580C / #4A5260) so a
+ * future hex re-pin lands in one alias, not 3 pill sites. Soft background reuses
+ * the matching `c.status*Soft` palette for visual lift without enlarging the soft-
+ * palette set.
+ */
+@Composable
+private fun TemporalPill(state: TemporalState) {
+    val c = AeroTheme.colors
+    val (label, fg, bg) = when (state) {
+        TemporalState.Done    -> Triple("已完成", c.taskCardStateDone,    c.surface3)
+        TemporalState.Running -> Triple("进行中", c.taskCardStateRunning, c.statusPagingSoft)
+        TemporalState.Pending -> Triple("待执行", c.taskCardStatePending, c.surface3)
+    }
+    Box(
+        modifier = Modifier
+            .clip(AeroTheme.shapes.rChip)
+            .background(bg)
+            .padding(horizontal = AeroTheme.spacing.sm, vertical = AeroTheme.spacing.xs),
+    ) {
+        Text(label, style = AeroTheme.typography.label, color = fg)
+    }
+}
+
+/**
+ * Target-zone tag (PA-14 Phase C row 20) — placeholder presentation until the v3
+ * task wire surfaces a zone field. Renders the [label] as a small neutral chip;
+ * the existing palette is used (`c.surface3` bg + `c.ink3` fg) per the施工图's
+ * "no new token — use existing c.ink3" guidance.
+ */
+@Composable
+private fun TargetZoneTag(label: String) {
+    val c = AeroTheme.colors
+    Box(
+        modifier = Modifier
+            .clip(AeroTheme.shapes.rChip)
+            .background(c.surface3)
+            .padding(horizontal = AeroTheme.spacing.sm, vertical = AeroTheme.spacing.xs),
+    ) {
+        Text("目标分区 · $label", style = AeroTheme.typography.label, color = c.ink3)
     }
 }
 

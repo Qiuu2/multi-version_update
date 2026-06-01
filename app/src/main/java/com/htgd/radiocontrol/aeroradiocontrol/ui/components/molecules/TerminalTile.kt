@@ -103,11 +103,17 @@ fun TerminalTile(
 @Composable
 private fun IconBadge(status: TerminalStatus) {
     val colors = AeroTheme.colors
-    val (bg, fg) = when (status) {
-        TerminalStatus.Online, TerminalStatus.Paging -> colors.primarySoft to colors.primaryInk
-        TerminalStatus.Offline                       -> colors.surface3  to colors.ink3
-        TerminalStatus.Fault                         -> colors.statusFaultSoft to colors.statusFault
-        TerminalStatus.Playing                       -> colors.statusPlayingSoft to colors.statusPlaying
+    // PA-14 C-3 (Phase C residual): per-state IconBadge bg/fg drive from the v1.3
+    // `tile*` aliases (semantically equivalent to the prior `c.status*` consumption
+    // — same hexes, role-bound name). The screen layer's centralised `tileColors()`
+    // helper in `TerminalUiModels.kt` documents the spec→token binding once;
+    // molecule re-resolves locally here to avoid a screen→molecule back-import.
+    val (fg, bg) = when (status) {
+        TerminalStatus.Online  -> colors.tileOnline  to colors.tileOnlineSoft
+        TerminalStatus.Offline -> colors.tileOffline to colors.tileOfflineSoft
+        TerminalStatus.Fault   -> colors.tileFault   to colors.tileFaultSoft
+        TerminalStatus.Playing -> colors.tilePlaying to colors.tilePlayingSoft
+        TerminalStatus.Paging  -> colors.tilePaging  to colors.tilePagingSoft
     }
     Box(
         modifier = Modifier
@@ -140,20 +146,23 @@ private fun CornerBadge(status: TerminalStatus, selected: Boolean) {
 
         status == TerminalStatus.Fault -> Box(
             modifier = Modifier
+                // Spec §s-terminal-tile fault-state: 18dp dot + priority_high glyph
+                // (Handoff:644-650, Phase C施工图 I-4). Color via v1.3 `tileFault`.
                 .size(18.dp)
-                .background(colors.statusFault, CircleShape),
+                .background(colors.tileFault, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Filled.PriorityHigh, contentDescription = "故障", tint = Color.White, modifier = Modifier.size(12.dp))
         }
 
         else -> {
+            // Dot color via v1.3 `tile*` per-state aliases.
             val dotColor = when (status) {
-                TerminalStatus.Online  -> colors.statusOnline
-                TerminalStatus.Offline -> colors.statusOffline
-                TerminalStatus.Playing -> colors.statusPlaying
-                TerminalStatus.Paging  -> colors.statusPaging
-                TerminalStatus.Fault   -> colors.statusFault
+                TerminalStatus.Online  -> colors.tileOnline
+                TerminalStatus.Offline -> colors.tileOffline
+                TerminalStatus.Playing -> colors.tilePlaying
+                TerminalStatus.Paging  -> colors.tilePaging
+                TerminalStatus.Fault   -> colors.tileFault
             }
             Box(
                 modifier = Modifier
