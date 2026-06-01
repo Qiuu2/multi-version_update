@@ -27,12 +27,17 @@ class LoginViewModelTest {
 
     @get:Rule val mainDispatcherRule = MainDispatcherRule()
 
-    /** Records the last [saveLogin] call so tests assert the 1:1 mapping. */
+    /** Records the last [saveLogin] call so tests assert the 1:1 mapping.
+     *  ★ NEXT-2 v2.2: tokenExpiry + rememberMe added.
+     *  ★ PA-NEXT2-FE 2026-06-01: SaveLoginArgs extended to capture all 6 args
+     *  so the rememberMe-propagation tests can assert on the recorded value. */
     private class FakeAuthStore : AuthStore {
         val _serverAddress = MutableStateFlow<ServerAddress?>(null)
         val _jwt = MutableStateFlow<String?>(null)
         val _refreshToken = MutableStateFlow<String?>(null)
+        val _tokenExpiry = MutableStateFlow<Long?>(null)
         val _account = MutableStateFlow<String?>(null)
+        val _rememberMe = MutableStateFlow(false)
         val _isLoggedIn = MutableStateFlow(false)
 
         var saveLoginArgs: SaveLoginArgs? = null
@@ -40,19 +45,35 @@ class LoginViewModelTest {
         override val serverAddress: StateFlow<ServerAddress?> = _serverAddress.asStateFlow()
         override val jwt: StateFlow<String?> = _jwt.asStateFlow()
         override val refreshToken: StateFlow<String?> = _refreshToken.asStateFlow()
+        override val tokenExpiry: StateFlow<Long?> = _tokenExpiry.asStateFlow()
         override val account: StateFlow<String?> = _account.asStateFlow()
+        override val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
         override val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
-        override suspend fun saveLogin(address: ServerAddress, account: String, jwt: String, refreshToken: String?) {
-            saveLoginArgs = SaveLoginArgs(address, account, jwt, refreshToken)
+        override suspend fun saveLogin(
+            address: ServerAddress,
+            account: String,
+            jwt: String,
+            refreshToken: String?,
+            tokenExpiry: Long?,
+            rememberMe: Boolean,
+        ) {
+            saveLoginArgs = SaveLoginArgs(address, account, jwt, refreshToken, tokenExpiry, rememberMe)
             _serverAddress.value = address
             _account.value = account
             _jwt.value = jwt
             _refreshToken.value = refreshToken
+            _tokenExpiry.value = tokenExpiry
+            _rememberMe.value = rememberMe
             _isLoggedIn.value = true
         }
 
         override suspend fun clearLogin() { _jwt.value = null; _isLoggedIn.value = false }
+        override suspend fun clearL2Atomically() { clearLogin() }
+        override suspend fun clearL1Account() {
+            _account.value = null; _serverAddress.value = null; _rememberMe.value = false
+        }
+        override suspend fun setRememberMe(enabled: Boolean) { _rememberMe.value = enabled }
         override suspend fun reset() { clearLogin(); _serverAddress.value = null; _account.value = null }
         override suspend fun refresh(knownStaleJwt: String?): Result<String> = Result.failure(IllegalStateException("unused"))
     }
@@ -62,6 +83,8 @@ class LoginViewModelTest {
         val account: String,
         val jwt: String,
         val refreshToken: String?,
+        val tokenExpiry: Long?,
+        val rememberMe: Boolean,
     )
 
     private fun authenticatorReturning(result: Result<AuthResult>) =
@@ -73,7 +96,7 @@ class LoginViewModelTest {
         val store = FakeAuthStore()
         val vm = LoginViewModel(store, LoginAuthenticator { _, _, _ -> called = true; Result.success(AuthResult("j")) })
 
-        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.1", port = "abc")
+        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.1", port = "abc", remember = true)
 
         assertEquals("端口必须是数字", vm.uiState.value.fieldErrors.server)
         assertTrue("authenticator must not run on a validation failure", !called)
@@ -88,7 +111,7 @@ class LoginViewModelTest {
             authenticatorReturning(Result.success(AuthResult(jwt = "JWT123", refreshToken = "R1", account = null))),
         )
 
-        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.10", port = "8080")
+        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.10", port = "8080", remember = true)
 
         assertEquals(LoginUiState.Phase.Success, vm.uiState.value.phase)
         val args = store.saveLoginArgs!!
@@ -107,7 +130,7 @@ class LoginViewModelTest {
             authenticatorReturning(Result.success(AuthResult(jwt = "J", account = "ADMIN_CANON"))),
         )
 
-        vm.onSubmit(account = "admin", password = "pw", ip = "10.0.0.1", port = "80")
+        vm.onSubmit(account = "admin", password = "pw", ip = "10.0.0.1", port = "80", remember = true)
 
         assertEquals("ADMIN_CANON", store.saveLoginArgs!!.account)
     }
@@ -117,7 +140,7 @@ class LoginViewModelTest {
         val store = FakeAuthStore()
         val vm = LoginViewModel(store, authenticatorReturning(Result.success(AuthResult("J"))))
 
-        vm.onSubmit(account = "a", password = "p", ip = "10.0.0.5", port = "")
+        vm.onSubmit(account = "a", password = "p", ip = "10.0.0.5", port = "", remember = true)
 
         assertEquals(ServerAddress("10.0.0.5", ServerAddress.DEFAULT_PORT), store.saveLoginArgs!!.address)
     }
@@ -130,7 +153,7 @@ class LoginViewModelTest {
             authenticatorReturning(Result.failure(IllegalArgumentException("账号或密码错误"))),
         )
 
-        vm.onSubmit(account = "admin", password = "bad", ip = "192.168.1.10", port = "8080")
+        vm.onSubmit(account = "admin", password = "bad", ip = "192.168.1.10", port = "8080", remember = true)
 
         assertEquals("账号或密码错误", vm.uiState.value.formError)
         assertNull(store.saveLoginArgs)
@@ -142,7 +165,7 @@ class LoginViewModelTest {
         val store = FakeAuthStore()
         val vm = LoginViewModel(store, UnconfiguredLoginAuthenticator())
 
-        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.10", port = "8080")
+        vm.onSubmit(account = "admin", password = "pw", ip = "192.168.1.10", port = "8080", remember = true)
 
         assertEquals("登录暂不可用，请稍后再试", vm.uiState.value.formError)
         assertNull(store.saveLoginArgs)
@@ -155,9 +178,9 @@ class LoginViewModelTest {
         var calls = 0
         val vm = LoginViewModel(store, LoginAuthenticator { _, _, _ -> calls++; gate.await() })
 
-        vm.onSubmit("a", "p", "192.168.1.10", "8080")   // enters Submitting, suspends on gate
+        vm.onSubmit("a", "p", "192.168.1.10", "8080", true)   // enters Submitting, suspends on gate
         assertTrue(vm.uiState.value.isSubmitting)
-        vm.onSubmit("a", "p", "192.168.1.10", "8080")   // must be ignored
+        vm.onSubmit("a", "p", "192.168.1.10", "8080", true)   // must be ignored
 
         gate.complete(Result.success(AuthResult("J")))
         assertEquals(1, calls)
@@ -174,5 +197,35 @@ class LoginViewModelTest {
 
         assertEquals("lastuser", vm.prefillAccount.value)
         assertEquals(ServerAddress("192.168.9.9", 9000), vm.prefillServer.value)
+    }
+
+    // ── PA-NEXT2-FE rememberMe propagation (regression: Critic 2026-06-01 NEXT-2) ─
+    //
+    // Pre-fix LoginRoute discarded the rememberMe Switch value into `_`, so the UI
+    // toggle never reached AuthStore.saveLogin — every login persisted with the
+    // default rememberMe=true regardless of the user's choice. These two cases lock
+    // the wiring so a future regression (re-introducing a default-arg fall-through
+    // in onSubmit or saveLogin) trips a test.
+
+    @Test
+    fun `onSubmit rememberMe true propagates to saveLogin`() = runTest {
+        val store = FakeAuthStore()
+        val vm = LoginViewModel(store, authenticatorReturning(Result.success(AuthResult("J"))))
+
+        vm.onSubmit(account = "a", password = "p", ip = "10.0.0.1", port = "80", remember = true)
+
+        assertEquals(true, store.saveLoginArgs!!.rememberMe)
+        assertEquals(true, store.rememberMe.value)
+    }
+
+    @Test
+    fun `onSubmit rememberMe false propagates to saveLogin`() = runTest {
+        val store = FakeAuthStore()
+        val vm = LoginViewModel(store, authenticatorReturning(Result.success(AuthResult("J"))))
+
+        vm.onSubmit(account = "a", password = "p", ip = "10.0.0.1", port = "80", remember = false)
+
+        assertEquals(false, store.saveLoginArgs!!.rememberMe)
+        assertEquals(false, store.rememberMe.value)
     }
 }

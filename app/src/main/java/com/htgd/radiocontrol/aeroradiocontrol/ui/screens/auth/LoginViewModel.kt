@@ -58,7 +58,13 @@ class LoginViewModel @Inject constructor(
      * Re-entrancy is guarded by [LoginUiState.isSubmitting] — a second tap while
      * a request is in flight is ignored.
      */
-    fun onSubmit(account: String, password: String, ip: String, port: String) {
+    /**
+     * @param remember the LoginScreen's rememberMe Switch value (PA-NEXT2-FE
+     *   2026-06-01) — flows through to [AuthStore.saveLogin] so the L1 (account)
+     *   prefill survives only when the user opts in. Pre-fix LoginRoute discarded
+     *   it; the default of `true` at the saveLogin layer always won.
+     */
+    fun onSubmit(account: String, password: String, ip: String, port: String, remember: Boolean) {
         if (_uiState.value.isSubmitting) return
 
         val serverError = validateServerAddress(ip, port)
@@ -83,11 +89,17 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             authenticator.authenticate(address, account, password).fold(
                 onSuccess = { result ->
+                    // PA-NEXT2-FE: pass tokenExpiry + rememberMe EXPLICITLY (no
+                    // default-arg fall-through), so a future signature change to
+                    // saveLogin surfaces as a compile error here rather than as
+                    // silently-wrong UX.
                     authStore.saveLogin(
                         address = address,
                         account = result.account ?: account,
                         jwt = result.jwt,
                         refreshToken = result.refreshToken,
+                        tokenExpiry = null,
+                        rememberMe = remember,
                     )
                     // isLoggedIn flips via AuthStore; reflect success for the UI.
                     _uiState.value = LoginUiState(phase = LoginUiState.Phase.Success)

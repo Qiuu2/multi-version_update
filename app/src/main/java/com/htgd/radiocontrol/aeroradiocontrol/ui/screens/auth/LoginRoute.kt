@@ -34,8 +34,12 @@ fun LoginRoute(
 
     LoginScreen(
         state = state,
-        onLogin = { account, password, ip, port, _ ->
-            viewModel.onSubmit(account, password, ip, port)
+        // PA-NEXT2-FE 2026-06-01 — the 5th arg is the rememberMe Switch value from
+        // LoginScreen.kt:208; pre-fix it was discarded into `_`, so AuthStore.saveLogin
+        // always got its `rememberMe=true` default — ignoring the UI toggle (Cycle 5
+        // of D-16 verification surfaced this). Pass through.
+        onLogin = { account, password, ip, port, remember ->
+            viewModel.onSubmit(account, password, ip, port, remember)
         },
         onScanClick = onScanClick,
         onDismissError = viewModel::dismissError,
