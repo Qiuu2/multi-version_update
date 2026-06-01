@@ -9,6 +9,13 @@
 ## 0. ⚠ FIRST: team re-spawn after /clear
 The team `aeroradio-v4` config + task list persist on disk, but live teammate processes die on /clear. Re-spawn the 5 teammates via the Agent tool (team_name="aeroradio-v4", name=<role>, subagent_type general-purpose, model opus, run_in_background). **Re-spawning appends a numeric suffix** because the dead members still hold the original names — this session's live names are **`data-integration-2 / critic-2 / fe-business-2 / fe-platform-2 / legacy-native-2`** (a future re-spawn likely becomes `-3`). Verify the spawn-result names; SendMessage to those exact names. Each teammate prompt: read its `aeroradio-workflow/agents/<role>/{profile,soul,skill,memory}.md` + MEMORY.md recall + handover + tasks.yaml + decision-log. (See memory [[agent-team-respawn-suffix]].)
 
+## 0.9 LATEST (2026-05-29 late) — build complete + committed + demo-prepped
+- **Plan A build FUNCTIONALLY COMPLETE.** Since §1 below: PA-10 (real V3TaskRepository, big-review PASS — wire=**TaskGuangboModel/clean projectstate/0==running**, §12/§13 ICD corrected, AR-110 mis-attribution fixed) + PA-11 (task mapper re-touch: zone→blank, log empty-state; closed double-start INFO). All carried items closed; Critic queue empty.
+- **git: 9 session commits, HEAD `5ed351f`** on claude/v4-screens-on-refactor (5-Tab `4ccdd13`..`85ea115` + post-batch `6658566`..`5ed351f`). Only .idea/.claude/skill_matlab_addendum.md uncommitted (intended). Per D-15 commit directive.
+- **Runtime demo PREPPED**: `assembleDebug` BUILD SUCCESSFUL, APK at app/build/outputs/apk/debug/app-debug.apk (~52MB); runbook = `.state/runtime-demo-checklist.md` (CTO-runnable, all-Tab real behavior + gotchas). **Awaiting CTO hardware**: emulator (x86_64=UI/REST; arm64 real device=voice/cast native + R-001) + reachable v3 host.
+- **Team**: all 5 idle/standby (-2 names). Wind-down vs keep-warm = pending CTO demo timing.
+- **Remaining (NO build work)**: runtime demo (CTO hw) → may yield ICD_UPDATEs for documented-assumptions; R-001 device-verify; deferred task-CRUD (SchemeEdit still mock); Phase-3 polish (rotation-saveable); R-ADDR-SLOT dormant re-check at demo.
+
 ## 1. Current progress — 5-Tab BUILD COMPLETE (2026-05-29)
 - **Phase 0 + Phase 1 prep + ICD逆推**: all Critic-PASSED (AR-001~010, AR-101~107, AR-110/111).
 - **Plan A (D-13)**: UI-only, v3 data layer + httptask/*Method.java ZERO change, no WS, only new net code = callback→StateFlow adapter.

@@ -11,13 +11,13 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD ID | Interface | Producer | Consumers | Status |
 |--------|-----------|----------|-----------|--------|
 | ICD-NetworkModule-v1 | 动态 baseUrl 拦截器接口 | data-integration | 所有 frontend agent | LIVE |
-| ICD-AuthState-v2 | JWT/Refresh 状态 + serverAddress（= 已落地 AuthStore.kt） | data-integration | frontend-business, frontend-platform | LIVE |
+| ICD-AuthState-v2.1 | JWT 60h ★ TTL 实测 + 登录响应 data:[{token,priority,userid}] array shape + refresh/delete /authorizations/current endpoints（PA-14 实读校正） | data-integration | frontend-business, frontend-platform | LIVE |
 | ICD-LoginAuthenticator-v1 | 登录鉴权 seam（fe 定义接口、data 实现 /authorizations） | frontend-business（consumer-defined） | data-integration（impl） | LIVE |
-| ICD-TerminalDto-v2 | 终端 DTO(4 int wire) + Domain TerminalStatus(sealed+Unknown) + Repository(observe/refresh) | data-integration | frontend-business | LIVE |
-| ICD-ZoneDto-v2 | Domain Zone(嵌套 terminals, join by zoneId) | data-integration | frontend-business | LIVE |
-| ICD-TaskRepository-v1 | 作息/任务 Repository(observe/refresh/setSchemeActive/getExecutionLog) + Domain Scheme(嵌套 tasks)/SchemeTask/SchemeTaskStatus(sealed+Unknown)/TaskLog | data-integration（领域 owner） | frontend-business | LIVE (接口契约; impl=V3TaskRepository 后续) |
+| ICD-TerminalDto-v2.1 | 终端 DTO（28 wire 字段，+14 PA-14）+ Domain TerminalStatus（sealed+Unknown）+ Repository（observe/refresh）+ ★ `terminal.zone` 字段 NOT membership FK | data-integration | frontend-business | LIVE |
+| ICD-ZoneDto-v2.1 | Domain Zone（嵌套 terminals SSOT，`/terminal/terzone` 唯一权威，多对多保留，envelope-meta） | data-integration | frontend-business | LIVE |
+| ICD-TaskRepository-v2.1 | 作息/任务 Repository（observe/refresh **二步 sechinfo→并发 sechetaskinfo→原子 publish**/setSchemeActive/getExecutionLog）+ Domain Scheme（嵌套 tasks）/SchemeTask/SchemeTaskStatus（sealed+Unknown）/TaskLog + 多 active option-A + 4 status int 派生规则 | data-integration（领域 owner） | frontend-business | LIVE（real impl V3TaskRepository，PA-15 Critic PASS_HIGH） |
 | ICD-TaskDto-v1 | 任务 DTO（逆推自 TaskGuangboModel + TaskIdModel） | data-integration | frontend-business | LIVE (code-fact, 源见 §12) |
-| ICD-SchemeDto-v1 | 作息方案/任务 list DTO（**PA-10 校正: /task/sechinfo 逆推自 TaskGuangboModel, clean projectstate**; projectstatetate 是 TaskZuoxiModel[另一 detail/CRUD 流]的 String 字段, 仅 SchemeRowDto 防御保留） | data-integration | frontend-business | LIVE (源见 §12; PA-10 校正 AR-110 mis-attribution) |
+| ICD-SchemeDto-v2 | 作息 DTO **2 形分裂**（SchemeRowDto `/task/sechinfo` SUMMARY + SchemeTaskRowDto `/task/sechetaskinfo` TIMELINE 23 字段 + ★ per-task `name` 字段非 `taskname`） | data-integration | frontend-business | LIVE（PA-15 split; 源见 §12） |
 | ICD-TtsTaskDto-v1 | TTS 任务 DTO（逆推自 TtsTaskContentModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-MediaDto-v1 | 媒体/文件夹 DTO（逆推自 MusicInfoModel + MusicFolderInfoModel） | data-integration | frontend-business | LIVE (源见 §12) |
 | ICD-ServerStateDto-v1 | 系统健康度 DTO（逆推自 SeverStateModel） | data-integration | frontend-business | LIVE (源见 §12) |
@@ -29,8 +29,8 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD-IPCSocket-v2 | 本机 127.0.0.1:4521 TCP（逆推自 SocketClient） | legacy-native | frontend-business | **LIVE**(连接语义+协程封装) / **DRAFT-pending-vendor**(命令词表, O-4) |
 | ICD-VoiceAAR-v2 | htapplib.aar Kotlin 适配（逆推自 AAR javap + v3） | legacy-native | frontend-business | **LIVE**(HTIntf控制+CallBackIntf 21回调+MP3结构) / **DRAFT-pending-device**(native执行, R-001) + **OPEN**(init参语义) |
 | ICD-MapLocation-v1 | 百度地图定位回调 + 经纬度回写 | legacy-native | frontend-business, data-integration | PLANNED (Phase 2 百度地图; 无 section, 落地时定义) |
-| ICD-DesignTokens-v1.2 | 设计 token（颜色/圆角/阴影/字体/动效，含落地别名映射 + gold/goldSoft 任务迁移 accent） | frontend-platform（从 Handoff 提炼） | 所有 frontend agent | LIVE |
-| ICD-Endpoints-v1 | REST 端点权威清单（路径×方法）+ 全局约定 | data-integration | frontend-business, legacy-native | DRAFT-FROZEN (含 OPEN, 待 INQ-O-1) |
+| ICD-DesignTokens-v1.3 | 设计 token（颜色/圆角/阴影/字体/动效；+broadcast 3-mode + tile 5-state + task-card 3-state 16 alias 字段 + Noto Sans SC + JetBrains Mono subset 落 res/font） | frontend-platform（从 Handoff 提炼） | 所有 frontend agent | LIVE |
+| ICD-Endpoints-v1.1 | REST 端点权威清单（路径×方法）+ 全局约定；+`/task/sechetaskinfo` POST + `/task/sechetask` CRUD + `/authorizations/current` refresh/delete；swagger 9079 行权威（PA-14/PA-15 实读校正） | data-integration | frontend-business, legacy-native | DRAFT-FROZEN（含 OPEN, 待 INQ-O-1） |
 
 ---
 
@@ -174,6 +174,7 @@ data class ServerAddress(val host: String, val port: Int) {
 
 ### 变更历史
 
+- v2.1 (2026-05-30, PA-14 实读校正): JWT TTL **~60h**（CTO 实测；旧文档 24h 作废）。登录响应实读为 array shape `{"data":[{"token":"...","priority":<int>,"userid":<int>}]}` — 当前 `TokenEnvelopeDto.data.firstOrNull().token` 形状正确；建议增 `priority/userid` 为 wire-only 字段以备 v4 admin gate（domain 暂不暴露）。Refresh 端点 `POST /authorizations/current` + Logout 端点 `DELETE /authorizations/current` 已 swagger 确认存在（当前 UnsupportedTokenRefresher 未接线；接 OPEN INQ-O-1 D-1）。
 - v2.0 (2026-05-27): 首次真实定义（TASK-AR-003 落地，Critic PASSED）。去 Flow 后缀 / +isLoggedIn / refreshToken 可空 / refresh(knownStaleJwt) / +reset()。v1 模板作废（无实现无消费者，hard cutover 零迁移）。
 - v1.0 (2026-05-27): 模板草案（从未实现）。
 
@@ -216,6 +217,12 @@ data class AuthResult(
 
 服务器**不返单一 `state` 字段**——MachineInfo 实读证返 **4 个独立 int 状态**：`taskstate / devicestate / netstate / speechstate`。故采 **wire/domain 两层**：Wire DTO 镜像 4 个 int（无损保真）；Domain 单一 `TerminalStatus` 由 `TerminalMapper.deriveStatus()` **派生**（有损 UI 折叠隔离在一个可换函数）。
 
+### ⚠ ★ PA-14 关键警告：`terminal.zone` 字段 **不是** zone-membership FK
+
+CTO ground truth (`.state/api-snapshots/terzone-cto-capture-2026-05-30.json`) 实证：zone "操场" (id=1) 下挂的 4 个终端，其 `terminal.zone` 值为 `0,0,0,8` — **没有一个等于父 zone id 1**。该字段语义 v3 文档未定义；v3 自身也**不**用它做分组（v3 调 `/terminal/zoneterminal/{id}` per zone）。**zone 归属的唯一权威来源 = `/terminal/terzone` 的嵌套 `ZoneDto.terminal[]` 数组**（见 §5）。任何按 `terminal.zone` 分组的实现 = 同 2026-05-30 操场 BLOCKER 复发。同族经验 memory `[[terminal-zone-field-is-not-membership]]` / `[[data-snapshot-verification]]` (RTM-ERR-005)。
+
+**v2.1 wire 全集** (PA-14 实读，24+envelope-meta，全 nullable per R-003)：`id, type, taskstate, devicestate, netstate, speechstate, volume, isinstancy, zone (★ NOT membership)`, `name, ip, latitude, longitude, isrecord, issponsor, shortcircuit, lopencircuit, ropencircuit, temperature, humidity, isdecode, isencode, switchcount` + envelope `all, count, start, state`。v1 的 14 字段仍 active；v2.1 新增 14 字段（DTO-only，未 domain promote）：`isrecord/issponsor/shortcircuit/lopencircuit/ropencircuit/temperature/humidity/isdecode/isencode/switchcount` + envelope-meta 4。其中 `shortcircuit / lopencircuit / ropencircuit` 可作未来 `TerminalStatus.Fault` 派生输入（当前 deriveStatus 未消费，候 O-1 D-3 回执）。
+
 ### TerminalRepository 接口（fe 消费契约 · @Binds 可注入）
 
 ```kotlin
@@ -256,6 +263,7 @@ TerminalDto(id, name, ip, zone, groupid, type,
 - GET `/terminal/terminalinfo` → List<TerminalDto>；GET `/terminal/terzone` → List<ZoneDto>；refresh 内部 join 二者。
 
 ### 变更历史
+- v2.1 (2026-05-30, PA-14 实读校正): ★ `terminal.zone` NOT membership FK 警告 pinned（CTO terzone capture 反证；2026-05-30 操场 BLOCKER 根因）。wire 字段集 14→24+envelope-meta（+isrecord/issponsor/shortcircuit/lopencircuit/ropencircuit/temperature/humidity/isdecode/isencode/switchcount 全 DTO-only）。Repository 改写 `refresh()` 只调 `/terminal/terzone` + `mapper.toTerminalOrNull(containingZoneId)`，废弃 `/terminal/terminalinfo + groupBy(terminal.zone)` 路径。Critic PA-14 PASS_W_MINOR HIGH（5-leg + emulator smoke 操场 4/4 命中 ground truth）。
 - v2.0 (2026-05-27, AR-101): observe+refresh 接口；wire/domain 两层(4 int→派生)；status=sealed+Unknown；Zone 嵌套；Partial 不暴露(无缓存)。v1 单 state 作废。派生/真值集/Fault 候 D-3+O-2。
 - v1.0 (2026-05-27): 模板（7 状态单 state，从未实现，假设错）。
 
@@ -285,6 +293,7 @@ ZoneDto(id:Int?, name:String?, description:String?, count:Int?, online:Int?, off
 - 端点：`GET /terminal/terzone`→分区；`GET /terminal/zoneterminal/{id}`→分区下终端（当前 ZoneDetail 从 observeZones 嵌套 terminals 取；若需懒拉单独加 getZoneTerminals 走 ICD_UPDATE）。
 
 ### 变更历史
+- v2.1 (2026-05-30, PA-14 实读校正): **嵌套来源 = `/terminal/terzone` 内的 `ZoneDto.terminal[]` 数组**（非 join 派生）；Zone view SOLE source = terzone（废弃 `/terminal/terminalinfo + groupBy`）。Wire 字段补 envelope-meta `all (String, 注：terzone 返 String 非 Int)/count (Int)/start (Int)/state (Int)` + 兼容旧 ZoneModel `online/offline/busyline` 防御保留。**多对多保留**：CTO ground truth 终端 id=14 出现在 4 个 zone 的 `terminal[]` 中，`Zone.terminals` 直接保留多次出现；扁平 `observeTerminals()` 返回 4×，UI 自决去重。`Terminal.zoneId = parentZone.id`（NOT wire `terminal.zone`，见 §4 ★ 警告）。Critic PA-14 PASS_W_MINOR HIGH（5-leg + emulator smoke 操场 4/4 + 5 named zones 全验）。
 - v2.0 (2026-05-27, AR-101): Domain Zone 嵌套 terminals(join by zoneId)；计数 fe 自算。
 - v1.0 (2026-05-27): 模板(terminalIds 扁平 + 计数字段，未实现)。
 
@@ -485,9 +494,67 @@ sealed class TalkState {
 - **Motion（6+2）**：fabIn220/tap130/pulse1500/tabBadgePulse2200/wave900/skel1600 + emphasized(.2,.7,.3,1)/standard(.2,0,0,1) easing。
 - **Gradients（3）**：Primary / Warm / Night。
 
-### 9.3 字体状态（R-5，待 Phase 3 子任务 `BL-FONT-ASSETS`）
+### 9.3 字体状态（v1.3 — BL-FONT-ASSETS 关闭）
 
-`AeroSans = FontFamily.Default`、`AeroMono = FontFamily.Monospace` 当前为**占位**（res/font/ 为空，实扫确认无资源）。目标：Noto Sans SC（中文/拉丁）+ JetBrains Mono（数字，OFL 开源，无 licensing escalation）落 res/font → 改 AeroSans/AeroMono 两行。**G4 发布前必须落地**。numeric 已显式 `fontFeatureSettings="tnum"`，换字体后仍稳健。
+✅ **2026-05-30 Phase C v1.3 落地**：`AeroSans` / `AeroMono` 从占位 (`FontFamily.Default` / `FontFamily.Monospace`) 升级为真接 `res/font/`：
+- Noto Sans SC **subset** Regular/Medium/Bold @ wght=400/500/700（GB2312 L1+L2 6763 字 ∪ 项目实读 963 字 ∪ ASCII printable ∪ CJK 标点 ∪ 全角符号 = 7173 chars cmap，**100% 项目串覆盖**），3 weight × 2.25 MB = 6.75 MB
+- JetBrains Mono **subset** Regular/Medium（ASCII + Latin-1 + dash punct），2 weight × 67 KB = 0.13 MB
+- 共 5 ttf 落 `res/font/`；OFL §3 license texts 落 `app/licenses/{NotoSansSC,JetBrainsMono}-OFL.txt`（aapt2 拒非字体资源进 res/font/，license 必须分离）
+- Type.kt `AeroSans = FontFamily(Font(R.font.noto_sans_sc_regular, Normal), Font(..._medium, Medium), Font(..._bold, Bold))`；`AeroMono` 同 pattern
+- grep `FontFamily.Default` / `FontFamily.Monospace` → 0 hits 全 purge
+- APK 增量 **+5.0 MB**（51.77 MB→56.78 MB；CTO Q2=(ii) subset 路径，避开 full vendor +80MB OTA 负担）
+- 子集漏字 fix workflow：append corpus → `pyftsubset` re-run → re-commit
+- `fontFeatureSettings="tnum"` 在 numeric 仍生效，subset 兼容
+- Subset 工具：pyftsubset 4.63.0；变量主字体 `NotoSansSC[wght].ttf` 经 `fontTools.varLib.mutator.instantiateVariableFont` 实例化后 subset
+
+### 9.4 v1.3 语义角色 alias（16 fields，additive，零新 hex，AR-009 R-1 sealed pattern）
+
+**Phase C-residual 2026-05-30 — 不破坏现有 consumer**。每个 alias = 现有 internal val 同一 hex；新增 alias 给消费屏一个"按语义命名"的入口，与未来 `BL-TOKEN-RENAME` breaking rename 解耦。
+
+#### 9.4.1 Broadcast 3-mode (3 alias)
+
+| Alias | Hex | Backs onto | Spec ref | Consumer |
+|---|---|---|---|---|
+| `modePaging` | #EA580C | `PageWarm` | Handoff.html:883 §s-broadcast 三档差异 | `BroadcastScreen` mode=page tint |
+| `modeIntercom` | #2563EB | `TalkBlue` | Handoff.html:884 | `BroadcastScreen` mode=talk tint |
+| `modeCast` | #0E7C70 | `Primary` | Handoff.html:885 | `BroadcastScreen` mode=cast tint (与 brand teal 同色) |
+
+`BroadcastMode.identityColor(colors)` 中心化映射函数（mirrors PA-14 C-1 `AeroTab.identityColor()`），3 mode 在 ModeSegmented / VoicePanel status-line / Idle CTA / CastPanel CTA 全 binding 经此函数。Resting chip label 也带 mode-identity 色（"carry identity even before selection"，Critic Phase C 真机验证）。
+
+#### 9.4.2 Terminal tile 5-state (10 alias = 5 fg + 5 soft)
+
+| Alias | Hex | Backs onto | Spec ref | Consumer |
+|---|---|---|---|---|
+| `tileOnline` | #16A34A | `StatusOnline` | Handoff.html:626 §components | `TerminalTile` IconBadge tint + CornerBadge dot — online |
+| `tileOffline` | #8A929F | `StatusOffline` | Handoff.html:640 | offline |
+| `tileFault` | #DC2626 | `StatusFault` | Handoff.html:647 | fault |
+| `tilePlaying` | #2563EB | `StatusPlaying` | Handoff.html:653 | playing |
+| `tilePaging` | #EA580C | `StatusPaging` | Handoff.html:512-516 derived | paging |
+| `tileOnlineSoft` | #E6F4F2 | `PrimarySoft` | Handoff.html:625 | online icon bg |
+| `tileOfflineSoft` | #EEF0F3 | `Surface3` | Handoff.html:639 | offline icon bg |
+| `tileFaultSoft` | #FDECEC | `StatusFaultSoft` (v1.1) | Handoff.html:646 | fault icon bg |
+| `tilePlayingSoft` | #E8EFFD | `StatusPlayingSoft` (v1.1) | Handoff.html:653 | playing icon bg |
+| `tilePagingSoft` | #FDEEE2 | `StatusPagingSoft` (v1.1) | Handoff.html derived | paging icon bg |
+
+`TerminalTile.kt` IconBadge + CornerBadge 用 `c.tile*` 替代 `c.status*`（semantic-rename 同 hex，零视觉变更）。fe-business sharp-trace 教训：5 状态差异化 **data-gated 不是 code-gated** — `when`-swap binding 已正确，渲染需服务端推混合状态终端（Critic Path A Compose @Preview 5-state 接受作 Leg 5 evidence）。
+
+#### 9.4.3 Task-card 3-state pill (3 alias，DOCUMENTED ASSUMPTION)
+
+| Alias | Hex | Backs onto | Spec ref | Consumer |
+|---|---|---|---|---|
+| `taskCardStateDone` | #8A929F | `Ink3` | Handoff.html:930-931 §s-task lists states; NO hex pin (assumption) | TaskCard 状态 pill — 已完成 |
+| `taskCardStateRunning` | #EA580C | `StatusPaging` | matches existing TaskScreen.kt:205 in-code usage for "进行中" — code-fact consistency | TaskCard 状态 pill — 进行中 |
+| `taskCardStatePending` | #4A5260 | `Ink2` | preliminary — awaiting CTO real-device review | TaskCard 状态 pill — 待执行 |
+
+★ ASSUMPTION TAG：Handoff.html 不固定 task-pill hex。PM Q1=(a) ruling 2026-05-30：LIVE-documented-assumption；CTO 真机回退 → 改 alias hex 不动 consumer（sealed AR-009 R-1 path）。`temporalStateOf(taskTime, now)` 推导（±60s window for Running，past=Done，future=Pending，parse-fail=Pending R-003 safe default）— TemporalStateTest 8 case 验。
+
+**复用 scheme-list 启用/停用**（语义一致 hex 同源 — PM 2026-05-30 ruling "P2 命名 TaskCardState* + KDoc 复用注释"）。
+
+### 9.5 增量变更（v1.1/v1.2/v1.3 累计）
+
+> v1.1 修订（DEL-TASK-AR-009-v2，PM R-1~R-5 裁定）：① 速查子集升级为完整清单；② 落地命名与 spec 权威名不一致 → 见 §9.1 **别名映射**（R-1 非破坏路径）；③ 补录 bgBeige（R-2）+ 派生 token（R-3）；④ Elevation 对齐 spec 2/8（R-4）；⑤ 字体占位状态登记（R-5）。
+> v1.2 修订（BL-GOLD-TOKEN，fe-platform，Critic PASSED HIGH 2026-05-29）：+`gold`(#A8780A) + `goldSoft`(#FAF0CC) 两个 AeroColors 字段（任务 迁移/对调 accent：gold=border+tag fg / goldSoft=tag pill bg）。**ADDITIVE 非破坏**（defaulted 字段，仅 no-arg `AeroColors()` 构造点，无消费方迁移，无 CTO gate）。
+> v1.3 修订（Phase C-residual, fe-platform + fe-business 合发，Critic PASSED_W_MINOR HIGH 2026-05-30）：(a) 16 alias 字段（broadcast 3 + tile 5 fg + tile 5 soft + task-card 3）— 见 §9.4；(b) BL-FONT-ASSETS 关闭：Noto Sans SC + JetBrains Mono subset 真接 res/font/，AeroSans/AeroMono FontFamily.Default/Monospace placeholder 全 purge — 见 §9.3。**ADDITIVE 非破坏 + 零新 hex**（alias 全引用现有 internal val），fe-business 屏消费 token 不破坏其他 consumer。APK +5.0 MB（CTO Q2=(ii) subset 路径）。OFL §3 license vendor 合规。
 
 ---
 
@@ -564,8 +631,27 @@ Retrofit 形态待 AR-002 拦截器定稿后落入 `data/api/AuthApi.kt`（本 I
 | O-1 D-1 | 有无独立刷新端点 / 是否被迫存密码 | AR-003 存储 + AR-002 401 链 | INQ-O-1 回执 (+可能 CTO 决策) |
 | O-1 D-2 | 登录 form vs JSON、头 key/前缀 | AR-002 头注入 + AR-005 请求构造 | INQ-O-1 回执 |
 
+### 11.6 v1.1 端点增量（PA-14 + PA-15 实读 + swagger 9079 行核对）
+
+| Verb | Path | Body / Auth | PA / Status | Notes |
+|---|---|---|---|---|
+| POST | `/authorizations/current` | Bearer | PA-14 swagger 确认 | refresh token endpoint（当前 UnsupportedTokenRefresher 未接线；OPEN INQ-O-1 D-1） |
+| DELETE | `/authorizations/current` | Bearer | PA-14 swagger 确认 | logout / delete token endpoint（当前未接线） |
+| GET | `/terminal/terzone` | Bearer | PA-14 LIVE | ★ zones 嵌套 terminals — Zone view 的 SOLE source；多对多保留 |
+| GET | `/terminal/terminalinfo` | Bearer | PA-14 LIVE | 扁平全终端；**Zone view 不再使用**（PA-14 废弃 groupBy 路径）；其他 consumer 不受影响 |
+| POST | `/terminal/zoneterminal` | Bearer | swagger 确认 | SET zone↔terminal binding — 是 POST 不是 GET。`GET /terminal/zoneterminal` 返 405 |
+| GET | `/terminal/zoneterminal/{id}` | Bearer | swagger 确认 | 单 zone 终端列表（v3 ZoneMethod 使用；v4 不需要，terzone 已嵌套） |
+| POST | `/task/sechetaskinfo` | Bearer + form `name=<sechename>` | PA-15 LIVE | ★ AUTHORITATIVE timeline source — 单作息内的 task 列表，per-task 23 字段（starttime / `name` ★ NOT `taskname` / medianame / state/taskstate/enablestate/offlinestate 4 status 等） |
+| POST | `/task/sechetask` | Bearer | swagger 确认 | CRUD: create scheme task（body `sechetaskinfo` def）；future increment |
+| PUT | `/task/sechetask` | Bearer | swagger 确认 | CRUD: update scheme task；future increment |
+| DELETE | `/task/sechetask` | Bearer | swagger 确认 | CRUD: delete scheme task（body `singleid`）；future increment |
+| GET | `/task/sechinfo` | Bearer | PA-15 校正 | scheme **SUMMARY** list (taskid/taskstate/taskcount/sechename/projectstate/startdate/enddate)；**NOT timeline source** — `taskcount` 是整数计数非 array；timeline 必走 sechetaskinfo |
+
+**参考权威**：swagger 完整 9079 行在 `.state/api-snapshots/swagger-v3-vendor.json`。Phase 0 auth DTO 骨架 (§11.4) 仍 LIVE；PA-14 v2.1 中标注的 `priority/userid` wire-only 字段对应 §3 的 v2.1 entry。
+
 ### 变更历史
 
+- v1.1 (2026-05-30, PA-14 + PA-15 实读校正): +`POST /task/sechetaskinfo` 标 AUTHORITATIVE timeline + sechetask CRUD（POST/PUT/DELETE 都 swagger 确认）+ `POST /authorizations/current` refresh + `DELETE /authorizations/current` logout。`GET /task/sechinfo` 重标为 SCHEME SUMMARY (NOT timeline source)。`GET /terminal/terzone` ★ Zone view SOLE source。Critic PA-14 + PA-15 PASS_HIGH 5-leg + emulator smoke。
 - v1.0-DRAFT-FROZEN (2026-05-27): 草案冻结。口径(O-4)、URL 组成(`/api` 前缀)、全局约定(documented-assumption)、Phase0 auth DTO 骨架已定；7 个 OPEN 待 INQ-O-1。明细表引用 `.state/endpoint-inventory-draft.md`。
 
 ---
@@ -614,7 +700,8 @@ ICD_UPDATE
 | ICD | 逆推自（旧栈 model） | 关键点 |
 |-----|------|------|
 | ICD-TaskDto-v1 | TaskGuangboModel(:12-49) + 写响应 TaskIdModel | state="15"=任务名重复(TaskMainMethod:313) |
-| ICD-SchemeDto-v1 | **TaskGuangboModel** (作息 list /task/sechinfo, PA-10 校正) | ⚠ PA-10 big-review: /task/sechinfo→TaskGuangboListRsp/TaskGuangboModel(TaskZuoxiActivity:291), **clean `projectstate`(0=running)**. 拼写 `projectstatetate` 是 **TaskZuoxiModel**(String, 另一 detail/CRUD 流, 非 list wire)——SchemeRowDto 仅防御保留. AR-110 原"逆推自 TaskZuoxiModel" 为 mis-attribution |
+| ICD-SchemeDto-v2 (**SchemeRowDto**) | **TaskGuangboModel** (作息 list /task/sechinfo, PA-10 校正) — **SUMMARY shape** | ⚠ /task/sechinfo→TaskGuangboListRsp，**clean `projectstate`(0=running)**。拼写 `projectstatetate` 是 **TaskZuoxiModel**(String，另一 detail/CRUD 流，非 list wire)——SchemeRowDto 仅防御保留。**taskcount 是整数计数非 array**；timeline 必走 sechetaskinfo（见下行）。 |
+| ICD-SchemeDto-v2 (**SchemeTaskRowDto**) | **TaskGuangboModel** (per-task /task/sechetaskinfo, PA-15 新增) — **TIMELINE shape，23 字段全捕获** | ★ PA-15 wire 实读 (CTO 海王作息 capture)：per-task 显示名字段是 **`name`** ★★★ NOT `taskname`（旧 dispatch 假设错）；`info` 是 sechename 反向 back-pointer，不是 FK；4 status ints (state/taskstate/enablestate/offlinestate) 折叠到 Domain.SchemeTaskStatus 经 SchemeMapper.deriveTaskStatus；execmode=62=0b111110=Mon-Fri bitmask（MVP-deferred UI）；同族 [[terminal-zone-field-is-not-membership]]。 |
 | ICD-TtsTaskDto-v1 | TtsTaskContentModel | state/taskid/speed/male/contents |
 | ICD-MediaDto-v1 | MusicInfoModel + MusicFolderInfoModel | 媒体 + 文件夹 |
 | ICD-ServerStateDto-v1 | SeverStateModel(:10-19) | state/connection/taskcount/bandwidth/maxconnection/ctrl·dataport/name/ip/gate |
@@ -660,10 +747,32 @@ data class TaskLog(id:String, taskName:String, timestamp:String, message:String)
 - ✅ **`projectstatetate` 校正**：是 **TaskZuoxiModel**(detail/CRUD 另一流, String) 的字段, **非** list wire。list 用 clean `projectstate`。SchemeRowDto 仅 cost-free 防御 @SerializedName 保留。
 - ✅ **UI 映射 (fe re-touch, post-PA-10)**：`TaskItem.zone` → **空白**（确认 TaskGuangboModel 无 zone 字段；原 mediaName 占位现真数据下=visible bug, 已修）。`LogEntry.success` moot（无 log feed → ExecutionLog Empty 态）。SchemeTaskStatus→UI 映射对齐 pinned 派生。
 
+### v2.1 RESOLVED additions (PA-15 fix, 接口签名仍 v1 不变)
+
+- ✅ **PA-15 BLOCKER FIX**：PA-10 误把 `/task/sechinfo` SUMMARY rows 当 timeline tasks → 14 task timeline 渲染空白（CTO 2026-05-30 demo blocker）。**根因**：sechinfo SUMMARY-only (taskcount=int 14 非 array)；timeline 必须 fetch SEPARATE endpoint `POST /task/sechetaskinfo` body `name=<sechename>`（v3 ListActivity demoably-working 同路径）。同族 RTM-ERR-005 [[data-snapshot-verification]]。
+- ✅ **refresh() 升级为 TWO-step + atomic publish**：
+  1. `GET /task/sechinfo` → enumerate schemes via `SchemeRowDto.toSchemeSummary()`（每行 → Scheme skeleton，`active=(projectstate==0)`）。
+  2. 每 scheme name parallel `POST /task/sechetaskinfo` body `{name: sechename}`（`coroutineScope { async + awaitAll }`）。每 per-task response 经 `SchemeTaskRowDto.toSchemeTask`，scheme.active 透传到 status 派生。
+  3. **Atomic publish**：全 per-scheme task fetch 成功才 publish 全 snapshot；ANY child failure → 整个 publish 跳过，PRIOR snapshot 保留（同 V3TerminalRepository 契约）。
+  4. Concurrent refresh() 共享 ONE in-flight fetch（Mutex + Deferred）。
+- ✅ **per-task `name` 字段实读 (PA-15 ★★★)**：sechetaskinfo 每行 display name 字段 = `name`（"早读开始铃" / "第一节课上课铃" etc），**NOT `taskname`**。SchemeTaskRowDto `@SerializedName("name")` 钉死，CTO ground truth 14 named task 真机渲染验证（Critic Path A + emulator smoke）。
+- ✅ **多 active scheme = Option A first-active-wins**：CTO 2026-05-30 capture：海王作息 + 日本作息 都 projectstate=0 RUNNING；TaskHomeViewModel.activeScheme 取 first-active（按 sechinfo `start` ordering）。Data SSOT 保留所有 active scheme 信息；fe 升 Option B (user pick) / C (merge timelines) 是 fe-only change，data 层无 repo 改动。documented-assumption pinned in SchemeMapper KDoc。
+- ✅ **4 status ints 派生 (sealed-with-Unknown)**：`deriveTaskStatus(schemeIsActive, state, taskState, enableState, offlineState)` 规则（top→bottom, first match wins）：
+  1. scheme NOT active → **Disabled**（per-task row under stopped scheme）
+  2. enableState == 0 → **Disabled**（per-task disable flag；analogue /task/taskdoorno "0=enable, 1=disable"）
+  3. taskState != 0 → **Running**（任意 per-task running 信号）
+  4. all four ints null → **Unknown("no-state")**（defensive R-003）
+  5. 否则 → **Idle**（已排但未触发 — CTO capture 正常态）
+  
+  单次 capture 不能完全枚举真值集；documented-assumption pinned。真值集确认后**只**改 deriveTaskStatus，sealed `SchemeTaskStatus` 类型 + fe boundary 不变。
+- ✅ **getExecutionLog = empty (PA-15 confirms PA-10)**：swagger sweep 确认 NO `/task/log` / `/task/journal` / `/task/history` 端点；getExecutionLog 返空。日后真有端点 → ICD_UPDATE（signature 不变）。
+- ✅ **SchemeDto 分裂 v1 → v2**：DTO shape change（见 §12）但 Domain Scheme/SchemeTask shape 不变，fe consumer **零 API 变更**。
+
 ### 变更历史
-- v1 (2026-05-28, 方案A PA-03b 接口先行): observe/refresh/setSchemeActive/getExecutionLog；Scheme 嵌套 tasks（同 Zone）；SchemeTaskStatus sealed+Unknown（同 TerminalStatus）；getExecutionLog 一次性。Critic 轻审 PASSED（同构核 Terminal）。impl=V3TaskRepository 待 PA-01 收尾后排。
+- v2.1 (2026-05-30, PA-15 real fix + Critic PASS_HIGH): refresh() 单步 → TWO-step (sechinfo→并发 sechetaskinfo)，atomic publish；per-task `name` ★★★ 字段实读；多 active Option A 文档化；4 status int 派生规则 pinned；SchemeDto v1→v2 (DTO split)。**接口签名不变（仍 v1）**。16/16 V3TaskRepositoryTest green + Critic 5-leg + emulator 13/14 named tasks 真机渲染验证。同族 [[data-snapshot-verification]] RTM-ERR-005。
+- v2 (2026-05-29, PA-10 real impl): V3TaskRepository STUB→REAL。Critic PASSED HIGH big-review（独立读 v3 源）。**接口签名不变（仍 v1）**；解全部 OPEN（见 RESOLVED 节）：wire=TaskGuangboModel/clean projectstate(0=running)/setSchemeActive POST {sechename,state}/getExecutionLog 无端点返空/SchemeTaskStatus 派生 pinned/projectstatetate 校正到 TaskZuoxiModel。fe mapper re-touch（zone→blank）post-PA-10。**PA-15 推翻 PA-10 单 fetch 假设**：sechinfo only=SUMMARY not timeline，必须配 sechetaskinfo（见 v2.1）。
 - v1-doc (2026-05-29, PA-03③ UI 接入): fe-business 落 TaskHome/SchemeDetail/ExecutionLog VM + TaskUiMappers（对接口编程，跑 V3TaskRepository stub[空]，21 测绿）。**无接口签名变更（仍 v1）**；仅追加 UI 边界映射 documented-assumption（zone/success 见上）。impl=V3TaskRepository（真 v3 wire）仍待排（大审 pin zone/success/status/projectstatetate）。
-- v2 (2026-05-29, PA-10 real impl): V3TaskRepository STUB→REAL。Critic PASSED HIGH big-review（独立读 v3 源）。**接口签名不变（仍 v1）**；解全部 OPEN（见 RESOLVED 节）：wire=TaskGuangboModel/clean projectstate(0=running)/setSchemeActive POST {sechename,state}/getExecutionLog 无端点返空/SchemeTaskStatus 派生 pinned/projectstatetate 校正到 TaskZuoxiModel。fe mapper re-touch（zone→blank）post-PA-10。
+- v1 (2026-05-28, 方案A PA-03b 接口先行): observe/refresh/setSchemeActive/getExecutionLog；Scheme 嵌套 tasks（同 Zone）；SchemeTaskStatus sealed+Unknown（同 TerminalStatus）；getExecutionLog 一次性。Critic 轻审 PASSED（同构核 Terminal）。impl=V3TaskRepository 待 PA-01 收尾后排。
 
 ---
 

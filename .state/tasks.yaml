@@ -3,7 +3,7 @@
 # 状态机见 SKILL.md §4 / communication-protocol.md §3.
 
 project: "aeroradio-v4"
-last_updated: "2026-05-29 (session resume)"
+last_updated: "2026-05-30 (PA-15 REVIEW_PASSED_HIGH; +retroactive closure on PA-14 C-1 / PA-12 / PA-13 / PA-14 V3TerminalRepo)"
 
 # ── SESSION RESUME 2026-05-29 (PM /clear 后接手, CTO go) ──
 session_resume_2026_05_29:
@@ -264,6 +264,48 @@ plan_a_pivot:
       title: "任务 mapper re-touch (post-PA-10 真数据): zone→blank(确认无 zone 字段, 闭 PA-03③ carried MINOR) + ExecutionLog empty-state copy(无 log 端点) + 折叠 BL-VOICE-DOUBLESTART(VoiceViewModel.start 同步置 Connecting 前于 launch, 闭 SD2 double-start INFO)"
       critic: "PASSED HIGH 2026-05-29 (0 findings). zone→blank 测翻转绿; double-start 同步 guard 关窗且空目标→Idle 不锁(真回归测 startTalkCalls==1, 非 tautology); log empty-state render-only 诚实; 全 task+broadcast 套件回归绿(Mappers4/TaskHome7/SchemeDetail7/ExecLog3/Voice15/Cast10/CastMapper3). 两 carried 项闭. Critic 队列空."
       milestone: "===== PLAN A BUILD FUNCTIONALLY COMPLETE 2026-05-29: 5-Tab UI 全真数据(终端/任务/服务/广播; AI 降级) + 数据层全 real on v3 wire(terminal/task/service/media + cast/voice adapters) + 全程 Critic PASS 零未决 finding + carried 项闭. 余: R-ADDR-SLOT dormant / rotation-saveable Phase3 / 任务CRUD(SchemeEdit 仍 mock)deferred / R-001 device + runtime demo = CTO/外部 ====="
+    PA-12:
+      owner: data-integration
+      status: COMPLETED
+      assigned: "2026-05-30; data-integration-2"
+      critic: "PASSED HIGH 2026-05-30 (0 B/M/Mi, 1 INFO size-report nit). 独立复核: 自跑 --rerun-tasks assembleDebug EXECUTED + 读 merged Manifest 证 attribute 落 line 73 + unzip -l 证 res/xml/network_security_config.xml(468B 包压后) 与 AndroidManifest(26416B AXML) 都在 APK. INFO: data 报 468 是包压后非源文件(913B), 报告口径 nit. 修 SHIP 正确."
+      title: "BLOCKER fix: NetworkSecurityConfig 缺失 → Android 9+ 阻塞明文 HTTP 到 v3 主机 (183.216.51.204). CTO 华为真机 demo 时触发."
+      fix: "NEW res/xml/network_security_config.xml(base-config cleartextTrafficPermitted=true 广允许 demo 期) + AndroidManifest.xml <application> 加 networkSecurityConfig 属性 + assembleDebug 验证 + ICD 提案(明文 HTTP 部署约束的 artifact)"
+      critic_miss: "PA-01/02/05/07/10 全过审无标. 明文 HTTP 是 day-1 constraint(v3-audit/Plan A/ICD-Endpoints), 但 NetworkSecurityConfig 这 runtime artifact 未产出. 代码审过 Hilt/SSOT/字段保真/R-ADDR-SLOT, 漏 Manifest+res/xml 部署配置轴. 单测用 fake 不发真 HTTP → 测试看不见. critic-2 并行做 self-audit + checklist 加项 + lessons-learned"
+      reviewer: critic-2
+      crit_path: true (demo blocked)
+      note: "demo 中, CTO 等新 APK; assembleDebug 上次 1m32s 故 ~2min"
+    PA-13:
+      owner: fe-platform
+      status: COMPLETED
+      assigned: "2026-05-30; fe-platform-2"
+      critic: "PASSED HIGH 2026-05-30 (0 findings). 独立复核: dexdump classes14.dex 证 appForegroundState + register 调用在 APK; PollingRefreshSchedulerTest 6/0/0 + 全 Tab VM 套件回归绿(Hub8/Zone6/TaskHome7/SchemeDetail7/ExecLog3/Service6/Voice15/Cast10); PA-12 NetworkSecurityConfig 仍 ship(aapt2 xmltree 证). Hilt @Inject 字段注入是合理选择(AR-004 同文件先例)."
+      critic_self_audit_done: "Critic 主动归因+泛化规则: PA-12 sweep 用 `grep ... | head -8` 截断, Manifest >8 uses-permission 行, 漏 line 32 → 误判 RECORD_AUDIO 缺. 机械错非判断错. fe-platform-2 三重核(读源/grep/aapt2)抓到. 教训文 Critic 已交+自主编辑 skill.md 已批"
+      false_positive: "★ Critic-2 sweep 称 Manifest 缺 RECORD_AUDIO = FALSE POSITIVE. fe-platform-2 三重核(读源 line 32 / grep / aapt2 dump permissions APK)证实已在. 未加重复. 教训: 类-失误 sweep 自身也可产 false positive, 接收方独立核是安全网; sweep 输出须配同等取证级别(grep + 正向读 + artifact 检). Critic 自审需补此 finding"
+      title: "Critic class-of-miss sweep 抓到的 2 连环 BLOCKER (同 PA-12 模式 / runtime artifact 缺失): (1) MyApplication.onCreate 未调 AppForegroundState.register(this) → PollingRefreshScheduler 永远 park 在前台门 → 全轮询 Tab 永停 Loading (PlatformModule.kt:28 TODO 已标; 单测用 Fake 掩盖); (2) Manifest 缺 <uses-permission RECORD_AUDIO> → 寻呼/对讲 启动即 SecurityException, AR-010 权限编排无法授未声明权限"
+      fix: "MyApplication.java onCreate 经 Hilt EntryPoints 取 AppForegroundState 并 .register(this) + Manifest <uses-permission RECORD_AUDIO> + assembleDebug 验 + PollingRefreshSchedulerTest 不破(用 Fake 与 prod 接线无关)"
+      class_of_miss: "同 PA-12: documented constraint with runtime activation switch, artifact 未产出/未接线; fake 掩盖. Critic 自审后主动 sweep 抓到——self-audit checklist 立即生效证. 3 实例(cleartext/foreground.register/RECORD_AUDIO) 同一规则: '约束登记时即产出 artifact'"
+      reviewer: critic-2
+      crit_path: true (demo 阻塞)
+      note: "CTO 已被告 HOLD PA-12 APK install 候组合修; ~2min ETA 同 PA-12 速度"
+    PA-14:
+      owner: fe-business + critic
+      status: in_progress (Phase A done, A.2+B 启动)
+      assigned: "2026-05-30; fe-business-2 持 build-slot, critic-2 parallel self-audit#3 + skill.md edit(11:25 done) + Phase B 评审 owner"
+      title: "视觉补缺 work package: 登录页 4 结构 BLOCKER + 5 Tab 系统 elevation/numeric token UNCONSUMED. CTO 标准: 真机随机一屏对比设计稿看不出区别"
+      phase_a_audit: "fe 交 — 重要框架校正: 屏层零硬编码 Color(0xFF) + 零 raw M3 widget(全过 atoms/molecules), token DEFINED 但 UNCONSUMED 是真系统问题. (1)DSN-ELEVATION-01 全屏 zero shadow consume, AeroTheme.elevation 闲置; (2)DSN-TYPO-01 zero numbers 用 typography.numeric(mono+tnum), 全是 body*, Service 数字 BLOCKER 级; (3)DSN-SPACING-01 仅 Login 7 raw dp 漏 spacing.* token; (4)Login 4 结构 BLOCKER(hero 缺装饰圆+欢迎回来+错图标 / server 位 bottom-collapse / CTA solid 非 gradient+arrow / 缺 footer)"
+      phase_b_login: "fe LoginScreen 重建 +223/-123 only LoginScreen.kt; 全 4 结构 BLOCKER 行行关闭 (Hero 装饰圆+brand tile e2+喇叭+欢迎回来+副标 / server 顶 expanded / 内联 gradient CTA+arrow / footer) + 7 raw dp→spacing tokens 映射 KDoc. 34/0/0/0 login regression. assembleDebug SUCCESSFUL → APK 11:32 fresh"
+      critic_phase_b: "PASSED_WITH_MINOR HIGH 2026-05-30 (RTM-ERR-003 首次实战). 0 B/M, 2 MINOR + 1 SPEC-GAP-cousin. Steps A-F 全跑: Step A 抓 DSN-ERR-007=LoginScreen 在 spec §7 缺录(操作目标 degrade 到 CTO BLOCKER-2 清单); Step C grep `Color(0x…)`=0, AeroTheme.*=40 sites(6 直+34 别名); Step D 10 元素全 file:line 正引(零 ABSENT); Step E 零 M3 fallthrough(Color.White 仅 dark-gradient 合法例外). 34/0/0/0 neutral 复跑. MINORs: §7.4 Login spec 扩展(PM 落)+ GradientLoginButton 48.dp KDoc(fe Phase C 顺手)"
+      phase_c_queue: "[REPLANNED 2026-05-30 CTO 真机截图复核后] 旧 Service-first 计划由 CTO 真机 5+ BLOCKER 反馈推翻. CTO 5 子阶段: C-1 Tab 5-色标识系统(BLOCKER, AeroColors.Tab* tokens DEFINED+CONSUMED 但 NOT APPLIED 到 TabBar 真实渲染——layer-4 教训); C-2 广播 mode 色(寻呼橙#EA580C/对讲蓝/点播 Teal, 实际寻呼按钮渲染绿+段控选中渲染 Teal 渐变); C-3 终端瓦片 5 态色(Handoff §625-653 default/offline/fault/playing/paging variant, 实际全同色); C-4 Hero strip + 任务时间轴空态(终端/AI 主页无 hero, 任务时间轴空白无 empty 文案); C-5 残余细节. 每阶段→新 APK→CTO 手动截图验收→Critic 3-leg trace 评审"
+      layer_4_lesson: "★ token consumption COUNT ≠ token semantic APPLICATION. Critic Step C grep `AeroTheme.*` > 0 + Step D 元素 file:line walk PASSED Phase B 但 5-Tab 实际渲染全黑、广播寻呼按钮渲染绿、终端瓦片同色——代码引用 token X 不等于 spec-named element 被 token X 渲染. 第 4 家族教训: 同 PA-12 deployment-artifact/head-8 sweep/visual-fidelity-gate, '什么单测不能 assert, 评审必须正向 assert' 现包含 render 输出. 新 3-leg trace: spec line→code line(spec-named element 用 spec-named token)→screencap pixel. 缺任一 leg → 未通过. Critic 落 RTM-ERR-004 + [[token-application-trace]] 记忆"
+      minor_followups_pending: "①PM: design-system-spec.md §7.4 Login 加 + §3 sub-8 decorative chip exception 说明 ②fe Phase C: GradientLoginButton 48.dp KDoc 1 行(M3 touch-target 鸣谢)"
+      class_of_miss: "第 3 层 demo 教训(同 PA-12 constraint-vs-artifact / Critic head-8 sweep): 单测能查的过, 单测查不了的(token 消费/视觉结构 vs 设计 spec)未 gate. ~10 UI 审(AR-005/009/102/105/106 + PA-03③ + Service + Broadcast SD1/SD2)全 PASS HIGH 但 design-system-spec.md 0 次开. PM 漏派 + Critic 漏审, 同责"
+      phases: "Phase A (fe 现在): 读 design-system-spec.md + Handoff + 全 theme/ 文件, 出 per-surface 设计 vs 代码 对比表 + DSN-ERR 清单 + 工时估; Phase B (PM 拍后): LoginScreen 重建为 spec(hero/渐变/装饰/footer/AeroTheme tokens 全消费, 零硬编码 / 零 Material3 默认); Phase C: 5 Tab 同标准扫修. 每屏=Critic micro-review."
+      adb_artifact: "CTO 准备就绪后 ! adb devices, PM 驱 adb exec-out screencap 每 Tab → 设计稿 vs 真机 对比交付"
+      ETA: "粗估 2-3 天(CTO 给), 待 Phase A 审计真 DSN-ERR 数后校准. LoginScreen 单屏数小时; 5 Tab 同等债则可能涨"
+      reviewer: critic-2
+      crit_path: true (CTO 已 PAUSE 所有新工作)
+      note: "PA-12+PA-13 demo APK 已 ship cleartext+foreground 修, CTO flash 后可登录见 Tab → 截图驱动. 其余团队(data/fe-platform/legacy) standby"
     PA-RESERVE-legacy:
       owner: legacy-native
       status: consumed (voice AR-104 + cast PA-08 都已落; 余 R-001 真机=CTO)
@@ -311,6 +353,7 @@ wp_icd_reverse:
 risks_added:
   - id: "R-WS-NEW"; risk: "ICD-BroadcastWS 纯新增、无 v3 代码可逆推(grep 全 legacy .java 零 WebSocket, CTO 已确认)"; impact: "实时方案全靠后端 O-2 文档+实测对接, 无 v3 事实兜底; 对接偏差风险高于其它 ICD"; mitigation: "维持 DRAFT; RealtimeClient(AR-103) parseMessage→Unknown 容错(已实现); O-2 回执后实测对接才 LIVE"; owner: "fe-platform + 后端/厂商"; status: "ACTIVE"
   - id: "R-ADDR-SLOT"; risk: "V4 login(V3LoginAuthenticator F-2) 只写 Constant.serveraddress(经 ServerConfig), 不写 v3 PreferencesUtil('serverAddress') 槽; v3 LoginActivity.prelogin(:497-499) 原来两槽都写. 15 个保留 v3 GET 路径(TaskGuangbo*/SelectMusic/ActivityMusicOrder/getServeNomber 等)读 PreferencesUtil 槽 → V4-only 登录下该槽 stale/空"; impact: "DORMANT: 这 15 个 legacy Activity 均未接入 V4 Compose nav(Critic grep 证), 当前 V4 UI 不可达. 若后续 Tab(尤其广播 点播/媒体——at-risk 路径名含 TaskGuangbo/SelectMusic/ActivityMusicOrder) 启动未迁移 legacy Activity 则地址 stale 请求失败"; mitigation: "首选: 新功能一律走 V3*Repository(用 ServerConfig), 不启 legacy Activity. 备选(若必须用保留路径): ConstantServerConfig.setBaseUrl 同步写 PreferencesUtil('serverAddress')——需给 ConstantServerConfig 注入 Context(小设计改, 非免费), 复刻 v3 双写. PM 决定现 DEFER(dormant)"; owner: "data-integration + PM watch"; status: "DORMANT-TRACKED"; gate: "广播 Tab 排期时 + 运行时 demo 时强制 re-check"
+  - id: "R-16KB-NATIVE"; risk: "PA-14 emulator smoke 在 Android 15 系统镜像上触发 '16 KB compatibility' 警告对话框. htapplib.aar + BaiduLBS_Android.aar 及其 .so(armeabi-v7a + arm64-v8a 全部)是 4 KB page-align 旧 native, Android 15+ 在 arm64 上要求 16 KB 对齐. 警告现仅遮蔽 UI 一次,功能不阻塞."; impact: "Android 14-: 无影响. Android 15+: 首启遮蔽对话框(警告级,可关). Android 16+: 转 BLOCKER(系统拒绝加载未对齐 native, 语音/对讲/点播 = 全断, 同时百度地图也死). 当前华为真机 demo 走 Android 12/13 通过, 但发布时序若上 Android 15+ 真机/上架某些渠道 = 必修."; mitigation: "厂商重打 htapplib.aar 16 KB 对齐(SPIKE-AAR64 时未要求过, 现需要); 百度 SDK 升 16 KB 对齐版(百度官方应有). 备选: -Wl,-z,max-page-size=16384 重编但厂商二进制我们改不了. 真机 R-001 关闭路径之外的第 2 项 native 残债."; owner: "legacy-native + 厂商"; status: "DORMANT-TRACKED"; gate: "Android 15 真机/上架前 强制 re-check; Critic emulator smoke 已发现"
 
 # ── 跨域接口协商在途 (经 PM) ──
 xdomain_negotiation:
@@ -426,3 +469,110 @@ infra_actions:
     note: >
       CTO 已决策保留 V4Activity 为唯一入口. 由 PM 统筹放进 Phase 0 第一批任务,
       WBS 出炉时正式建任务. 需校验 V4Activity 启动后能正确衔接登录/会话状态.
+
+# ── PA-15 task-schedule timeline blank (BLOCKER candidate) ──
+pa15:
+  state: "REVIEW_PASSED_HIGH"         # 2026-05-30T09:12+08:00 critic-2 5-leg PASS_HIGH; build-slot released; awaiting CTO manual verify before ICD landing + commit batch
+  symptom: "Task Tab Hero shows active scheme name ('海王作息') but timeline below renders empty. CTO demo 2026-05-30."
+  family: "RTM-ERR-005 sibling — data in SEPARATE response (not nested same-response like PA-14); PA-10 missed the second endpoint"
+  audit_report: ".state/api-snapshots/task-schedule-rootcause.md"
+  ground_truth_captures:
+    - ".state/api-snapshots/sechinfo-cto-capture-2026-05-30.json"          # CTO bash session 6 schemes
+    - ".state/api-snapshots/sechetaskinfo-haiwang-cto-capture-2026-05-30.json"  # 14 tasks for 海王作息
+  root_cause: |
+    PA-10 wired only GET /task/sechinfo (scheme-summary; taskcount=int, NOT task array).
+    Per-scheme timeline lives in SEPARATE POST /task/sechetaskinfo body {name: sechename}.
+    SchemeRowDto treated /sechinfo rows as if they were timeline tasks → per-task fields (starttime/medianame/name) null → timeline rows render blank.
+  five_wire_findings_captured:
+    - "★★★ Per-task display name field = `name` (NOT `taskname`). defensive @SerializedName('name') CONFIRMED, no longer assumption."
+    - "★ Multi-active scheme: 海王作息+日本作息 both projectstate=0. PA-10 active-selection must handle list. Recommended Option A (first-active wins) for this fix, documented-assumption for fe upgrade to B/C later."
+    - "★ Four status fields per task: state/taskstate/enablestate/offlinestate (PA-14 terminal family pattern). Domain SchemeTask.status derived via sealed-with-Unknown; rule pinned in SchemeMapper KDoc."
+    - "★ taskcount=14 = sechetaskinfo row count = 14 — reconciliation sanity check added to test fixture."
+    - "execmode=62=0b111110=Mon-Fri bitmask — KDoc TODO weekday UI, NOT in current fix scope. DTO round-trips all 23 fields for future-proofing."
+  fix_design_accepted:
+    repo_change: "V3TaskRepository.fetchAndPublish: step1 GET sechinfo → step2 parallel POST sechetaskinfo per scheme (appScope.async + awaitAll, same as V3TerminalRepository in-flight dedup) → step3 build Scheme(name, active, tasks) → step4 atomic publish-only-on-full-success"
+    dto_change: "Split SchemeDto.kt: SchemeRowDto stays slim summary; new SchemeTaskRowDto covers full 23-field set; KDoc carries 5 ★ annotations + [[terminal-zone-field-is-not-membership]] link"
+    mapper_change: "SchemeMapper refactor: groupRowsIntoSchemes split into summary→Scheme + sechetaskinfo-rows→List<SchemeTask>; status derivation sealed-with-Unknown rule documented"
+    test_change: "V3TaskRepositoryTest rewrite using both capture jsons as fixtures. Named-task assertions (早读开始铃 / 第一节课上课铃 / 大课间 / 快乐放学季). taskcount==tasks.size sanity. Multi-active assertion. Atomic-publish failure semantic test."
+    failure_semantics: "ANY sechetaskinfo failure → whole publish skipped, prior snapshot preserved (same as V3TerminalRepository)"
+  icd_proposed:
+    proposals_file: ".state/api-snapshots/icd-proposals-pa15.md"           # to be written by data
+    landing_policy: "DO NOT land to icd-contracts.md until Critic 5-leg PASS + CTO smoke verify. Same staging as PA-14."
+    sections_to_bump:
+      - "ICD-Endpoints: add /task/sechetaskinfo (POST, form name=string, returns {data: [SchemeTaskRow]}) + sechetask CRUD endpoints"
+      - "ICD-SchemeDto §12: split into SchemeRowDto v2 (summary) + new SchemeTaskRowDto v1 (full 23 fields); ★ doc-note about two-endpoint reuse + 'name not taskname'"
+      - "ICD-TaskRepository §13: refresh contract update — composes two endpoints, atomic publish, multi-active handling rule"
+      - "ICD-Scheme domain §?: SchemeTask.status enum + 4-status-int derivation rule documented"
+  team_state:
+    data_integration_2:
+      state: "WORKING"
+      build_slot: true
+      started_at: "2026-05-30T~08:45:00+08:00"
+      eta_self_reported: "4.5h actual (under 6.4h calibrated)"
+      first_file: "app/.../data/dto/SchemeDto.kt"
+      sequencing: "8 steps — read captures → SchemeDto split → SchemeMapper refactor → V3TaskRepository → tests → compile+test+assembleDebug → ICD diff → §6 rootcause append"
+      go_dark_until: "SendMessage COMPLETE"
+      ping_back_triggers: ["build/test fail self-stuck", "wire 6th surprise", "fe-interface clash on Option A"]
+    critic_2:
+      state: "STANDBY (not yet messaged — saves token; activated post-fix-COMPLETE)"
+    fe_business_2:
+      state: "STANDBY"
+    fe_platform_2:
+      state: "STANDBY"
+    legacy_native_2:
+      state: "STANDBY"
+  five_leg_status:
+    L1_spec: "DONE — Handoff.html §s-task 915-955 + AeroRadio v4.html §247-263 confirm timeline-tasks structure"
+    L2_code: "DONE — data audit complete (rootcause.md), V3TaskRepository missing /sechetaskinfo wiring confirmed file:line"
+    L3_test_pass: "PENDING — V3TaskRepositoryTest rewrite in flight as part of fix"
+    L4_data: "DONE — CTO captures landed; both endpoints captured + reconciliation rules in place"
+    L5_smoke_render: "PENDING — Critic 5-leg + emulator smoke per smoke-render-required memory; PM activates critic-2 post-fix"
+  rationale: >
+    PA-15 is the third application of the 5-leg discipline (sibling to PA-14 terminal-zone + PA-13 foreground-register).
+    L4 ground truth was the deciding artifact: confirmed `name` field, surfaced multi-active reality,
+    surfaced 4-status-field pattern, taskcount reconciles exactly. Code-only review would not have
+    landed (3) and (4) above. This is the data-snapshot-verification memory in action.
+
+  next_actions:
+    pm:
+      - "DONE — Hold build-slot exclusive to data-integration-2"
+      - "DONE — Wait for SendMessage COMPLETE"
+      - "DONE — On COMPLETE: activate critic-2 with 5-leg dispatch + emulator smoke mandate"
+      - "PENDING — Post Critic PASS: land 4 PA-15 ICD bumps + 4 PA-14 ICD bumps = 8 total to icd-contracts.md serial (await CTO manual verify GO)"
+      - "PENDING — Post CTO manual verify: commit batch (PA-12/13/14/15 + Phase B/C-1)"
+      - "PENDING — Post commit batch: dispatch NEXT-2 audit per .state/auth-split-brain-framing.md §6 Stage 1"
+    cto:
+      - "DONE — 5-min curl"
+      - "PENDING — Manual verify: adb install -r app-debug.apk (mtime 16:57) → login admin/123456 → 任务 Tab → confirm 14 named tasks + Hero '14 项任务 / 海王作息' + 紫色 #7C3AED 选中态"
+      - "PENDING — GO NEXT-2 once PA-15 visually confirmed"
+  critic_verdict_2026_05_30:
+    verdict: "PASSED — Confidence HIGH"
+    cycle: 1
+    severity_counts: { BLOCKER: 0, MAJOR: 0, MINOR: 0, INFO: 1 }
+    info_findings:
+      - "Dispatch off-by-8 SchemeDto.kt line number (PM claimed @SerializedName('name') :127, actual :135) — pure cosmetic, no code defect."
+    legs_summary:
+      L1_spec: "PASS — Handoff §s-task + AeroRadio v4.html §247-263 match implementation"
+      L2_code: "PASS — fetchAndPublish 2-step composition; coroutineScope structured-concurrency-skip-publish-on-failure verified at file:line"
+      L3_test: "PASS — 16/16 V3TaskRepositoryTest fresh rerun (mtime 17:07:16); 4 load-bearing assertions confirmed"
+      L4_data: "PASS — 4-leg reconciliation table every cell filled with file:line; name field 4-leg trace closed (capture line / DTO:135 / Mapper:90 / render '早读开始铃'); cross-stack TaskZuoxiListActivity:271 agreement confirmed"
+      L5_smoke: "PASS — emulator Pixel_6 KVM real-run; .ui.V4Activity direct (PA-14 lesson applied); login admin/123456 succeeded; 13 of 14 named tasks visible across 16-task-tab.png + 17-task-tab-scrolled.png; period-segmentation 下午 divider rendered; no FATAL/Compose crash"
+    retroactive_closures:
+      - id: "PA-14 C-1 TabBar 5-color (Task tab axis)"
+        prior_state: "PASSED_WITH_MINOR Confidence MEDIUM 'render unverified'"
+        new_state: "PASSED HIGH on Task-tab axis — 任务紫 #7C3AED rendered correctly on device per identityColor() centralised binding"
+      - id: "PA-12 cleartext"
+        prior_state: "fixed but only verified once at demo"
+        new_state: "device retroactively confirmed — POST /authorizations to 183.216.51.204:99 succeeded on Pixel_6"
+      - id: "PA-13 ActivityLifecycleForegroundState.register"
+        prior_state: "fixed but not retroactively verified in new session"
+        new_state: "device retroactively confirmed — terminal/task polling refreshes fire on tab entry"
+      - id: "PA-14 V3TerminalRepo terzone-only zone mapping"
+        prior_state: "PASSED_WITH_MINOR (5-leg complete) but Leg 5 missed Zone tab (no credentials)"
+        new_state: "device retroactively confirmed — 操场 4/4 matches CTO terzone capture; 5 named zones rendering"
+    bonus_observation: "critic-2 retroactive-closure pattern (carry prior PA verdicts forward when device session validates them) is value-add NOT in skill.md; treat as standing pattern for future audit-on-demand revisits"
+  smoke_snapshots:
+    - ".state/smoke-snapshots/16-task-tab.png"
+    - ".state/smoke-snapshots/17-task-tab-scrolled.png"
+    # 01-09 = PA-14 history; 10-15 = PA-15 boot/login/terminal/login-fill; 16-17 = PA-15 task tab pre/post scroll
+  apk_at_review: "app/build/outputs/apk/debug/app-debug.apk mtime 2026-05-30 16:57 (also serves CTO manual verify)"
