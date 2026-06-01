@@ -54,8 +54,13 @@ class TerminalRepositoryImpl @Inject constructor(
             val terminalsResponse = terminalApi.getTerminals()
             requireSuccess(terminalsResponse)
 
+            // DORMANT impl (PA-14: V3TerminalRepository is bound; this kept as
+            // migration asset). Pass wire `zone` field as containingZoneId — the
+            // dormant code path's only reachable here if @Binds is ever flipped
+            // back, in which case this preserves its old behavior (flawed but
+            // unchanged from before PA-14). The REAL impl is V3TerminalRepository.
             val terminals = terminalsResponse.body()?.data
-                ?.mapNotNull { it.toTerminalOrNull() }
+                ?.mapNotNull { it.toTerminalOrNull(it.zone?.toString().orEmpty()) }
                 .orEmpty()
             val terminalsByZone: Map<String, List<Terminal>> =
                 terminals.groupBy { it.zoneId }

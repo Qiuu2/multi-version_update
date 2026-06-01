@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "source": "CTO manual curl via Bearer token, 2026-05-30",
+    "endpoint": "GET http://183.216.51.204:99/api/terminal/terzone",
+    "auth": "Header Authorization: Bearer <token>",
+    "ground_truth_quote": "zone id=1 name='操场' terminal[] = 4 terminals: 右一终端(14), 右二终端(15), 营销大厅-2(16), 网络功放2(18) — all 在线",
+    "v4_observed": "操场分区显示: 服务器251 / 寻呼话筒2.86 / 财务室 — 3 个, 完全不匹配, BLOCKER",
+    "completeness": "节选自 CTO 终端贴出来的内容(末尾被截断,完整需要 data 用同 token 再拉一份覆盖此文件)"
+  },
+  "data": [
+    {"all":"6","count":1,"start":1,"state":0,"id":1,"datetime":"2026-4-22 21:36:31","name":"操场","description":"","terminal":[
+      {"all":4,"count":1,"start":1,"state":0,"id":14,"type":11,"taskstate":0,"devicestate":1,"netstate":1,"speechstate":0,"volume":50,"isinstancy":0,"zone":0,"name":"右一终端","ip":"192.168.3.26","latitude":"0.000000","longitude":"0.000000","isrecord":0,"issponsor":0,"shortcircuit":0,"lopencircuit":1,"ropencircuit":1,"temperature":0,"humidity":0,"isdecode":1,"isencode":0,"switchcount":0},
+      {"all":4,"count":1,"start":2,"state":0,"id":15,"type":11,"taskstate":0,"devicestate":1,"netstate":1,"speechstate":0,"volume":50,"isinstancy":0,"zone":0,"name":"右二终端","ip":"192.168.3.27"},
+      {"all":4,"count":1,"start":3,"state":0,"id":16,"type":11,"taskstate":0,"devicestate":1,"netstate":1,"speechstate":0,"volume":50,"isinstancy":0,"zone":0,"name":"营销大厅-2","ip":"192.168.3.12"},
+      {"all":4,"count":1,"start":4,"state":0,"id":18,"type":5,"taskstate":0,"devicestate":1,"netstate":1,"speechstate":0,"volume":70,"isinstancy":0,"zone":8,"name":"网络功放2","ip":"192.168.3.38"}
+    ]},
+    {"id":2,"name":"英语角分区","terminal":[{"id":12,"name":"营销大厅-1"},{"id":14,"name":"右一终端"}]},
+    {"id":3,"name":"航天","terminal":[{"id":14,"name":"右一终端"}]},
+    {"id":5,"name":"会议室","terminal":[{"id":14,"name":"右一终端"},{"id":15,"name":"右二终端"}]},
+    {"id":8,"name":"海口","terminal":[{"id":25,"name":"海口运营中心","netstate":0}]},
+    {"id":9,"name":"赣州角","terminal":[]}
+  ]
+}

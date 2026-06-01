@@ -1,7 +1,6 @@
 package com.htgd.radiocontrol.aeroradiocontrol.data.repository
 
 import com.google.gson.Gson
-import com.htgd.radiocontrol.aeroradiocontrol.data.dto.TerminalEnvelopeDto
 import com.htgd.radiocontrol.aeroradiocontrol.data.dto.ZoneEnvelopeDto
 import com.htgd.radiocontrol.aeroradiocontrol.data.model.Terminal
 import com.htgd.radiocontrol.aeroradiocontrol.data.model.Zone
@@ -23,21 +22,28 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Plan A [TerminalRepository] backed by the v3 stack (TASK-PA-01).
+ * Plan A [TerminalRepository] backed by the v3 stack.
  *
- * Replaces the (now-dormant) Retrofit `TerminalRepositoryImpl` via a @Binds swap
- * — the INTERFACE, domain models, Mapper, and consuming ViewModels are unchanged
- * (the seam payoff). Data flows: [V3CallbackAdapter] (v3 RequestManger → raw JSON)
- * → Gson parse into the reverse-engineered DTOs → existing [toTerminalOrNull] /
- * [toZoneOrNull] Mapper → domain models → in-memory SSOT → Flow.
+ * ★ PA-14 (2026-05-30) — single endpoint, no client-side join:
+ *   GET /terminal/terzone is the AUTHORITATIVE source for both the zone list
+ *   AND each zone's terminals (they are nested on the wire as ZoneDto.terminal[]).
+ *   We map each ZoneDto with its nested array — V3CallbackAdapter → Gson
+ *   ZoneEnvelopeDto → [toZoneOrNull] (which threads the parent zone id into
+ *   each nested terminal). NO second call to /terminal/terminalinfo, NO
+ *   groupBy on `terminal.zone` (that field is not the membership key — root
+ *   cause of the 操场 mismatch; see TerminalDto KDoc + zone-mapping-rootcause.md).
+ *
+ * Many-to-many preserved: one terminal can appear nested under multiple zones
+ * (CTO capture: id=14 in 操场/英语角/航天/会议室). observeTerminals() therefore
+ * returns the FLATTENED-with-duplicates list (one entry per nesting); the UI
+ * dedupes if it wants a unique terminal set.
  *
  * SSOT contract (verbatim from AR-101, Critic AC):
  *  - observe* emits the current snapshot, starting at emptyList().
- *  - refresh() populates the SSOT only on full success; on failure the previous
+ *  - refresh() populates the SSOT only on success; on failure the previous
  *    snapshot is retained (caller drives retry from Result.failure).
  *  - concurrent refresh() is de-duplicated so the SSOT can't be left stale:
- *    callers racing in share the one in-flight fetch (AR-102 refreshResult
- *    pattern) rather than interleaving partial updates.
+ *    callers racing in share the one in-flight fetch.
  *
  * Realtime (Plan A): v3 has no server push, so "live" = the ViewModel calling
  * refresh() on entry + optional polling. This repo only provides the refresh
@@ -55,11 +61,10 @@ class V3TerminalRepository @Inject constructor(
     private val zonesFlow = MutableStateFlow<List<Zone>>(emptyList())
 
     // In-flight refresh sharing (Critic AC): concurrent refresh() callers share
-    // ONE network fetch (launched in appScope so a caller cancelling doesn't
-    // kill the shared work) — they all await the same Deferred. The mutex only
-    // guards the (start-or-join) decision, not the fetch itself, so it's never
-    // held across IO. A finished refresh clears the slot so the next one re-fetches
-    // (no permanent stale).
+    // ONE network fetch (launched in appScope so a caller cancelling doesn't kill
+    // the shared work). The mutex only guards the (start-or-join) decision, not
+    // the fetch, so it's never held across IO. A finished refresh clears the slot
+    // so the next one re-fetches (no permanent stale).
     private val inFlightMutex = Mutex()
     private var inFlight: Deferred<Result<Unit>>? = null
 
@@ -76,25 +81,19 @@ class V3TerminalRepository @Inject constructor(
         return try {
             deferred.await()
         } finally {
-            // Clear the slot once this attempt is done so a later refresh re-fetches.
             inFlightMutex.withLock { if (inFlight === deferred) inFlight = null }
         }
     }
 
     private suspend fun fetchAndPublish(): Result<Unit> = runCatching {
-        val zonesJson = adapter.get(url(PATH_ZONES)).getOrThrow()
-        val terminalsJson = adapter.get(url(PATH_TERMINALS)).getOrThrow()
-
-        val terminals = gson.fromJson(terminalsJson, TerminalEnvelopeDto::class.java)
-            ?.data?.mapNotNull { it.toTerminalOrNull() }.orEmpty()
-        val byZone = terminals.groupBy { it.zoneId }
-
-        val zones = gson.fromJson(zonesJson, ZoneEnvelopeDto::class.java)
+        val json = adapter.get(url(PATH_ZONES)).getOrThrow()
+        // Map each zone with its OWN nested terminal[] — no cross-zone join. The
+        // Mapper threads each zone's id into the nested terminals' zoneId.
+        val zones = gson.fromJson(json, ZoneEnvelopeDto::class.java)
             ?.data?.mapNotNull { it.toZoneOrNull() }
-            ?.map { zone -> zone.copy(terminals = byZone[zone.id].orEmpty()) }
             .orEmpty()
 
-        // Publish only after both fetches parse — observers never see a half-
+        // Publish only after the fetch parses — observers never see a half-
         // updated snapshot; on any throw above the old snapshot stays (failure).
         zonesFlow.value = zones
     }
@@ -103,11 +102,10 @@ class V3TerminalRepository @Inject constructor(
     private fun url(path: String): String = serverConfig.baseUrl() + path
 
     private companion object {
-        // Relative endpoint paths (mirror v3 Constant.SearchZone / getMahcinelistAll).
-        // Inlined here so this class never loads v3 Constant (whose static init
-        // touches Android → unit tests can't load it). Values are LIVE-verified
-        // against Constant.java:99 (/terminal/terzone) and :24 (/terminal/terminalinfo).
+        // Relative endpoint path — LIVE-verified against Constant.java:99
+        // (/terminal/terzone, the AUTHORITATIVE source for zones + nested terminals).
+        // /terminal/terminalinfo is NOT used here (PA-14); the previous two-fetch
+        // join by `terminal.zone` was the root cause of the 操场 mismatch.
         const val PATH_ZONES = "/terminal/terzone"
-        const val PATH_TERMINALS = "/terminal/terminalinfo"
     }
 }
