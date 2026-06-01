@@ -1,0 +1,27 @@
+{
+  "_capture_meta": {
+    "endpoint": "GET /api/task/sechinfo",
+    "host": "http://183.216.51.204:99",
+    "captured_by": "CTO bash session",
+    "captured_at": "2026-05-30T08:43:00+08:00",
+    "session_dispatch": "PA-15 Leg-4 data verification (RTM-ERR-005 family)",
+    "auth": "Bearer <eyJ0eXAi... JWT, exp=1780346581=2026-06-01T13:43+08:00, ~60h TTL confirmed>",
+    "subject_user": "admin",
+    "sechename_under_test": "海王作息",
+    "wire_facts_observed": [
+      "Top-level shape: {data: [...]} — array under data, no envelope code/message at this layer",
+      "Each row = ONE scheme summary (NOT a task row); confirms /sechinfo is scheme-SUMMARY endpoint",
+      "Row carries: all=6 (paging total), count=1 (page items?), start=N (page offset), state=0, taskid (CONFIRMED: refers to scheme's own taskid, not a per-task id), taskstate=0, taskcount=14 (per-scheme task count INT), startdate/enddate (scheme validity), sechename (UNIQUE display name), projectstate (0=RUNNING, 1=STOPPED)",
+      "★ 6 schemes returned, projectstate==0 (RUNNING) on TWO of them: 海王作息 (taskid=73683) AND 日本作息 (taskid=73711). Multi-active is REAL on v3 wire. PA-10 active-selection logic must handle list-of-active not single-active.",
+      "★★ taskcount=14 (海王作息) matches sechetaskinfo row count = 14 EXACTLY → wire reconciles."
+    ]
+  },
+  "data": [
+    {"all": 6, "count": 1, "start": 1, "state": 0, "taskid": 73795, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "小学测试作息", "projectstate": 1},
+    {"all": 6, "count": 1, "start": 2, "state": 0, "taskid": 73823, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "最终测试作息", "projectstate": 1},
+    {"all": 6, "count": 1, "start": 3, "state": 0, "taskid": 73683, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "海王作息", "projectstate": 0},
+    {"all": 6, "count": 1, "start": 4, "state": 0, "taskid": 73711, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "日本作息", "projectstate": 0},
+    {"all": 6, "count": 1, "start": 5, "state": 0, "taskid": 73739, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "股市作息", "projectstate": 1},
+    {"all": 6, "count": 1, "start": 6, "state": 0, "taskid": 73767, "taskstate": 0, "taskcount": 14, "startdate": "2026-01-18", "enddate": "2039-01-31", "sechename": "中学测试作息", "projectstate": 1}
+  ]
+}
