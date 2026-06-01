@@ -101,4 +101,42 @@ data class AeroColors(
 
     val gold: Color = Gold,
     val goldSoft: Color = GoldSoft,
+
+    // ── ICD-DesignTokens-v1.3 semantic-role aliases (additive, non-breaking) ──
+    // Per BL-TOKEN-RENAME + AR-009 R-1 alias pattern: same hex as existing
+    // status / brand tokens, new semantic role names so screens reference
+    // role-by-purpose ("modePaging" for the broadcast 寻呼 segmented control)
+    // rather than reusing a status-pill name ("statusPaging") for a different
+    // semantic surface. Zero new hex; old names stay valid — consumers migrate
+    // at leisure. Spec citations as comments.
+
+    // Broadcast 3-mode (Handoff.html:883-885 §s-broadcast 三档差异):
+    val modePaging:   Color = PageWarm,   // = #EA580C — 寻呼
+    val modeIntercom: Color = TalkBlue,   // = #2563EB — 对讲
+    val modeCast:     Color = Primary,    // = #0E7C70 — 点播 (shares brand teal)
+
+    // Terminal tile 5-state foreground (Handoff.html:621-658 §components):
+    val tileOnline:   Color = StatusOnline,   // = #16A34A
+    val tileOffline:  Color = StatusOffline,  // = #8A929F
+    val tileFault:    Color = StatusFault,    // = #DC2626
+    val tilePlaying:  Color = StatusPlaying,  // = #2563EB
+    val tilePaging:   Color = StatusPaging,   // = #EA580C
+    // Tile icon-bg soft tints (Handoff.html:625-657 — bg colors match v1.1
+    // *Soft palette; aliased for parallel role-naming):
+    val tileOnlineSoft:  Color = PrimarySoft,       // online icon bg → primary-soft
+    val tileOfflineSoft: Color = Surface3,          // offline icon bg → surface-3
+    val tileFaultSoft:   Color = StatusFaultSoft,   // = #FDECEC
+    val tilePlayingSoft: Color = StatusPlayingSoft, // = #E8EFFD
+    val tilePagingSoft:  Color = StatusPagingSoft,  // = #FDEEE2
+
+    // Task-card state pill (PM-confirmed naming, P2). Handoff.html:930-931
+    // §s-task names the task card states 已完成/进行中/待执行/已取消/已迁移/对调
+    // but does NOT pin task-pill hex — this 3-alias set is a DOCUMENTED
+    // ASSUMPTION, mapped to existing tokens so hex stays consistent across
+    // the consumer surfaces; also reused for scheme-list 启用/停用 since the
+    // semantic is the same. Hex re-source if CTO real-device review pushes back
+    // (alias level absorbs the swap — consumers don't change).
+    val taskCardStateDone:    Color = Ink3,         // = #8A929F — 已完成 / disabled-row text
+    val taskCardStateRunning: Color = StatusPaging, // = #EA580C — 进行中 (matches TaskScreen.kt:205 existing in-code usage)
+    val taskCardStatePending: Color = Ink2,         // = #4A5260 — 待执行 (preliminary, awaiting CTO real-device review)
 )
