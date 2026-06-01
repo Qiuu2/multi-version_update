@@ -81,6 +81,17 @@ public class MyApplication extends Application {
     @com.htgd.radiocontrol.aeroradiocontrol.di.LegacyOkHttpClient
     okhttp3.OkHttpClient legacyOkHttpClient;
 
+    // BL-FOREGROUND-WIRE: ActivityLifecycleForegroundState defaults isForeground=false
+    // and only flips to true when registerActivityLifecycleCallbacks fires
+    // onActivityStarted. Without an explicit register(application) call here, the
+    // Polling gate in PollingRefreshScheduler.start() parks forever and every
+    // polling Tab renders Loading indefinitely (PlatformModule.kt:28 TODO).
+    // Field-injected by Hilt during super.onCreate(), same mechanism as the
+    // legacyOkHttpClient above (this Application is @HiltAndroidApp, the Hilt root,
+    // so @Inject fields are populated by the generated component).
+    @javax.inject.Inject
+    com.htgd.radiocontrol.aeroradiocontrol.ui.platform.AppForegroundState appForegroundState;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -89,6 +100,14 @@ public class MyApplication extends Application {
         // Hand the shared client to the legacy stack before any request is made.
         com.htgd.radiocontrol.aeroradiocontrol.httptask.RequestManger
                 .setOkHttpClient(legacyOkHttpClient);
+        // Activate foreground tracking BEFORE any Activity onStart can fire.
+        // The @Binds in PlatformBindings supplies the ActivityLifecycleForegroundState
+        // concrete instance; cast is safe (interface→impl is the only binding).
+        if (appForegroundState instanceof
+                com.htgd.radiocontrol.aeroradiocontrol.ui.platform.ActivityLifecycleForegroundState) {
+            ((com.htgd.radiocontrol.aeroradiocontrol.ui.platform.ActivityLifecycleForegroundState)
+                    appForegroundState).register(this);
+        }
         configUnits();
         setDefault();
          initBaiduMap();

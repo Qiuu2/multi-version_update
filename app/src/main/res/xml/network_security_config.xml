@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Plaintext-HTTP allowance for the demo (TASK-PA-BLOCKER, 2026-05-30).
+
+    Android 9+ blocks cleartext (HTTP) by default. The v3 backend is plaintext HTTP
+    (single LAN host per campus, per CTO day-1 constraint), so without this config
+    every Repository GET/POST fails with "CLEARTEXT communication ... not permitted
+    by network security policy" — observed on the 华为 arm64 demo device.
+
+    Scope: BROAD cleartext for the demo. Plan to tighten to specific hosts/ranges
+    (LAN campus subnets) post-demo via <domain-config> ; tracked in the ICD note.
+    System trust-anchors are kept for any HTTPS endpoints that may be added later.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
