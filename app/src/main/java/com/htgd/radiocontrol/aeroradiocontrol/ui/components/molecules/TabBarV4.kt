@@ -45,11 +45,47 @@ enum class AeroTab(val label: String, val icon: ImageVector) {
 }
 
 /**
- * v4 TabBar — Handoff.html §03 · TabBar.
+ * Resolves an [AeroTab] to its identity color (design-system-spec §1.3 mode-colors).
+ * The mapping below is the THREE-LEG trace's middle leg — pixels in [FlatTab] /
+ * [RaisedAITab] inherit from here, so a token rename / new tab inserts in one place.
+ *
+ *   spec §1.3 row           spec hex     → AeroColors field    (internal value)
+ *   ─────────────────────── ──────────── ──────────────────── ───────────────────
+ *   终端    (TabTerminal)   #0E7C70      → colors.primary      (Primary    = #0E7C70)
+ *   广播    (TabBroadcast)  #EA580C      → colors.pageWarm     (PageWarm   = #EA580C)
+ *   AI      (TabAI)         #14B8A6      → colors.aiTeal       (AITeal     = #14B8A6)
+ *   任务    (TabTask)       #7C3AED      → colors.taskPurple   (TaskPurple = #7C3AED)
+ *   服务    (TabService)    #2563EB      → colors.serviceBlue  (ServiceBlue= #2563EB)
+ *
+ * Naming note: spec calls these `TabTerminal`/`TabBroadcast`/`TabAI`/`TabTask`/
+ * `TabService`; the existing color fields use the property-style names
+ * (`primary` / `pageWarm` / `aiTeal` / `taskPurple` / `serviceBlue`) defined in
+ * `Color.kt`. The hexes match 1:1 against `Color.kt:34-38` (PageWarm/TalkBlue/
+ * TaskPurple/AITeal/ServiceBlue internals) and `Color.kt:29` (Primary).
+ */
+private fun AeroTab.identityColor(
+    colors: com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroColors,
+) = when (this) {
+    AeroTab.Terminal  -> colors.primary       // spec §1.3 终端    #0E7C70
+    AeroTab.Broadcast -> colors.pageWarm      // spec §1.3 广播    #EA580C
+    AeroTab.AI        -> colors.aiTeal        // spec §1.3 AI      #14B8A6
+    AeroTab.Task      -> colors.taskPurple    // spec §1.3 任务    #7C3AED
+    AeroTab.Service   -> colors.serviceBlue   // spec §1.3 服务    #2563EB
+}
+
+/**
+ * v4 TabBar — Handoff.html §03 · TabBar + design-system-spec.md §1.3 / §7.2.
  *
  * Custom 5-slot bottom bar; the middle (AI) tab is raised by [tabRaise] dp
  * and filled with the primary gradient — this is **not** a stock M3
  * NavigationBar because the spec calls out "不要用 BottomNavigation 默认行为".
+ *
+ * Tab-identity colors (spec §7.2 "当前 Tab：图标 + 文字着 Tab 标识色"): each tab's
+ * SELECTED icon + label takes its identity color (spec §1.3 mode-colors table —
+ * Terminal Teal #0E7C70 / Broadcast Orange #EA580C / AI Cyan #14B8A6 / Task Purple
+ * #7C3AED / Service Blue #2563EB). Unselected stays neutral (ink3 / ink2). See
+ * [tabIdentityColor]; before PA-14 C-1 every selected tab tinted `colors.primary`
+ * (teal) regardless of identity → CTO 2026-05-30 BLOCKER (real-device screencaps).
  *
  * Badge support is intentionally minimal here (just a red dot prop); fancier
  * dot / num / 99+ rendering is wired in a follow-up.
@@ -108,7 +144,10 @@ private fun FlatTab(
     modifier: Modifier = Modifier,
 ) {
     val colors = AeroTheme.colors
-    val tint   = if (isCurrent) colors.primary else colors.ink3
+    // Selected → this tab's identity color (spec §7.2); unselected → neutral ink3.
+    // Pre-PA-14-C-1 this was `colors.primary` for every tab → all selections rendered
+    // teal regardless of identity (CTO 2026-05-30 screencaps).
+    val tint   = if (isCurrent) tab.identityColor(colors) else colors.ink3
 
     Column(
         modifier = modifier
@@ -133,8 +172,10 @@ private fun FlatTab(
                 )
             }
         }
+        // Q3 #6: spec kicker = UPPERCASE (Handoff:555). .uppercase() is no-op for CJK;
+        // visible for "AI" and any future Latin tab labels.
         Text(
-            text  = tab.label,
+            text  = tab.label.uppercase(),
             style = AeroTheme.typography.kicker.copy(
                 fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
                 color      = tint,
@@ -177,11 +218,16 @@ private fun RaisedAITab(
                     modifier = Modifier.size(28.dp),
                 )
             }
+            // Raised-AI LABEL follows the same per-tab identity rule (spec §7.2): the
+            // AI tab's identity color is `aiTeal` #14B8A6, NOT primary. Background
+            // gradient stays Primary (PA-14 C-1 scope is label/icon colors only).
+            // Q3 #6: spec kicker = UPPERCASE; "AI" → "AI" (no change for this label, but
+            // uppercase() is applied consistently with FlatTab for correctness.
             Text(
-                text  = AeroTab.AI.label,
+                text  = AeroTab.AI.label.uppercase(),
                 style = AeroTheme.typography.kicker.copy(
                     fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
-                    color      = if (isCurrent) AeroTheme.colors.primary else AeroTheme.colors.ink2,
+                    color      = if (isCurrent) AeroTab.AI.identityColor(AeroTheme.colors) else AeroTheme.colors.ink2,
                 ),
             )
         }

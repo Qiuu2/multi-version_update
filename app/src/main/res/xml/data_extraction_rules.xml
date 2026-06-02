@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ★ NEXT-2 (2026-06-01) — Auto Backup exclusion rules for API 31+.
+    Companion file `backup_rules.xml` covers API <31.
+
+    Purpose: exclude the EncryptedSharedPreferences "auth_secure.xml" file
+    from both cloud backup (Google Drive Auto Backup) and device-to-device
+    transfer. The encrypted JWT must NOT survive uninstall/reinstall on the
+    same Android user identity, because EncryptedSharedPreferences's MasterKey
+    is keyed off the Android Keystore alias (which IS preserved across
+    uninstall), so the restored ciphertext is decryptable post-reinstall —
+    that is the 2026-05-30 BLOCKER-3 v1 path A mechanism.
+
+    The plain "auth_plain.xml" (L1 prefill: account / serverHost / serverPort /
+    rememberMe) is intentionally NOT excluded → it CAN restore, so a device
+    migration preserves the user's "remember me" UX. The L2 session does not
+    restore → user must re-enter the password.
+
+    See `.state/api-snapshots/auth-split-brain-rootcause.md` §1 + the sister
+    PA-13 network_security_config.xml for the canonical
+    "documented constraint → produced artifact" discipline
+    ([[constraint-vs-artifact-rule]]).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="auth_secure.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="auth_secure.xml" />
+    </device-transfer>
+</data-extraction-rules>

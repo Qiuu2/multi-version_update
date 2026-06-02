@@ -1,0 +1,28 @@
+# Normalize line endings to LF for all text files (CRLF churn root-cause fix,
+# TASK-AR-107). `text=auto` lets Git detect text vs binary; `eol=lf` forces LF
+# in the working tree and the repo, so editors/tools that flip to CRLF no longer
+# pollute diffs or trigger spurious whole-file changes.
+* text=auto eol=lf
+
+# Windows batch files must keep CRLF or they break.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never apply EOL conversion (would corrupt them).
+*.jar     binary
+*.aar     binary
+*.so      binary
+*.jks     binary
+*.keystore binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.gif     binary
+*.ico     binary
+*.ttf     binary
+*.otf     binary
+*.woff    binary
+*.woff2   binary
+*.zip     binary
+*.apk     binary

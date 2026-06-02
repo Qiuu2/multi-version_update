@@ -5,12 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.automirrored.filled.Dvr
-import androidx.compose.material.icons.filled.EventAvailable
-import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +14,11 @@ import androidx.compose.ui.Modifier
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.AeroTab
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TabBarV4
 import com.htgd.radiocontrol.aeroradiocontrol.ui.components.molecules.TopBarV4
-import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.placeholder.TabPlaceholder
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.ai.AiScreen
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.broadcast.BroadcastScreen
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.service.ServiceScreen
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.task.TaskTab
+import com.htgd.radiocontrol.aeroradiocontrol.ui.screens.terminal.TerminalTab
 import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 
 /**
@@ -55,31 +53,11 @@ fun MainScaffold(
 
             Box(modifier = Modifier.weight(1f)) {
                 when (selected) {
-                    AeroTab.Terminal  -> TabPlaceholder(
-                        title    = "终端 Hub",
-                        subtitle = "任务 #6 · 分区卡片 · 多选 · 详情页",
-                        icon     = Icons.AutoMirrored.Filled.Dvr,
-                    )
-                    AeroTab.Broadcast -> TabPlaceholder(
-                        title    = "广播",
-                        subtitle = "任务 #7 · 寻呼 / 对讲 / 点播 三档统一",
-                        icon     = Icons.Filled.Campaign,
-                    )
-                    AeroTab.AI        -> TabPlaceholder(
-                        title    = "AI 助手",
-                        subtitle = "任务 #9 · 占位 · 一句话搞定运维 · 敬请期待",
-                        icon     = Icons.Filled.AutoAwesome,
-                    )
-                    AeroTab.Task      -> TabPlaceholder(
-                        title    = "任务",
-                        subtitle = "任务 #8 · 今日时间轴 + 作息方案",
-                        icon     = Icons.Filled.EventAvailable,
-                    )
-                    AeroTab.Service   -> TabPlaceholder(
-                        title    = "服务",
-                        subtitle = "任务 #9 · 占位 · 系统健康度 + 工单",
-                        icon     = Icons.Filled.SupportAgent,
-                    )
+                    AeroTab.Terminal  -> TerminalTab()
+                    AeroTab.Broadcast -> BroadcastScreen()
+                    AeroTab.AI        -> AiScreen(onGoToTasks = { selected = AeroTab.Task })
+                    AeroTab.Task      -> TaskTab()
+                    AeroTab.Service   -> ServiceScreen()
                 }
             }
 

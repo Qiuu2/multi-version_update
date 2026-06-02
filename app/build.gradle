@@ -16,11 +16,13 @@ android {
         versionName "3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk {
-            // armeabi-v7a is the htapplib.aar's only ABI (voice intercom native libs).
-            // arm64-v8a is added so the APK can install on 64-bit-only devices
-            // (Pixel 7+, modern emulators) for UI/non-voice testing during the
-            // multi-version upgrade. Voice intercom will not work on arm64 until
-            // the aar vendor ships 64-bit native libs (Layer 3).
+            // htapplib.aar (2026-05-14) ships BOTH armeabi-v7a and arm64-v8a voice
+            // native libs (libaudioplay.so + libmp3lame.so); SPIKE-AAR64 verified the
+            // arm64-v8a libs are self-contained (no 32-bit-only deps) and export the
+            // same JNI surface as armeabi-v7a. Voice intercom (MP3 encode path) is
+            // therefore expected to work on arm64 — pending one real-device confirmation
+            // (see .state/spike-aar64-report.md §7.2). x86/x86_64 .so are NOT shipped,
+            // so voice/MP3 encode is unavailable on x86_64 emulators (dev-time only).
             // Baidu Map SDK already ships .so for both ABIs in app/libs/.
             abiFilters = ["armeabi-v7a", "arm64-v8a"]
         }
@@ -201,6 +203,15 @@ dependencies {
     implementation 'androidx.room:room-runtime:2.6.1'
     implementation 'androidx.room:room-ktx:2.6.1'
     kapt 'androidx.room:room-compiler:2.6.1'
+
+    // EncryptedSharedPreferences: at-rest encryption (AES256) for credentials.
+    // AuthStore keeps the JWT + refresh token here, never in plain
+    // SharedPreferences. The legacy stack stored these (and the password) in
+    // plain prefs; new code must not. Pinned 1.1.0-alpha06 — the last release
+    // of androidx.security:security-crypto; later the library was deprecated
+    // but no Jetpack replacement shipped, so this remains the supported path
+    // for minSdk 21.
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
 
     // Test stack for new code (legacy junit:4.13.2 above stays for old tests).
     testImplementation 'io.mockk:mockk:1.13.13'
