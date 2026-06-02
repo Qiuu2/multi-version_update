@@ -120,7 +120,7 @@ private fun ZoneTerminalList(zone: ZoneUi) {
                 Text(
                     "在线 ${zone.onlineCount}/${zone.terminals.size}",
                     style = AeroTheme.typography.bodySmall,
-                    color = colors.ink3,
+                    color = colors.ink2, // spec §4 次要文字→ink2
                 )
             }
         }
@@ -129,7 +129,8 @@ private fun ZoneTerminalList(zone: ZoneUi) {
                 NotificationBanner(type = NotificationType.Error, message = "本分区 ${zone.faultCount} 个终端故障")
             }
         }
-        items(terminals.chunked(2), key = { it.first().id }) { rowItems ->
+        // Handoff:541/798 — 3-column terminal grid (was chunked(2), fixed Q3 #1)
+        items(terminals.chunked(3), key = { it.first().id }) { rowItems ->
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
                 rowItems.forEach { t -> TerminalTile(name = t.name, status = t.status) }
             }

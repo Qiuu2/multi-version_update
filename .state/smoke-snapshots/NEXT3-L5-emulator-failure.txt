@@ -1,0 +1,27 @@
+L5 Emulator Attempt — NEXT-3 review 2026-06-01 19:14
+======================================================
+
+Attempt 1: emulator -avd Pixel_6 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+  Result: QEMU2 CPU thread hang
+    ERROR | detected a hanging thread 'QEMU2 CPU0 thread'. No response for 19470 ms
+    ERROR | detected a hanging thread 'QEMU2 CPU1 thread'. No response for 19471 ms
+    ERROR | detected a hanging thread 'QEMU2 main loop'. No response for 15000 ms
+    Process self-terminated. No ADB device attached.
+
+Attempt 2: emulator -avd Pixel_6 -no-window -no-audio -no-boot-anim -gpu off -cores 2
+  Result: Same QEMU2 CPU thread hang at identical timeout (~19459 ms)
+  Both attempts consistent — platform-level QEMU2 hypervisor issue.
+
+Specific failure reason: QEMU2 virtual CPU threads hang during Android OS boot (~19s)
+  - KVM device /dev/kvm is accessible (ACL grant confirmed, accel-check returns 0)
+  - gRPC server starts (emulator partially boots)
+  - QEMU2 main loop becomes unresponsive → emulator self-terminates
+  - This is consistent with a nested-virtualization environment where KVM calls
+    succeed at the API level but the hypervisor throttles or blocks the virtual
+    CPU execution context
+
+Required CTO fallback verification (4 scenarios):
+  1. Kill-app → restart → MainScreen (ServerToken rehydration closes NEXT-3 root fix)
+  2. RememberMe prefill after logout (prefillRememberMe = authStore.rememberMe)
+  3. Terminal/Task load failure shows "加载失败，请重试" not raw HTML  
+  4. Task Tab 2 schemes visible + switch button present

@@ -179,7 +179,7 @@ private fun SchemeDetailBody(
 @Composable
 private fun CenterMessage(text: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text, style = AeroTheme.typography.body, color = AeroTheme.colors.ink3)
+        Text(text, style = AeroTheme.typography.body, color = AeroTheme.colors.ink2) // spec §4 次要文字→ink2
     }
 }
 
@@ -199,7 +199,7 @@ internal fun CompactTaskRow(task: TaskItem) {
         Text(task.time, style = AeroTheme.typography.bodyLarge, color = colors.primary)
         Column(modifier = Modifier.weight(1f)) {
             Text(task.title, style = AeroTheme.typography.body, color = colors.ink)
-            Text(task.zone, style = AeroTheme.typography.bodySmall, color = colors.ink3)
+            Text(task.zone, style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
         }
         StateTagText(task.state)
     }

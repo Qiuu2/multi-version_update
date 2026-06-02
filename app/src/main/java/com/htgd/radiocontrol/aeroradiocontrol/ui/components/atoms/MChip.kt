@@ -37,14 +37,15 @@ fun MChip(
     val shape  = AeroTheme.shapes.rChip
     val typo   = AeroTheme.typography
 
+    // Q3 #3: padding must appear ONCE, after the visual container (background/border) so it
+    // sits inside the coloured surface. The old code put padding in `base` AND then again in
+    // each branch → double padding (28dp/16dp instead of 14dp/8dp per Handoff:237).
     val base = modifier
         .clip(shape)
         .clickable(onClick = onClick)
-        .padding(horizontal = 14.dp, vertical = 8.dp)
 
     val chipModifier = if (active) {
         base
-            .clip(shape)
             .background(AeroGradients.Primary)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     } else {

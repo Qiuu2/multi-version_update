@@ -84,12 +84,25 @@ import com.htgd.radiocontrol.aeroradiocontrol.ui.theme.AeroTheme
 fun LoginScreen(
     state: LoginUiState = LoginUiState.Idle,
     onLogin: (account: String, password: String, ip: String, port: String, remember: Boolean) -> Unit = { _, _, _, _, _ -> },
+    /**
+     * Called when the user flips rememberMe OFF. The host (LoginRoute) wires this to
+     * [LoginViewModel.onRememberMeOff] → AuthStore.clearL1Account so the persisted L1
+     * fields and the flag are cleared in sync with the UI toggle. Not called on toggle
+     * ON (prefill restoring happens via initialAccount/initialIp/initialPort). ★ Task1.
+     */
+    onRememberMeOff: () -> Unit = {},
     onScanClick: () -> Unit = {},
     onDismissError: () -> Unit = {},
     /** Pre-fill values from a prior session (survive logout); null = blank. */
     initialAccount: String = "",
     initialIp: String = "",
     initialPort: String = "",
+    /**
+     * Initial state of the "记住我" Switch. Comes from AuthStore.rememberMe so a user
+     * who previously opted out sees the switch OFF (and blank fields, per spec) on the
+     * next open, rather than the unconditional true default. ★ Task1.
+     */
+    initialRememberMe: Boolean = true,
     /** Returns an error message for "ip:port", or null when valid. */
     validateServer: (ip: String, port: String) -> String? = ::validateServerAddress,
 ) {
@@ -100,7 +113,11 @@ fun LoginScreen(
     var account     by remember { mutableStateOf(initialAccount) }
     var password    by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var remember_   by remember { mutableStateOf(true) }
+    // ★ Task1: initialise from AuthStore.rememberMe (via initialRememberMe) instead of
+    // a hard-coded `true`.  A user who opted out previously sees the switch OFF, and
+    // the account/IP/port fields stay blank (they were not persisted by AuthStore since
+    // rememberMe=false → clearL1Account already wiped them).
+    var remember_   by remember { mutableStateOf(initialRememberMe) }
     var serverIp   by remember { mutableStateOf(initialIp) }
     var serverPort by remember { mutableStateOf(initialPort) }
     // Local server-validation error, surfaced inline; merged with any error the host
@@ -196,7 +213,18 @@ fun LoginScreen(
                 color = colors.ink2,
                 modifier = Modifier.weight(1f),
             )
-            MSwitch(checked = remember_, onCheckedChange = { remember_ = it }, enabled = !submitting)
+            MSwitch(
+                checked = remember_,
+                // ★ Task1: when the user flips the switch OFF, call onRememberMeOff so
+                // AuthStore.clearL1Account clears persisted prefill (the user explicitly
+                // opted out). Toggle ON requires no store action — the next saveLogin
+                // will persist L1 if rememberMe=true.
+                onCheckedChange = { checked ->
+                    remember_ = checked
+                    if (!checked) onRememberMeOff()
+                },
+                enabled = !submitting,
+            )
         }
 
         GradientLoginButton(
@@ -214,7 +242,7 @@ fun LoginScreen(
         Text(
             "需要协助? 联系您的系统管理员",
             style = typo.bodySmall,
-            color = colors.ink3,
+            color = colors.ink2, // spec §4 次要文字→ink2
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = spacing.xs),
         )
@@ -282,7 +310,7 @@ private fun Hero(modifier: Modifier = Modifier) {
         Text(
             "登录您的校园广播控制系统",
             style = typo.bodySmall,
-            color = colors.ink3,
+            color = colors.ink2, // spec §4 次要文字→ink2
             textAlign = TextAlign.Center,
         )
     }

@@ -131,7 +131,9 @@ class TerminalHubViewModelTest {
     }
 
     @Test
-    fun `failed refresh with no data yields Error carrying the message`() = runTest {
+    fun `failed refresh with no data yields Error with fixed copy`() = runTest {
+        // ★ Task2: VM must emit the FIXED copy "加载失败，请重试" — never the raw
+        // exception message (which could contain an HTML 500 body from the backend).
         val repo = FakeTerminalRepository(
             refreshResult = Result.failure(IllegalStateException("网络不可达")),
             initialZones = emptyList(),
@@ -140,7 +142,7 @@ class TerminalHubViewModelTest {
             vm.uiState.test {
                 var s = awaitItem()
                 while (s !is TerminalHubUiState.Error) s = awaitItem()
-                assertEquals("网络不可达", (s as TerminalHubUiState.Error).message)
+                assertEquals("加载失败，请重试", (s as TerminalHubUiState.Error).message)
                 cancelAndIgnoreRemainingEvents()
             }
         }

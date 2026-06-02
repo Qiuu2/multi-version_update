@@ -126,14 +126,15 @@ class ZoneDetailViewModelTest {
     }
 
     @Test
-    fun `failed refresh with no matching zone yields Error`() = runTest {
+    fun `failed refresh with no matching zone yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val repo = FakeTerminalRepository(
             refreshResult = Result.failure(IllegalStateException("网络错误")),
             initialZones = emptyList(),
         )
         withDetail(repo) { vm ->
             vm.load("z1")
-            vm.uiState.awaitState<ZoneDetailUiState.Error> { assertEquals("网络错误", it.message) }
+            vm.uiState.awaitState<ZoneDetailUiState.Error> { assertEquals("加载失败，请重试", it.message) }
         }
     }
 

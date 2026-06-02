@@ -237,12 +237,13 @@ class VoiceViewModelTest {
     }
 
     @Test
-    fun `start failure other than typed gates yields Error`() = runTest {
+    fun `start failure other than typed gates yields Error with fixed copy`() = runTest {
+        // ★ Task2: raw exception message must NOT reach the UI; expect fixed copy.
         val adapter = FakeVoiceAdapter(startResult = { Result.failure(IllegalStateException("会话拒绝")) })
         withVm(adapter) { vm ->
             vm.start(VoiceKind.Talk, setOf("z1"))
             runCurrent()
-            assertEquals(VoiceUiState.Error("会话拒绝"), vm.uiState.value)
+            assertEquals(VoiceUiState.Error("加载失败，请重试"), vm.uiState.value)
         }
     }
 

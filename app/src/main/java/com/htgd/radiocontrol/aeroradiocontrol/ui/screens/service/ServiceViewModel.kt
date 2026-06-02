@@ -80,9 +80,8 @@ class ServiceViewModel @Inject constructor(
     ): ServiceUiState = when {
         server != null -> ServiceUiState.Success(server.toServiceUi())
         refresh == null -> ServiceUiState.Loading
-        refresh.isFailure -> ServiceUiState.Error(
-            refresh.exceptionOrNull()?.message ?: "加载服务器状态失败",
-        )
+        // ★ Task2: fixed copy — never expose raw exception message.
+        refresh.isFailure -> ServiceUiState.Error("加载失败，请重试")
         // refresh succeeded but the SSOT is still null (empty data array → repo
         // reports failure, so this branch is effectively unreachable; kept exhaustive).
         else -> ServiceUiState.Loading

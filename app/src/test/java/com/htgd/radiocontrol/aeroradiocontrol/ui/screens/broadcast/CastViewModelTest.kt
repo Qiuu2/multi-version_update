@@ -111,7 +111,8 @@ class CastViewModelTest {
     }
 
     @Test
-    fun `failed library load with nothing to show yields Error`() = runTest {
+    fun `failed library load with nothing to show yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val vm = CastViewModel(
             FakeMediaRepository(refreshResult = Result.failure(IllegalStateException("媒体库不可达")), initialMedia = emptyList()),
             FakeTerminalRepository(),
@@ -120,7 +121,7 @@ class CastViewModelTest {
         vm.uiState.test {
             var s = awaitItem()
             while (s !is CastUiState.Error) s = awaitItem()
-            assertEquals("媒体库不可达", (s as CastUiState.Error).message)
+            assertEquals("加载失败，请重试", (s as CastUiState.Error).message)
             cancelAndIgnoreRemainingEvents()
         }
     }

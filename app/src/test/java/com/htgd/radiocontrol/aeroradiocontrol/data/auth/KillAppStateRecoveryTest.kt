@@ -48,12 +48,19 @@ class KillAppStateRecoveryTest {
         override fun clear() = map.clear()
     }
 
-    /** Recording ServerConfig fake — captures every setBaseUrl call. */
+    /** Recording ServerConfig fake — captures every setBaseUrl and setAuthToken call. */
     private class RecordingServerConfig : ServerConfig {
         var current: String = ""
+        var currentToken: String = ""
         val writes = mutableListOf<String>()
+        val authTokenWrites = mutableListOf<String>()
         override fun baseUrl(): String = current
         override fun setBaseUrl(url: String) { current = url; writes.add(url) }
+        override fun authToken(): String = currentToken
+        override fun setAuthToken(bearerToken: String) {
+            currentToken = bearerToken
+            authTokenWrites.add(bearerToken)
+        }
     }
 
     private val sampleAddress = ServerAddress("192.168.1.10", 8080)
@@ -92,7 +99,7 @@ class KillAppStateRecoveryTest {
     // ── Happy path: valid persisted session is resumed ─────────────────────
 
     @Test
-    fun resumeSessionIfValid_persistedSession_returnsTrueAndRehydratesServerConfig() {
+    fun resumeSessionIfValid_persistedSession_returnsTrueAndRehydratesBothCaches() {
         val secure = FakeKeyValueStore()
         val plain = FakeKeyValueStore()
         seedValidSession(secure, plain)
@@ -104,10 +111,17 @@ class KillAppStateRecoveryTest {
         val resumed = decider.resumeSessionIfValid()
 
         assertTrue(resumed)
-        // ★ The rehydration that was missing pre-NEXT-2.
+        // ★ URL rehydration (NEXT-2): Constant.serveraddress.
         assertEquals(
             listOf("http://${sampleAddress.host}:${sampleAddress.port}/api"),
             cfg.writes,
+        )
+        // ★★ Token-cache rehydration (NEXT-3 2026-06-01): ServerToken.serverToken.
+        // Without this, RequestManger sends Authorization: "" → server 500 on
+        // kill-app restart (the live bug this test guards against).
+        assertEquals(
+            listOf("Bearer $anyJwt"),
+            cfg.authTokenWrites,
         )
         // Session still intact post-decider.
         assertEquals(anyJwt, store.jwt.value)
@@ -238,9 +252,11 @@ class KillAppStateRecoveryTest {
 
         assertTrue(decider.resumeSessionIfValid())
         assertTrue(decider.resumeSessionIfValid())
-        // Second call re-rehydrates (writes the same URL again) — observable
+        // Second call re-rehydrates (writes the same URL + token again) — observable
         // idempotency: state matches.
         assertEquals(2, cfg.writes.size)
         assertTrue(cfg.writes.all { it == "http://${sampleAddress.host}:${sampleAddress.port}/api" })
+        assertEquals(2, cfg.authTokenWrites.size)
+        assertTrue(cfg.authTokenWrites.all { it == "Bearer $anyJwt" })
     }
 }

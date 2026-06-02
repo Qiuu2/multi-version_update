@@ -242,7 +242,7 @@ private fun TargetSection(
     Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("目标终端", style = AeroTheme.typography.sectionTitle, color = colors.ink, modifier = Modifier.weight(1f))
-            Text("已选 ${selectedIds.size} 区", style = AeroTheme.typography.bodySmall, color = colors.ink3)
+            Text("已选 ${selectedIds.size} 区", style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -312,7 +312,7 @@ private fun VoicePanel(
             else -> Text(
                 "选择目标终端后，点击下方按钮开始$verb",
                 style = AeroTheme.typography.body,
-                color = colors.ink3,
+                color = colors.ink2, // spec §4 次要文字→ink2
                 textAlign = TextAlign.Center,
             )
         }
@@ -502,6 +502,6 @@ private fun MediaRow(file: MediaUi, selected: Boolean, onClick: () -> Unit) {
             modifier = Modifier.size(24.dp),
         )
         Text(file.name, style = AeroTheme.typography.body, color = colors.ink, modifier = Modifier.weight(1f))
-        Text(file.duration, style = AeroTheme.typography.bodySmall, color = colors.ink3)
+        Text(file.duration, style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
     }
 }

@@ -57,13 +57,14 @@ class ExecutionLogViewModelTest {
     }
 
     @Test
-    fun `failed fetch yields Error carrying the message`() = runTest {
+    fun `failed fetch yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val vm = ExecutionLogViewModel(
             FakeTaskRepository(logResult = Result.failure(IllegalStateException("日志服务不可达"))),
         )
         vm.load()
         val state = vm.uiState.value
         assertTrue(state is ExecutionLogUiState.Error)
-        assertEquals("日志服务不可达", (state as ExecutionLogUiState.Error).message)
+        assertEquals("加载失败，请重试", (state as ExecutionLogUiState.Error).message)
     }
 }

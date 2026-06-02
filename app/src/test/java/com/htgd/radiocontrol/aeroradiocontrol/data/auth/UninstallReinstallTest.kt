@@ -55,6 +55,8 @@ class UninstallReinstallTest {
         val writes = mutableListOf<String>()
         override fun baseUrl(): String = current
         override fun setBaseUrl(url: String) { current = url; writes.add(url) }
+        override fun authToken(): String = ""
+        override fun setAuthToken(bearerToken: String) { /* no-op in this test */ }
     }
 
     private val sampleAddress = ServerAddress("192.168.1.10", 8080)
@@ -140,6 +142,9 @@ class UninstallReinstallTest {
         assertTrue(cfg.writes.isEmpty())
         assertNull(store.serverAddress.value)
         assertNull(store.account.value)
-        assertFalse(store.rememberMe.value)
+        // ★ NEXT-3 (2026-06-01): default is now TRUE (spec D-16 "rememberMe 默认开").
+        // A cold install starts with rememberMe=true so the FIRST login pre-fills
+        // on the next open without the user needing to toggle the switch.
+        assertTrue(store.rememberMe.value)
     }
 }

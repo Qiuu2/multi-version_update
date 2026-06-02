@@ -172,8 +172,10 @@ private fun FlatTab(
                 )
             }
         }
+        // Q3 #6: spec kicker = UPPERCASE (Handoff:555). .uppercase() is no-op for CJK;
+        // visible for "AI" and any future Latin tab labels.
         Text(
-            text  = tab.label,
+            text  = tab.label.uppercase(),
             style = AeroTheme.typography.kicker.copy(
                 fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
                 color      = tint,
@@ -219,8 +221,10 @@ private fun RaisedAITab(
             // Raised-AI LABEL follows the same per-tab identity rule (spec §7.2): the
             // AI tab's identity color is `aiTeal` #14B8A6, NOT primary. Background
             // gradient stays Primary (PA-14 C-1 scope is label/icon colors only).
+            // Q3 #6: spec kicker = UPPERCASE; "AI" → "AI" (no change for this label, but
+            // uppercase() is applied consistently with FlatTab for correctness.
             Text(
-                text  = AeroTab.AI.label,
+                text  = AeroTab.AI.label.uppercase(),
                 style = AeroTheme.typography.kicker.copy(
                     fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
                     color      = if (isCurrent) AeroTab.AI.identityColor(AeroTheme.colors) else AeroTheme.colors.ink2,

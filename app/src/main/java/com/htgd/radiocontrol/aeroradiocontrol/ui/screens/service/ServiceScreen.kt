@@ -195,7 +195,7 @@ private fun ContactCard() {
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("技术支持工程师", style = AeroTheme.typography.sectionTitle, color = colors.ink)
-                Text("工作日 8:00 - 18:00", style = AeroTheme.typography.bodySmall, color = colors.ink3)
+                Text("工作日 8:00 - 18:00", style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
             }
         }
         MButton(

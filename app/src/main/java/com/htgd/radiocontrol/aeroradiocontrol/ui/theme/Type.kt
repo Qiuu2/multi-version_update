@@ -55,9 +55,15 @@ data class AeroTypography(
     val bodyLarge:  TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 15.sp, fontWeight = FontWeight.Medium),
     val body:       TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 14.sp, fontWeight = FontWeight.Normal),
     val bodySmall:  TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 13.sp, fontWeight = FontWeight.Normal),
+    // Q3 #6: kicker = spec「标签（大写）」row (Handoff:555): 11sp / mono / 0.6 / UPPERCASE.
+    // Compose TextStyle has no textTransform; consuming sites must call text.uppercase()
+    // for Latin content (CJK is unaffected by uppercase so no-op there).
     val kicker:     TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 11.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.6.sp),
     val numeric:    TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
-    val label:      TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+    // Q3 #7: label = same spec row as kicker (Handoff:555): 11sp / mono / Normal / 0.6.
+    // Was: 12sp / AeroSans / Medium (wrong size, wrong font, wrong weight — fixed here).
+    // STD-SHAREDFILE: Type.kt line 60 — label token changed from 12sp/sans/Medium → 11sp/mono/Normal.
+    val label:      TextStyle = TextStyle(fontFamily = AeroMono, fontSize = 11.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.6.sp),
     val button:     TextStyle = TextStyle(fontFamily = AeroSans, fontSize = 14.sp, fontWeight = FontWeight.Medium),
 )
 

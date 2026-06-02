@@ -29,8 +29,15 @@ class AuthInterceptorTest {
         every { this@mockk.jwt } returns MutableStateFlow(jwt)
     }
 
-    /** ★ NEXT-2: relaxed ServerConfig fake — most tests don't assert on it. */
-    private fun serverConfig(): ServerConfig = mockk(relaxed = true)
+    /**
+     * ★ NEXT-2: relaxed ServerConfig fake with a valid baseUrl so the NEXT-3
+     * fail-fast guard (jwt blank OR baseUrl blank → NO_SESSION) doesn't fire on
+     * tests that have a valid jwt. Tests asserting on setBaseUrl("") still work
+     * because mockk(relaxed = true) records all calls.
+     */
+    private fun serverConfig(): ServerConfig = mockk(relaxed = true) {
+        every { baseUrl() } returns "http://10.0.0.1:99/api"
+    }
 
     private fun request(path: String) =
         Request.Builder().url("http://server/api$path").build()

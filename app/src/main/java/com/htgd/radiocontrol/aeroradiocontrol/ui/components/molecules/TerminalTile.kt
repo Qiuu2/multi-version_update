@@ -108,8 +108,12 @@ private fun IconBadge(status: TerminalStatus) {
     // — same hexes, role-bound name). The screen layer's centralised `tileColors()`
     // helper in `TerminalUiModels.kt` documents the spec→token binding once;
     // molecule re-resolves locally here to avoid a screen→molecule back-import.
+    // Q3 #5: online icon fg = primary-ink (#095C54, deep teal) per Handoff:625
+    // "t-tile-icon color:var(--primary-ink)" for the default/online state.
+    // tileOnline (#16A34A green) was wrong for the icon fg; bg stays tileOnlineSoft (primary-soft).
+    // Other states (offline/fault/playing/paging) already match Handoff.
     val (fg, bg) = when (status) {
-        TerminalStatus.Online  -> colors.tileOnline  to colors.tileOnlineSoft
+        TerminalStatus.Online  -> colors.primaryInk  to colors.tileOnlineSoft
         TerminalStatus.Offline -> colors.tileOffline to colors.tileOfflineSoft
         TerminalStatus.Fault   -> colors.tileFault   to colors.tileFaultSoft
         TerminalStatus.Playing -> colors.tilePlaying to colors.tilePlayingSoft

@@ -45,6 +45,32 @@ class LoginViewModel @Inject constructor(
     val prefillAccount: StateFlow<String?> = authStore.account
     val prefillServer: StateFlow<ServerAddress?> = authStore.serverAddress
 
+    /**
+     * Whether to pre-fill the account + server fields on the next LoginScreen open.
+     * Exposed so [LoginRoute] can initialise the rememberMe Switch from the persisted
+     * flag rather than always defaulting to `true` — so a user who opted out on a
+     * prior login sees the switch OFF (and blank fields) next time. ★ Task1.
+     */
+    val prefillRememberMe: StateFlow<Boolean> = authStore.rememberMe
+
+    /**
+     * Explicit logout — clears L2 (JWT + token) but keeps L1 (account + host) for
+     * prefill on re-login. Call from the 5-tab scaffold's "退出登录" menu item.
+     * ★ Task1 logout UI hook.
+     */
+    fun onLogout() {
+        viewModelScope.launch { authStore.clearLogin() }
+    }
+
+    /**
+     * User toggled rememberMe OFF — clears L1 account/host/port + resets the flag so
+     * the next app open shows a blank form. L2 is untouched (the current session stays
+     * live). ★ Task1 rememberMe-off UI hook.
+     */
+    fun onRememberMeOff() {
+        viewModelScope.launch { authStore.clearL1Account() }
+    }
+
     /** Clears the form-level error banner (user dismissed it). */
     fun dismissError() {
         _uiState.value = _uiState.value.copy(formError = null)

@@ -103,9 +103,8 @@ class SchemeDetailViewModel @Inject constructor(
             else SchemeDetailUiState.Success(schemeUi)
         }
         refresh == null -> SchemeDetailUiState.Loading
-        refresh.isFailure -> SchemeDetailUiState.Error(
-            refresh.exceptionOrNull()?.message ?: "加载方案失败",
-        )
+        // ★ Task2: fixed copy — never expose raw exception message.
+        refresh.isFailure -> SchemeDetailUiState.Error("加载失败，请重试")
         else -> SchemeDetailUiState.NotFound
     }
 }

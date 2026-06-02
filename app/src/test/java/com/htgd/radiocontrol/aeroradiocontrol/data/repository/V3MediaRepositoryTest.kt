@@ -40,6 +40,11 @@ class V3MediaRepositoryTest {
         private var url = "http://10.0.0.1:8080/api"
         override fun baseUrl() = url
         override fun setBaseUrl(value: String) { url = value }
+        // Return a non-blank token so the NO_SESSION guard in V3CallbackAdapter
+        // doesn't fire on happy-path tests (tests that verify failure inject
+        // the adapter mock directly to return Result.failure, bypassing the guard).
+        override fun authToken() = "Bearer test-token"
+        override fun setAuthToken(bearerToken: String) { /* no-op in tests */ }
     }
     private lateinit var repo: V3MediaRepository
 

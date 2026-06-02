@@ -110,9 +110,8 @@ class ZoneDetailViewModel @Inject constructor(
             else ZoneDetailUiState.Success(zoneUi)
         }
         refresh == null -> ZoneDetailUiState.Loading
-        refresh.isFailure -> ZoneDetailUiState.Error(
-            refresh.exceptionOrNull()?.message ?: "加载分区失败",
-        )
+        // ★ Task2: fixed copy — never expose raw exception message.
+        refresh.isFailure -> ZoneDetailUiState.Error("加载失败，请重试")
         else -> ZoneDetailUiState.NotFound
     }
 }

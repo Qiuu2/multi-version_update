@@ -178,7 +178,8 @@ class VoiceViewModel @Inject constructor(
                 _uiState.value = VoiceUiState.Idle
                 _effects.tryEmit(VoiceEffect.RequestMicPermission(kind))
             }
-            else -> _uiState.value = VoiceUiState.Error(e.message ?: "发起语音失败")
+            // ★ Task2: fixed copy — never expose raw exception message.
+            else -> _uiState.value = VoiceUiState.Error("加载失败，请重试")
         }
     }
 
@@ -188,6 +189,7 @@ class VoiceViewModel @Inject constructor(
         VoiceState.Active -> VoiceUiState.Active
         VoiceState.Refused -> VoiceUiState.Refused
         VoiceState.Ended -> if (available) VoiceUiState.Idle else VoiceUiState.Unavailable
-        is VoiceState.Error -> VoiceUiState.Error(cause.message ?: "语音会话出错")
+        // ★ Task2: fixed copy — never expose raw exception/cause message.
+        is VoiceState.Error -> VoiceUiState.Error("加载失败，请重试")
     }
 }

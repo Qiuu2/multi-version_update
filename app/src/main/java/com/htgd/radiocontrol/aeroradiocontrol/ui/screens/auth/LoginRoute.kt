@@ -17,6 +17,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
  *
  * [LoginScreen] stays free of Hilt so it remains previewable in isolation.
  */
+/**
+ * Stateful entry point for the login destination (TASK-AR-005).
+ *
+ * ★ Task1 additions (2026-06-01):
+ *   - Observes [LoginViewModel.prefillRememberMe] to initialise the Switch from the
+ *     persisted flag, so a user who previously opted out sees the switch OFF (and blank
+ *     fields) rather than the unconditional `true` default.
+ *   - [onRememberMeOff] wires the Switch-off path to [LoginViewModel.onRememberMeOff]
+ *     (→ AuthStore.clearL1Account): L1 fields cleared, rememberMe=false persisted.
+ *   - [onLogout] parameter left open for the 5-tab scaffold's "退出登录" menu to call
+ *     [LoginViewModel.onLogout] (→ AuthStore.clearLogin); not wired to a UI element
+ *     inside LoginRoute itself (that lives in MainScaffold), but the ViewModel method
+ *     is available here for composition convenience.
+ *
+ * Nav invariant: the LaunchedEffect(loggedIn) fires ONLY when the user just submitted
+ * a fresh login (loggedIn flips true via AuthStore after saveLogin). A restored session
+ * is routed directly to Main by V4Activity + StartupAuthDecider BEFORE Compose mounts,
+ * so loggedIn is already false when LoginRoute composes and the effect stays dormant.
+ */
 @Composable
 fun LoginRoute(
     onLoggedIn: () -> Unit,
@@ -27,6 +46,8 @@ fun LoginRoute(
     val loggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val prefillAccount by viewModel.prefillAccount.collectAsStateWithLifecycle()
     val prefillServer by viewModel.prefillServer.collectAsStateWithLifecycle()
+    // ★ Task1: read persisted rememberMe flag to initialise the Switch correctly.
+    val prefillRememberMe by viewModel.prefillRememberMe.collectAsStateWithLifecycle()
 
     LaunchedEffect(loggedIn) {
         if (loggedIn) onLoggedIn()
@@ -41,10 +62,14 @@ fun LoginRoute(
         onLogin = { account, password, ip, port, remember ->
             viewModel.onSubmit(account, password, ip, port, remember)
         },
+        // ★ Task1: when the user flips the switch off, clear L1 account from the store.
+        onRememberMeOff = viewModel::onRememberMeOff,
         onScanClick = onScanClick,
         onDismissError = viewModel::dismissError,
         initialAccount = prefillAccount.orEmpty(),
         initialIp = prefillServer?.host.orEmpty(),
         initialPort = prefillServer?.port?.toString().orEmpty(),
+        // ★ Task1: initialise Switch from AuthStore.rememberMe, not a hard-coded true.
+        initialRememberMe = prefillRememberMe,
     )
 }

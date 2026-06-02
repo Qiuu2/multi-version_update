@@ -95,10 +95,10 @@ private fun LogRow(entry: LogEntry) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
-        Text(entry.time, style = AeroTheme.typography.bodySmall, color = colors.ink3)
+        Text(entry.time, style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
         Column(modifier = Modifier.weight(1f)) {
             Text(entry.title, style = AeroTheme.typography.body, color = colors.ink)
-            Text(entry.detail, style = AeroTheme.typography.bodySmall, color = colors.ink3)
+            Text(entry.detail, style = AeroTheme.typography.bodySmall, color = colors.ink2) // spec §4 次要文字→ink2
         }
         ResultPill(success = entry.success)
     }

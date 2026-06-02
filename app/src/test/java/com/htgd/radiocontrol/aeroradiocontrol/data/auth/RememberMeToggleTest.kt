@@ -40,9 +40,12 @@ class RememberMeToggleTest {
         AuthStoreImpl(secure, plain, noopRefresher)
 
     @Test
-    fun defaultRememberMe_onFreshInstall_isFalse() = runTest {
+    fun defaultRememberMe_onFreshInstall_isTrue() = runTest {
+        // ★ NEXT-3 (2026-06-01): spec D-16 "rememberMe 默认开". Changed from
+        // false (NEXT-2 implementation gap) to true so first-time users get
+        // prefill without having to explicitly toggle the switch on.
         val store = newStore(FakeKeyValueStore(), FakeKeyValueStore())
-        assertFalse(store.rememberMe.value)
+        assertTrue(store.rememberMe.value)
     }
 
     @Test
@@ -131,14 +134,15 @@ class RememberMeToggleTest {
     @Test
     fun rememberMe_flowEmitsToggleTransitions() = runTest {
         // StateFlow .value transitions correctly under repeated toggle.
+        // ★ NEXT-3: default is now true; first assertion updated accordingly.
         val store = newStore(FakeKeyValueStore(), FakeKeyValueStore())
 
+        assertTrue(store.rememberMe.value) // default=true (NEXT-3)
+        store.setRememberMe(false)
         assertFalse(store.rememberMe.value)
         store.setRememberMe(true)
         assertTrue(store.rememberMe.value)
         store.setRememberMe(false)
         assertFalse(store.rememberMe.value)
-        store.setRememberMe(true)
-        assertTrue(store.rememberMe.value)
     }
 }

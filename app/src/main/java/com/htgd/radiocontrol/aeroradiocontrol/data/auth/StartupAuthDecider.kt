@@ -18,10 +18,15 @@ import javax.inject.Singleton
  *      reads, so `.value` is correct at app start without flow collection.
  *   2. Check the atomic invariant: all four fields valid (non-blank token,
  *      non-null address, non-blank account, expiry-not-past-clock-now).
- *   3. If valid → **rehydrate `Constant.serveraddress`** by calling
- *      [ServerConfig.setBaseUrl] with the AuthStore-tracked address. This
- *      is the missing rehydration step PA-10/PA-15 never had: the static
- *      field is process-scoped and was reset to null on every kill-app.
+ *   3. If valid → rehydrate **both** v3 static caches via [ServerConfig]:
+ *        a. [ServerConfig.setBaseUrl] — `Constant.serveraddress` (URL);
+ *        b. [ServerConfig.setAuthToken] — `ServerToken.serverToken` (Bearer).
+ *      ★ NEXT-3 (2026-06-01): the token-cache rehydration was the missing step
+ *      that caused "kill-app → 500". `RequestManger` reads
+ *      `ServerToken.serverToken` for the Authorization header; the static resets
+ *      to `""` on every process kill. Without rehydration all RequestManger
+ *      calls after restart sent `Authorization: ` (empty) → server 500.
+ *      Root cause: [[static-field-rehydration-trap]] applied to the token cache.
  *   4. If invalid → [AuthStore.clearL2Atomically] (single-transaction wipe
  *      of any partial residue) and return false → caller routes to Login.
  *
@@ -30,11 +35,10 @@ import javax.inject.Singleton
  *
  * Why this exists (audit reference): under Plan A, `Constant.serveraddress`
  * is the URL truth for every V3*Repository. Only `V3LoginAuthenticator.
- * authenticate()` writes it. A restored session via
- * `LoginRoute.LaunchedEffect(loggedIn)` bounces past Login → Main WITHOUT
- * calling authenticate() → the static stays null on every process restart
- * → repos build `"null/terminal/terzone"` → "加载失败 serveraddress must
- * not be null". Full mechanism in
+ * authenticate()` writes it (and `ServerToken.serverToken`). A restored
+ * session via `LoginRoute.LaunchedEffect(loggedIn)` bounced past Login → Main
+ * WITHOUT calling authenticate() → both statics stayed at their empty defaults
+ * on every process restart. Full mechanism in
  * `.state/api-snapshots/auth-split-brain-rootcause.md` §3.
  *
  * Sister memory: `[[static-field-rehydration-trap]]` — the generalized
@@ -43,9 +47,10 @@ import javax.inject.Singleton
 interface StartupAuthDecider {
     /**
      * @return true iff the persisted L2 four-tuple is complete and not
-     *   expired AND `Constant.serveraddress` has been (re)hydrated via
-     *   [ServerConfig.setBaseUrl]. False otherwise (caller routes to Login;
-     *   any partial L2 residue has been atomically cleared).
+     *   expired AND both v3 static caches (`Constant.serveraddress` +
+     *   `ServerToken.serverToken`) have been (re)hydrated. False otherwise
+     *   (caller routes to Login; any partial L2 residue has been atomically
+     *   cleared).
      */
     fun resumeSessionIfValid(): Boolean
 }
@@ -89,13 +94,30 @@ class DefaultStartupAuthDecider @Inject constructor(
             return false
         }
 
-        // ★ The rehydration that was missing under Plan A. URL shape mirrors
+        // ★ URL rehydration (NEXT-2): `Constant.serveraddress` is process-scoped
+        // and resets to null on every kill-app. URL shape mirrors
         // V3LoginAuthenticator.kt:63 — "http://${host}:${port}/api". `address`
-        // is non-null at this point (the `valid` predicate above asserted it),
-        // but Kotlin can't smart-cast across that intermediate boolean — use !!
-        // which is safe because the !valid early-return covered the null case.
+        // is non-null here (the `valid` predicate asserted it), but Kotlin can't
+        // smart-cast across that boolean — use !! which is safe because the
+        // !valid early-return already covered the null case.
         serverConfig.setBaseUrl("http://${address!!.host}:${address.port}/api")
+
+        // ★ Token-cache rehydration (NEXT-3 2026-06-01): `ServerToken.serverToken`
+        // is also process-scoped (default ""). `RequestManger` reads it for the
+        // Authorization header on every request. Without this line, kill-app →
+        // restart sends `Authorization: ` (empty) → server returns 500.
+        // Token format mirrors V3LoginAuthenticator:80 (`Constant.token_tag + rawJwt`).
+        // `jwt` is non-null/non-blank here (the `valid` predicate asserted it).
+        serverConfig.setAuthToken(TOKEN_TAG + jwt!!)
         return true
+    }
+
+    private companion object {
+        // Mirrors Constant.token_tag — verbatim "Bearer " (with trailing space).
+        // Cannot import Constant here (Android static-init trap); literal is
+        // confirmed equal per Constant.java:10 `"Bearer "`. Tests verify the
+        // format via RecordingServerConfig.authTokenWrites.
+        const val TOKEN_TAG = "Bearer "
     }
 }
 

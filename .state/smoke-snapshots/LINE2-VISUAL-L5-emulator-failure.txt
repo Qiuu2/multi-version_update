@@ -1,0 +1,36 @@
+L5 Emulator Smoke Attempt — 线2 视觉 7-item review (Critic-4) 2026-06-02 18:51
+==============================================================================
+
+Pre-checks (all GREEN):
+  - emulator -accel-check → 0; "KVM (version 12) is installed and usable."
+  - /dev/kvm → crw-rw----+ root kvm (ACL grant present)
+  - AVD available: Pixel_6
+
+Attempt 1 (single, per smoke-render-required no-multi-retry rule):
+  emulator -avd Pixel_6 -no-window -no-audio -no-boot-anim \
+    -gpu swiftshader_indirect -netdelay none -netspeed full
+  Result: QEMU2 virtual-CPU threads hang during Android OS boot.
+    ERROR | detected a hanging thread 'QEMU2 CPU0..3 thread'. No response for 19734 ms
+    ERROR | detected a hanging thread 'QEMU2 main loop'. No response for 15000 ms
+    Process self-terminated (段错误/core dumped) at ~35s. No ADB device attached,
+    sys.boot_completed never reached 1.
+
+Specific failure reason: nested-virtualization QEMU2 hypervisor hang.
+  KVM API calls succeed (accel-check=0, KVM v12 usable) but the QEMU2 vCPU
+  threads make no progress past ~19s of OS boot and the process aborts. This
+  REPRODUCES the identical failure logged 2026-06-01 in
+  NEXT3-L5-emulator-failure.txt (both -gpu swiftshader_indirect and -gpu off
+  hung at the same ~19s timeout on that run). Platform-level, not AVD/config.
+
+Fallback (per Leg-5 verdict-cap calibration):
+  - Fresh APK BUILT for CTO real-device install (visual verification path):
+      app/build/outputs/apk/debug/app-debug.apk
+      56,785,878 bytes · mtime 2026-06-02 18:49:03 · md5 745f935ee1e6e697239b86752b7926b4
+  - Render (Leg 3) of the 7 visual items → CTO adb screencap on arm64/real device.
+    Items to eyeball on device: terminal grid = 3 columns (终端 hub + 分区详情 +
+    loading skeleton); Splash brand teal→cyan gradient (not night/black);
+    chip 14×8 padding; secondary text ink2 (#4A5260, slightly darker than old ink3);
+    online tile speaker-icon deep-teal #095C54 (dot still green); tab labels
+    UPPERCASE ("AI"); label-token rows (任务 timeline times / state pills /
+    period headers) at 11sp mono — verify CJK glyphs render (mono family has no
+    CJK; relies on system CJK fallback) and nothing clips.

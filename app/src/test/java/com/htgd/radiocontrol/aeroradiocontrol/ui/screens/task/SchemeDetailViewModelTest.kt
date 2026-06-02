@@ -119,7 +119,8 @@ class SchemeDetailViewModelTest {
     }
 
     @Test
-    fun `failed refresh with no matching scheme yields Error`() = runTest {
+    fun `failed refresh with no matching scheme yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val repo = FakeTaskRepository(
             refreshResult = Result.failure(IllegalStateException("网络错误")),
             initialSchemes = emptyList(),
@@ -129,7 +130,7 @@ class SchemeDetailViewModelTest {
             vm.uiState.test {
                 var s = awaitItem()
                 while (s !is SchemeDetailUiState.Error) s = awaitItem()
-                assertEquals("网络错误", (s as SchemeDetailUiState.Error).message)
+                assertEquals("加载失败，请重试", (s as SchemeDetailUiState.Error).message)
                 cancelAndIgnoreRemainingEvents()
             }
         }

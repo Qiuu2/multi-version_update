@@ -73,7 +73,9 @@ fun TerminalHubSkeleton(modifier: Modifier = Modifier) {
     ) {
         repeat(3) {
             SkeletonBox(modifier = Modifier.fillMaxWidth().height(52.dp), shape = AeroTheme.shapes.rCard)
+            // Handoff:541 — 3-column terminal grid (was 2 boxes, fixed Q3 #1)
             Row(horizontalArrangement = Arrangement.spacedBy(AeroTheme.spacing.tileGap)) {
+                SkeletonBox(modifier = Modifier.size(130.dp), shape = AeroTheme.shapes.rTile)
                 SkeletonBox(modifier = Modifier.size(130.dp), shape = AeroTheme.shapes.rTile)
                 SkeletonBox(modifier = Modifier.size(130.dp), shape = AeroTheme.shapes.rTile)
             }

@@ -197,7 +197,7 @@ private fun TerminalHubList(
                         Text(
                             if (bulkMode) "已选 ${selectedIds.size} 台" else "长按或点「多选」批量操作",
                             style = AeroTheme.typography.bodySmall,
-                            color = colors.ink3,
+                            color = colors.ink2, // spec §4 次要文字→ink2
                             modifier = Modifier.weight(1f),
                         )
                         MButton(
@@ -250,7 +250,8 @@ private fun TerminalHubList(
                     )
                 }
                 if (expanded) {
-                    items(visible.chunked(2), key = { it.first().id }) { rowItems ->
+                    // Handoff:541/798 — 3-column terminal grid (was chunked(2), fixed Q3 #1)
+                    items(visible.chunked(3), key = { it.first().id }) { rowItems ->
                         Row(horizontalArrangement = Arrangement.spacedBy(spacing.tileGap)) {
                             rowItems.forEach { t ->
                                 TerminalTile(
@@ -317,7 +318,7 @@ private fun ZoneHeader(
                     if (fault > 0) append(" · 故障 $fault")
                 },
                 style = AeroTheme.typography.bodySmall,
-                color = if (fault > 0) colors.statusFault else colors.ink3,
+                color = if (fault > 0) colors.statusFault else colors.ink2, // spec §4 次要文字→ink2
             )
         }
         Icon(

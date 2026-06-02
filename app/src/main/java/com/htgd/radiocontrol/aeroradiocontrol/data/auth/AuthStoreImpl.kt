@@ -53,8 +53,10 @@ class AuthStoreImpl @Inject constructor(
     private val _account = MutableStateFlow(plain.getString(KEY_ACCOUNT))
     override val account: StateFlow<String?> = _account.asStateFlow()
 
-    // ★ NEXT-2: default false on fresh install (no L1 fields written yet).
-    private val _rememberMe = MutableStateFlow(plain.getBoolean(KEY_REMEMBER_ME, false))
+    // ★ NEXT-3 (2026-06-01): default TRUE on fresh install (spec D-16: "rememberMe
+    // 默认开"). A user who has never changed the flag should pre-fill on next open.
+    // The prior default was false (NEXT-2 implementation gap); this corrects it.
+    private val _rememberMe = MutableStateFlow(plain.getBoolean(KEY_REMEMBER_ME, true))
     override val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
 
     private val _isLoggedIn = MutableStateFlow(!_jwt.value.isNullOrBlank())
@@ -225,7 +227,7 @@ class AuthStoreImpl @Inject constructor(
         const val KEY_HOST = "server_host"
         const val KEY_PORT = "server_port"
         const val KEY_ACCOUNT = "account"
-        /** ★ NEXT-2: L1 prefill flag. Default false on fresh install. */
+        /** ★ NEXT-2: L1 prefill flag. Default true on fresh install (D-16 spec). */
         const val KEY_REMEMBER_ME = "remember_me"
     }
 }

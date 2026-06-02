@@ -117,7 +117,8 @@ class CastViewModel @Inject constructor(
         return when {
             mediaUis.isNotEmpty() -> CastUiState.Ready(mediaUis)
             refresh == null -> CastUiState.Loading
-            refresh.isFailure -> CastUiState.Error(refresh.exceptionOrNull()?.message ?: "加载媒体库失败")
+            // ★ Task2: fixed copy — never expose raw exception message (library load path).
+            refresh.isFailure -> CastUiState.Error("加载失败，请重试")
             // refresh succeeded but library is empty — a picker with no options is a
             // valid (non-error) Ready(emptyList), not Error.
             else -> CastUiState.Ready(emptyList())

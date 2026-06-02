@@ -228,4 +228,61 @@ class LoginViewModelTest {
         assertEquals(false, store.saveLoginArgs!!.rememberMe)
         assertEquals(false, store.rememberMe.value)
     }
+
+    // ── Task1 additions (2026-06-01): prefillRememberMe flow + logout UI hooks ─────
+
+    @Test
+    fun `prefillRememberMe exposes AuthStore rememberMe`() = runTest {
+        // When AuthStore.rememberMe is true, the VM exposes it for LoginRoute to
+        // initialise the Switch correctly (vs. always defaulting to ON).
+        val store = FakeAuthStore().apply { _rememberMe.value = true }
+        val vm = LoginViewModel(store, UnconfiguredLoginAuthenticator())
+
+        assertEquals(true, vm.prefillRememberMe.value)
+
+        store._rememberMe.value = false
+        assertEquals(false, vm.prefillRememberMe.value)
+    }
+
+    @Test
+    fun `onLogout calls clearLogin clearing JWT without wiping L1`() = runTest {
+        // Explicit logout: L2 cleared (isLoggedIn=false), L1 account/host retained.
+        val store = FakeAuthStore().apply {
+            _account.value = "admin"
+            _serverAddress.value = ServerAddress("10.0.0.1", 80)
+            _jwt.value = "JWT_XYZ"
+            _isLoggedIn.value = true
+        }
+        val vm = LoginViewModel(store, UnconfiguredLoginAuthenticator())
+
+        vm.onLogout()
+
+        // After clearLogin: JWT gone, isLoggedIn=false; L1 account/host preserved.
+        assertEquals(false, store.isLoggedIn.value)
+        assertEquals(null, store.jwt.value)
+        assertEquals("admin", store.account.value)          // L1 retained
+        assertEquals(ServerAddress("10.0.0.1", 80), store.serverAddress.value) // L1 retained
+    }
+
+    @Test
+    fun `onRememberMeOff calls clearL1Account clearing account and rememberMe`() = runTest {
+        // User flips switch OFF: L1 fields cleared, rememberMe=false. L2 untouched.
+        val store = FakeAuthStore().apply {
+            _account.value = "admin"
+            _serverAddress.value = ServerAddress("10.0.0.1", 80)
+            _jwt.value = "JWT_STILL_LIVE"
+            _rememberMe.value = true
+            _isLoggedIn.value = true
+        }
+        val vm = LoginViewModel(store, UnconfiguredLoginAuthenticator())
+
+        vm.onRememberMeOff()
+
+        assertEquals(null, store.account.value)         // L1 account wiped
+        assertEquals(null, store.serverAddress.value)   // L1 server wiped
+        assertEquals(false, store.rememberMe.value)     // flag cleared
+        // L2 must remain intact (active session unaffected by the toggle).
+        assertEquals(true, store.isLoggedIn.value)
+        assertEquals("JWT_STILL_LIVE", store.jwt.value)
+    }
 }

@@ -132,7 +132,8 @@ class TaskHomeViewModelTest {
     }
 
     @Test
-    fun `failed refresh with no schemes yields Error`() = runTest {
+    fun `failed refresh with no schemes yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val repo = FakeTaskRepository(
             refreshResult = Result.failure(IllegalStateException("网络不可达")),
             initialSchemes = emptyList(),
@@ -141,7 +142,7 @@ class TaskHomeViewModelTest {
             vm.uiState.test {
                 var s = awaitItem()
                 while (s !is TaskHomeUiState.Error) s = awaitItem()
-                assertEquals("网络不可达", (s as TaskHomeUiState.Error).message)
+                assertEquals("加载失败，请重试", (s as TaskHomeUiState.Error).message)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -184,6 +185,70 @@ class TaskHomeViewModelTest {
             vm.setSchemeActive("s1", true)
             runCurrent()
             assertEquals(listOf("s1" to true), repo.setActiveCalls)
+        }
+    }
+
+    // ── Task3 (2026-06-01): multi-scheme viewing upgrade ─────────────────────
+
+    @Test
+    fun `all schemes are exposed in Success allSchemes and selectScheme cycles through them`() = runTest {
+        // Two schemes; both inactive (matches the real-device sechinfo snapshot).
+        val repo = FakeTaskRepository(
+            initialSchemes = listOf(
+                scheme("s1", active = false, tasks = listOf(task("t1"))),
+                scheme("s2", active = false, tasks = listOf(task("t2"))),
+            ),
+        )
+        withHome(repo) { vm ->
+            vm.uiState.test {
+                var s = awaitItem()
+                while (s !is TaskHomeUiState.Success) s = awaitItem()
+                val success = s as TaskHomeUiState.Success
+
+                // Both schemes are in allSchemes.
+                assertEquals(2, success.allSchemes.size)
+                // Default: first scheme (index 0) since no active flag.
+                assertEquals(0, success.selectedIndex)
+                assertEquals("方案-s1", success.scheme.name)
+
+                // User taps "切换" — selectScheme(1).
+                vm.selectScheme(1)
+                val next = awaitItem()
+                assertTrue(next is TaskHomeUiState.Success)
+                assertEquals(1, (next as TaskHomeUiState.Success).selectedIndex)
+                assertEquals("方案-s2", next.scheme.name)
+                // allSchemes is still the full list.
+                assertEquals(2, next.allSchemes.size)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Test
+    fun `selectScheme does not call setSchemeActive on the repository`() = runTest {
+        // "切换查看" ≠ "激活方案" — the repository must never see a setSchemeActive call
+        // when the user merely switches the viewed scheme via the header button.
+        val repo = FakeTaskRepository(
+            initialSchemes = listOf(
+                scheme("s1", active = false),
+                scheme("s2", active = false),
+            ),
+        )
+        withHome(repo) { vm ->
+            vm.uiState.test {
+                var s = awaitItem()
+                while (s !is TaskHomeUiState.Success) s = awaitItem()
+
+                vm.selectScheme(1)
+                awaitItem() // consume the index update
+
+                assertTrue(
+                    "selectScheme must not activate a scheme server-side",
+                    repo.setActiveCalls.isEmpty(),
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 }

@@ -102,7 +102,8 @@ class ServiceViewModelTest {
     }
 
     @Test
-    fun `failed refresh with no snapshot yields Error carrying the message`() = runTest {
+    fun `failed refresh with no snapshot yields Error with fixed copy`() = runTest {
+        // ★ Task2: fixed copy "加载失败，请重试" — not the raw exception message.
         val repo = FakeServerStateRepository(
             refreshResult = Result.failure(IllegalStateException("服务器无响应")),
             initial = null,
@@ -111,7 +112,7 @@ class ServiceViewModelTest {
             vm.uiState.test {
                 var s = awaitItem()
                 while (s !is ServiceUiState.Error) s = awaitItem()
-                assertEquals("服务器无响应", (s as ServiceUiState.Error).message)
+                assertEquals("加载失败，请重试", (s as ServiceUiState.Error).message)
                 cancelAndIgnoreRemainingEvents()
             }
         }

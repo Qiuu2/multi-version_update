@@ -90,11 +90,14 @@ fun TaskTab(modifier: Modifier = Modifier) {
 }
 
 /**
- * Task home — stateful entry (TASK-PA-03c, de-mocked).
+ * Task home — stateful entry (TASK-PA-03c, de-mocked; ★ Task3 multi-scheme).
  *
- * Observes [TaskHomeViewModel] (→ [TaskRepository], real data; V3TaskRepository is a
- * STUB so this shows Empty until the v3 adapter lands) and renders the
+ * Observes [TaskHomeViewModel] (→ [TaskRepository], real data) and renders the
  * [TaskHomeUiState] states. No more mock data.
+ *
+ * ★ Task3 (2026-06-01): wires [TaskHomeViewModel.selectScheme] into the hero header
+ * switch button so the user can cycle through all available schemes without activating
+ * them (Handoff line 929: "当前作息方案名 + 切换按钮").
  */
 @Composable
 fun TaskScreen(
@@ -115,6 +118,7 @@ fun TaskScreen(
         onOpenLog = onOpenLog,
         onOpenTempBroadcast = onOpenTempBroadcast,
         onRetry = viewModel::refresh,
+        onSelectScheme = viewModel::selectScheme,
         modifier = modifier,
     )
 }
@@ -128,6 +132,11 @@ fun TaskHomeContent(
     onOpenLog: () -> Unit,
     onOpenTempBroadcast: () -> Unit,
     onRetry: () -> Unit,
+    /**
+     * Called when the user taps the "切换" button to view a different scheme.
+     * Receives the next index to select (0-based). ★ Task3.
+     */
+    onSelectScheme: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     pollingState: PollingState = PollingState.IDLE,
 ) {
@@ -153,20 +162,26 @@ fun TaskHomeContent(
 
             is TaskHomeUiState.Success -> TaskHomeList(
                 scheme = state.scheme,
+                allSchemesCount = state.allSchemes.size,
+                selectedIndex = state.selectedIndex,
                 staleMessage = pollLapseMessage(pollingState),
                 onOpenSchemeDetail = onOpenSchemeDetail,
                 onOpenSchemeEdit = onOpenSchemeEdit,
                 onOpenLog = onOpenLog,
                 onOpenTempBroadcast = onOpenTempBroadcast,
+                onSelectScheme = onSelectScheme,
             )
 
             is TaskHomeUiState.Partial -> TaskHomeList(
                 scheme = state.scheme,
+                allSchemesCount = state.allSchemes.size,
+                selectedIndex = state.selectedIndex,
                 staleMessage = state.staleMessage,
                 onOpenSchemeDetail = onOpenSchemeDetail,
                 onOpenSchemeEdit = onOpenSchemeEdit,
                 onOpenLog = onOpenLog,
                 onOpenTempBroadcast = onOpenTempBroadcast,
+                onSelectScheme = onSelectScheme,
             )
         }
     }
@@ -189,14 +204,30 @@ private fun TaskHomeSkeleton() {
     }
 }
 
+/**
+ * The populated task home list.
+ *
+ * ★ Task3 (2026-06-01): the hero header now includes a "切换" button next to the
+ * scheme name when [allSchemesCount] > 1, per Handoff line 929 ("当前作息方案名 +
+ * 切换按钮"). Tapping it advances to the next scheme index (wrapping around). The
+ * button is hidden when there is only one scheme, so the single-scheme experience is
+ * unchanged.
+ *
+ * The switch is a viewing selection only — it calls [onSelectScheme] with the next
+ * index and does NOT activate the scheme on the server (setSchemeActive is a separate
+ * action, reachable from SchemeDetailScreen).
+ */
 @Composable
 private fun TaskHomeList(
     scheme: SchemeUi,
+    allSchemesCount: Int,
+    selectedIndex: Int,
     staleMessage: String?,
     onOpenSchemeDetail: (String) -> Unit,
     onOpenSchemeEdit: (String) -> Unit,
     onOpenLog: () -> Unit,
     onOpenTempBroadcast: () -> Unit,
+    onSelectScheme: (Int) -> Unit,
 ) {
     val spacing = AeroTheme.spacing
     LazyColumn(
@@ -211,7 +242,27 @@ private fun TaskHomeList(
         }
         item(key = "hero") {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
-                HeroStrip(kicker = "当前作息方案 · ${scheme.tasks.size} 项任务", title = scheme.name)
+                // ★ Task3: HeroStrip + inline scheme-switch button (Handoff line 929).
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                ) {
+                    HeroStrip(
+                        kicker = "当前作息方案 · ${scheme.tasks.size} 项任务",
+                        title = scheme.name,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // Only render the switch button when there are 2+ schemes so
+                    // single-scheme campuses see no UI change.
+                    if (allSchemesCount > 1) {
+                        SchemeSwitchButton(
+                            currentIndex = selectedIndex,
+                            total = allSchemesCount,
+                            onClick = { onSelectScheme((selectedIndex + 1) % allSchemesCount) },
+                        )
+                    }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                     QuickAction("方案详情", Icons.AutoMirrored.Filled.ListAlt) { onOpenSchemeDetail(scheme.id) }
                     QuickAction("编辑", Icons.Filled.Edit) { onOpenSchemeEdit(scheme.id) }
@@ -246,6 +297,43 @@ private fun TaskHomeList(
                 }
             }
         }
+    }
+}
+
+/**
+ * Scheme-switch button shown in the hero header when there are 2+ schemes
+ * (Handoff line 929: "当前作息方案名 + 切换按钮"). Renders as a compact chip that
+ * shows the current position ("1/2") and a swap icon. Uses existing tokens:
+ * `c.surface` background, `c.primary` tint, `rCard` shape — no new tokens. ★ Task3.
+ */
+@Composable
+private fun SchemeSwitchButton(
+    currentIndex: Int,
+    total: Int,
+    onClick: () -> Unit,
+) {
+    val colors = AeroTheme.colors
+    val spacing = AeroTheme.spacing
+    Row(
+        modifier = Modifier
+            .clip(AeroTheme.shapes.rCard)
+            .background(colors.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = spacing.md, vertical = spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing.xs),
+    ) {
+        Icon(
+            Icons.Filled.SwapHoriz,
+            contentDescription = "切换方案",
+            tint = colors.primary,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            "${currentIndex + 1}/$total",
+            style = AeroTheme.typography.label,
+            color = colors.primary,
+        )
     }
 }
 

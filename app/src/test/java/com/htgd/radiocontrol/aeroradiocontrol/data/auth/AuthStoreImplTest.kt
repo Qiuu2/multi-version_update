@@ -57,6 +57,16 @@ class AuthStoreImplTest {
         assertFalse(store.isLoggedIn.value)
     }
 
+    @Test
+    fun firstLaunch_rememberMe_defaultsToTrue() = runTest {
+        // ★ NEXT-3 (2026-06-01) regression guard: spec D-16 says "rememberMe 默认开".
+        // The prior NEXT-2 default was false (implementation gap). A fresh install
+        // must start with rememberMe=true so the first login pre-fills on the next
+        // open without the user having to explicitly toggle the switch on.
+        val store = newStore()
+        assertTrue(store.rememberMe.value)
+    }
+
     // ── saveLogin / clearLogin / reset ──────────────────────────────────────
 
     @Test

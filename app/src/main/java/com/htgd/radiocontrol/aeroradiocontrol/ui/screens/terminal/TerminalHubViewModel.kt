@@ -99,9 +99,9 @@ class TerminalHubViewModel @Inject constructor(
         return when {
             zoneUis.isNotEmpty() -> TerminalHubUiState.Success(zoneUis)
             refresh == null -> TerminalHubUiState.Loading
-            refresh.isFailure -> TerminalHubUiState.Error(
-                refresh.exceptionOrNull()?.message ?: "加载终端失败",
-            )
+            // ★ Task2: fixed copy — never expose raw exception message (may contain
+            // HTML 500 body from the backend). The screen renders this string directly.
+            refresh.isFailure -> TerminalHubUiState.Error("加载失败，请重试")
             else -> TerminalHubUiState.Empty
         }
     }

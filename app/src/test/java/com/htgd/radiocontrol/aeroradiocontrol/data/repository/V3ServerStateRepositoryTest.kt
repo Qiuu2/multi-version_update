@@ -42,6 +42,8 @@ class V3ServerStateRepositoryTest {
         private var url = "http://10.0.0.1:8080/api"
         override fun baseUrl() = url
         override fun setBaseUrl(value: String) { url = value }
+        override fun authToken() = "Bearer test-token"
+        override fun setAuthToken(bearerToken: String) { /* no-op in tests */ }
     }
     private lateinit var repo: V3ServerStateRepository
 

@@ -46,7 +46,8 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AeroGradients.Night),
+            // Handoff:755「品牌渐变背景」— was Night (AI/call-screen gradient), fixed Q3 #2
+            .background(AeroGradients.Primary),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

@@ -11,9 +11,10 @@ ICD 命名规范：`ICD-{InterfaceName}-v{version}`
 | ICD ID | Interface | Producer | Consumers | Status |
 |--------|-----------|----------|-----------|--------|
 | ICD-NetworkModule-v1 | 动态 baseUrl 拦截器接口 | data-integration | 所有 frontend agent | LIVE |
-| ICD-AuthState-v2.2 | L1/L2 两层存储（L1 凭据明文 + L2 鉴权加密）+ tokenExpiry + rememberMe + 4-path logout matrix + L2 atomic invariant（D-16 NEXT-2 fix）| data-integration | frontend-business, frontend-platform | LIVE |
+| ICD-AuthState-v2.3 | L1/L2 两层存储 + tokenExpiry + rememberMe（**默认 TRUE**，NEXT-3 D-17）+ 4-path logout matrix + L2 atomic invariant（D-16 NEXT-2 fix）| data-integration | frontend-business, frontend-platform | LIVE |
 | ICD-LoginAuthenticator-v1 | 登录鉴权 seam（fe 定义接口、data 实现 /authorizations） | frontend-business（consumer-defined） | data-integration（impl） | LIVE |
-| ICD-StartupAuthDecider-v1 | 启动鉴权 atomic check + ServerConfig rehydrate seam（V4Activity.onCreate 前 synchronous; D-16 kill-app fix）| data-integration | frontend-business（V4Activity inject） | LIVE |
+| ICD-StartupAuthDecider-v1.1 | 启动鉴权 atomic check + ServerConfig rehydrate seam（V4Activity.onCreate 前 synchronous）。**v1.1（NEXT-3 D-17）：rehydrate BOTH 静态缓存 — setBaseUrl + `setAuthToken`（ServerToken.serverToken，static-field-rehydration-trap 第二实例 fix）** | data-integration | frontend-business（V4Activity inject） | LIVE |
+| ICD-ApiException-v1 | 网络层 typed 错误（NO_SESSION/HTTP_ERROR/NON_JSON/PARSE_FAIL）；AuthInterceptor + V3CallbackAdapter 拦截（含 v3 活路入口 NO_SESSION 短路 + HTML→NON_JSON）；fe VM 映射固定文案「加载失败，请重试」（NEXT-3 D-17，§17）| data-integration | frontend-business, frontend-platform | LIVE |
 | ICD-TerminalDto-v2.1 | 终端 DTO（28 wire 字段，+14 PA-14）+ Domain TerminalStatus（sealed+Unknown）+ Repository（observe/refresh）+ ★ `terminal.zone` 字段 NOT membership FK | data-integration | frontend-business | LIVE |
 | ICD-ZoneDto-v2.1 | Domain Zone（嵌套 terminals SSOT，`/terminal/terzone` 唯一权威，多对多保留，envelope-meta） | data-integration | frontend-business | LIVE |
 | ICD-TaskRepository-v2.1 | 作息/任务 Repository（observe/refresh **二步 sechinfo→并发 sechetaskinfo→原子 publish**/setSchemeActive/getExecutionLog）+ Domain Scheme（嵌套 tasks）/SchemeTask/SchemeTaskStatus（sealed+Unknown）/TaskLog + 多 active option-A + 4 status int 派生规则 | data-integration（领域 owner） | frontend-business | LIVE（real impl V3TaskRepository，PA-15 Critic PASS_HIGH） |
@@ -253,6 +254,7 @@ interface AuthStore {
 
 ### 变更历史
 
+- v2.3 (2026-06-02, D-17 / NEXT-3 fix; Critic 5-leg PASS_W_MINOR HIGH): rememberMe 默认值 false→**true**（D-16 spec「记住我默认开」实现 gap 补正；AuthStoreImpl `getBoolean(KEY_REMEMBER_ME, true)`）。语义：首装 switch ON 但无 L1 可预填（字段空）；用户显式关 → clearL1Account 持久化 false → 下次 OFF，不被默认覆盖。配套 §3B v1.1（StartupAuthDecider 同时 setAuthToken rehydrate ServerToken.serverToken — 真根因修，杀-app 后 auth 头不再空 → 不再 500）。
 - v2.2 (2026-06-01, D-16 / NEXT-2 fix; Critic PASS_W_MINOR HIGH 5-cycle emulator): L1/L2 两层存储语义化 + tokenExpiry (Long?, legacy 60h-from-issue documented-assumption default) + rememberMe (Boolean) + clearL2Atomically (single-transaction per store) + clearL1Account + setRememberMe + extended saveLogin (additive 2 default params)。LoginAuthenticator + StartupAuthDecider (NEW §3B) 是 v2.2 的两个主消费方。kill-app BLOCKER 闭环 (Cycle 2 logcat URL rehydrate + Main render + 无 crash 实证)。
 - v2.1 (2026-05-30, PA-14 实读校正): JWT TTL **~60h**（CTO 实测；旧文档 24h 作废）。登录响应实读为 array shape `{"data":[{"token":"...","priority":<int>,"userid":<int>}]}` — 当前 `TokenEnvelopeDto.data.firstOrNull().token` 形状正确；建议增 `priority/userid` 为 wire-only 字段以备 v4 admin gate（domain 暂不暴露）。Refresh 端点 `POST /authorizations/current` + Logout 端点 `DELETE /authorizations/current` 已 swagger 确认存在（当前 UnsupportedTokenRefresher 未接线；接 OPEN INQ-O-1 D-1）。
 - v2.0 (2026-05-27): 首次真实定义（TASK-AR-003 落地，Critic PASSED）。去 Flow 后缀 / +isLoggedIn / refreshToken 可空 / refresh(knownStaleJwt) / +reset()。v1 模板作废（无实现无消费者，hard cutover 零迁移）。
@@ -1060,6 +1062,33 @@ class OnDemandCastException(val state: Int) : RuntimeException
 
 ### 变更历史
 - v1 (2026-05-29, PA-08): impl 落地。javap 证 6 签名; 序列 verbatim v3; gate JVM 测 + happy-path device-pending(同 AR-104 边界). Critic PASSED HIGH(5 测 + Voice 回归 7 绿).
+
+---
+
+## 17. ICD-ApiException-v1（网络层 typed 错误，NEXT-3 D-17）
+
+**Producer**: Data-Integration（`data/network/ApiException.kt`）
+**Consumers**: frontend-business（各屏 VM `.onFailure` 映射固定文案）, frontend-platform
+**Status**: LIVE（2026-06-02; Critic 5-leg PASS_W_MINOR HIGH，含 4 个 `verify(exactly=0) RequestManger` 锁"未发"）
+
+```kotlin
+class ApiException(
+    val kind: Kind,
+    val httpCode: Int? = null,
+    val rawMessage: String? = null,   // NEVER render directly（可能含后端 HTML 错误页原文）
+) : IOException(...) {
+    enum class Kind { NO_SESSION, HTTP_ERROR, NON_JSON, PARSE_FAIL }
+}
+```
+
+- **thrown_by**:
+  - `AuthInterceptor`（Retrofit 路，Plan A 休眠）：jwt 空 / baseUrl 空 → NO_SESSION。
+  - `V3CallbackAdapter`（v3 活路，Plan A 业务请求实际走此）：① `get()`/`post()` 入口 token/baseUrl 空 → NO_SESSION **短路不调 RequestManger、不碰 socket**（login POST `needToken=false` 豁免）；② `onFailed` 响应 HTML body → NON_JSON / 非 HTML 非 200 → HTTP_ERROR。
+- **consumed_by**: `V3*Repository` runCatching → fe ViewModel `.onFailure` → **统一固定文案「加载失败，请重试」**（绝不渲染 rawMessage / response body）。kind-specific copy（NO_SESSION→Login、500→"服务器错误"…）= backlog `BL-ERROR-COPY-KIND`。
+- **背景**: 修 CTO 真机两 bug —（a）终端页 500 时把 HTML 错误页原文渲染到屏；（b）启动缺 token 仍发业务请求吃 500。两层防护：belt（v3 入口短路）+ suspenders（session invalid → MainScaffold 不 compose → poller 不 start）。
+
+### 变更历史
+- v1 (2026-06-02, NEXT-3 D-17): 首次定义。
 
 ---
 

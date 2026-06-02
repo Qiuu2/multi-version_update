@@ -39,8 +39,9 @@ class ExecutionLogViewModel @Inject constructor(
                         if (logs.isEmpty()) ExecutionLogUiState.Empty
                         else ExecutionLogUiState.Success(logs.map { it.toLogEntry() })
                 }
+                // ★ Task2: fixed copy — never expose raw exception message.
                 .onFailure {
-                    _uiState.value = ExecutionLogUiState.Error(it.message ?: "加载执行日志失败")
+                    _uiState.value = ExecutionLogUiState.Error("加载失败，请重试")
                 }
         }
     }

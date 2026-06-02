@@ -62,8 +62,10 @@ interface AuthStore {
     val account: StateFlow<String?>
 
     /** Whether the user opted to remember the L1 prefill (account + host:port).
-     *  Independent of [isLoggedIn] — survives logout. Default: false on a
-     *  fresh install (no L1 fields written yet). ★ NEXT-2 addition. */
+     *  Independent of [isLoggedIn] — survives logout. Default: **true** on a
+     *  fresh install (D-16 spec: "rememberMe 默认开"; corrected NEXT-3 2026-06-01 —
+     *  the prior NEXT-2 impl used false which was an implementation gap).
+     *  ★ NEXT-2 addition. */
     val rememberMe: StateFlow<Boolean>
 
     // ─── L2 (encrypted) + serverAddress (plain, participates in L2 invariant) ─

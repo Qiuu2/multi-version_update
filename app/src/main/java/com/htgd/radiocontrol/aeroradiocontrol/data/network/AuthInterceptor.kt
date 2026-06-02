@@ -43,7 +43,22 @@ class AuthInterceptor @Inject constructor(
             return chain.proceed(request)
         }
 
+        // ★ NEXT-3 (2026-06-01) — fail-fast guard: if the session is absent,
+        // short-circuit BEFORE making any network call. Sending a request with
+        // an empty or null token is never correct; the server returns 500 or 401.
+        // This is the Retrofit-path safety net (the v3/RequestManger path has its
+        // own guard in V3CallbackAdapter). Throwing ApiException(NO_SESSION) lets
+        // the ViewModel map it to a Login route, not a generic "request failed".
+        val baseUrl = serverConfig.baseUrl()
         val jwt = runBlocking { authStore.jwt.first() }
+        if (jwt.isNullOrBlank() || baseUrl.isBlank()) {
+            throw ApiException(
+                kind = ApiException.Kind.NO_SESSION,
+                rawMessage = "jwt=${if (jwt.isNullOrBlank()) "blank" else "present"} " +
+                    "baseUrl=${if (baseUrl.isBlank()) "blank" else "present"}",
+            )
+        }
+
         val response = chain.proceed(request.withBearer(jwt))
 
         if (response.code != HTTP_UNAUTHORIZED) {
