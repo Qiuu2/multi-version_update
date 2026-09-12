@@ -8,6 +8,11 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'claude/**'
+    paths:
+      - 'desktop-calendar/**'
+      - '.github/workflows/build-desktop-calendar.yml'
 
 jobs:
   build:
@@ -50,7 +55,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop-calendar/src-tauri -> target
 
@@ -72,7 +77,7 @@ jobs:
       - name: 上传安装包
         uses: actions/upload-artifact@v4
         with:
-          name: 本地日历-${{ matrix.name }}
+          name: LocalCalendar-${{ matrix.name }}
           if-no-files-found: error
           path: |
             desktop-calendar/src-tauri/target/release/bundle/**/*.msi
@@ -96,9 +101,9 @@ jobs:
         run: |
           npm ci
           npm run build:single
-          mv dist-single/index.html dist-single/本地日历.html
+          mv dist-single/index.html dist-single/LocalCalendar.html
       - uses: actions/upload-artifact@v4
         with:
-          name: 本地日历-单文件HTML
+          name: LocalCalendar-singlefile-html
           if-no-files-found: error
-          path: desktop-calendar/dist-single/本地日历.html
+          path: desktop-calendar/dist-single/LocalCalendar.html
