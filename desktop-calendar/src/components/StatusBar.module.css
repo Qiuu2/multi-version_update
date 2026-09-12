@@ -1,0 +1,85 @@
+/* 状态栏高 32px，顶部 1px 分隔线 */
+.bar {
+  height: 32px;
+  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--c-bg);
+  border-top: 1px solid var(--c-border);
+  font-size: 12px;
+  color: var(--c-muted);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.undatedBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--c-muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+}
+.undatedBtn:hover {
+  color: var(--c-text);
+}
+
+.arrow {
+  display: inline-flex;
+  transition: transform 120ms ease;
+}
+
+.drawer {
+  position: absolute;
+  right: 16px;
+  bottom: 38px;
+  width: 260px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  box-shadow: 0 10px 24px rgba(43, 37, 33, 0.16);
+  padding: 6px;
+  box-sizing: border-box;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 5px;
+}
+.drawerRow:hover {
+  background: var(--c-bg);
+}
+
+.drawerCheckbox {
+  width: 13px;
+  height: 13px;
+}
+
+.drawerBar {
+  width: 3px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
+.drawerTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--c-text);
+}

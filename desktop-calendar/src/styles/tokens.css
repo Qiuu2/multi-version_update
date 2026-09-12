@@ -1,0 +1,108 @@
+/* 主题 token —— 数值 1:1 取自交接文档「Design Tokens / 主题」表 */
+
+[data-cal-theme='light'] {
+  --c-bg: #faf6f1;
+  --c-surface: #ffffff;
+  --c-weekend: #f6f1e9;
+  --c-panel: #f3ede4;
+  --c-border: #e7ddd1;
+  --c-text: #2b2521;
+  --c-muted: #8c8177;
+  --c-faint: #a99c8e;
+  --c-accent: #d2703a;
+  --c-accent-soft: #fbede1;
+  --c-accent-deep: #c2571f;
+  --c-accent-lite: #e9a272;
+  --c-danger: #c0392b;
+  --c-danger-soft: #fdecea;
+  --c-other: #f0f0ee;
+  --c-other-weekend: #e8e8e6;
+  --c-dot-empty: #d8cec2;
+  --c-toast: #2b2521;
+}
+
+[data-cal-theme='dark'] {
+  --c-bg: #1c1a18;
+  --c-surface: #262320;
+  --c-weekend: #211e1b;
+  --c-panel: #221f1c;
+  --c-border: #3a342e;
+  --c-text: #f2ece4;
+  --c-muted: #a79c90;
+  --c-faint: #7e7468;
+  --c-accent: #e08a4e;
+  --c-accent-soft: #3a2a1e;
+  --c-accent-deep: #f2a96f;
+  --c-accent-lite: #f0b075;
+  --c-danger: #e0685a;
+  --c-danger-soft: #3a2320;
+  --c-other: #201e1c;
+  --c-other-weekend: #1b1917;
+  --c-dot-empty: #4a443c;
+  --c-toast: #0f0e0d;
+}
+
+[data-cal-theme='blue'] {
+  --c-bg: #f2f5fa;
+  --c-surface: #ffffff;
+  --c-weekend: #e9eef7;
+  --c-panel: #e6ecf6;
+  --c-border: #d3deec;
+  --c-text: #16263b;
+  --c-muted: #64788f;
+  --c-faint: #93a4b8;
+  --c-accent: #3c6e9f;
+  --c-accent-soft: #dee9f5;
+  --c-accent-deep: #2a5480;
+  --c-accent-lite: #8fb4d8;
+  --c-danger: #c0392b;
+  --c-danger-soft: #fbe7e4;
+  --c-other: #e9edf3;
+  --c-other-weekend: #e0e6ef;
+  --c-dot-empty: #c3cedc;
+  --c-toast: #16263b;
+}
+
+/* 浮层阴影（文档「尺寸与间距」最后一条） */
+[data-cal-theme] {
+  --shadow-panel: 0 1px 3px rgba(43, 37, 33, 0.06);
+  --shadow-dropdown: 0 10px 26px rgba(43, 37, 33, 0.18);
+  --shadow-popover: 0 12px 30px rgba(43, 37, 33, 0.2);
+  --shadow-modal: 0 16px 40px rgba(43, 37, 33, 0.24);
+  --shadow-toast: 0 8px 22px rgba(43, 37, 33, 0.28);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #eceae7;
+  font-family: 'Archivo', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--c-faint);
+}

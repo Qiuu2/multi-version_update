@@ -1,0 +1,114 @@
+/* 右侧栏占剩余宽度，底色 --c-panel，内边距 14px */
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 12px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  gap: 14px;
+  min-width: 0;
+  background: var(--c-panel);
+}
+
+.heading {
+  font-size: 11px;
+  color: var(--c-muted);
+  flex: 0 0 auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 分组标题前的 3px 色条 */
+.sectionBar {
+  width: 3px;
+  height: 13px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
+.sectionName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.count {
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9px;
+  padding: 1px 7px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.rowCheckbox {
+  width: 14px;
+  height: 14px;
+}
+
+/* 悬停时左侧色条从 4px 加宽到 6px */
+.rowBar {
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  width: 4px;
+  transition: width 90ms ease;
+}
+.row:hover .rowBar {
+  width: 6px;
+}
+.row:hover {
+  background: var(--c-surface);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rowParent {
+  font-size: 10px;
+  color: var(--c-muted);
+}
+
+.rowTitle {
+  font-size: 12px;
+  color: var(--c-text);
+}
+
+.badge {
+  font-size: 10px;
+  border-radius: 9px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}

@@ -1,0 +1,149 @@
+/* 月视图区宽 608px（模板 flex:0 0 608px），右侧 1px 分隔线 */
+.wrap {
+  flex: 0 0 608px;
+  width: 608px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 12px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--c-border);
+  background: var(--c-bg);
+}
+
+.weekRow {
+  user-select: none;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+  flex: 0 0 auto;
+}
+
+.weekLabel {
+  font-size: 11px;
+  padding-left: 4px;
+}
+
+/* 7 列 × 6 行，gap:1px + 网格底色画出网格线 */
+/* 横拖框选时不能让浏览器顺手选中日期文字 */
+.grid {
+  user-select: none;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  border-top: 1px solid var(--c-border);
+  border-left: 1px solid var(--c-border);
+  background: var(--c-border);
+  gap: 1px;
+}
+
+.cell {
+  position: relative;
+  padding: 4px 5px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+/* 框选染色层：上下满描边，首末格补侧边描边与圆角 */
+.selOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--c-accent-soft);
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 0;
+  border-top: 1.5px solid var(--c-accent);
+  border-bottom: 1.5px solid var(--c-accent);
+  box-sizing: border-box;
+  transition: opacity 120ms ease;
+}
+
+/* 拖拽落点预览 */
+.dropPreview {
+  position: absolute;
+  inset: 3px;
+  border: 1.5px dashed var(--c-accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-accent) 10%, transparent);
+  pointer-events: none;
+}
+
+/* 日期数字 17px 圆形，今天带强调浅底 */
+.dateChip {
+  font-size: 11px;
+  line-height: 13px;
+  margin-bottom: 1px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.entries {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* 日程：整块填充分组色 + 白字 */
+.event {
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 13px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+/* 任务：3 × 12px 分组色竖条 + 深色文字 */
+.task {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.taskBar {
+  width: 3px;
+  height: 12px;
+  flex: 0 0 auto;
+  border-radius: 2px;
+}
+
+.taskText {
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--c-text);
+}
+
+.overflow {
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--c-accent);
+  padding-left: 1px;
+  flex: 0 0 auto;
+}

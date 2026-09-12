@@ -1,0 +1,74 @@
+/* 月视图底部的批量操作条：left 16、bottom 38、宽 580 */
+.bar {
+  position: absolute;
+  left: 16px;
+  bottom: 38px;
+  width: 580px;
+  box-sizing: border-box;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 9px;
+  box-shadow: var(--shadow-popover);
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  z-index: 10;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 0 0 auto;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 9px;
+}
+
+.action {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.groupHost {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.groupBtn {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+.groupPop {
+  bottom: 32px;
+  right: 0;
+  width: 132px;
+  z-index: 11;
+}
+
+.close {
+  font-size: 14px;
+}

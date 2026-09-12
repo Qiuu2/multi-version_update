@@ -1,0 +1,290 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(43, 37, 33, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* 420 × 460，圆角 12px */
+.dialog {
+  width: 420px;
+  height: 460px;
+  background: var(--c-surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 12px;
+  box-sizing: border-box;
+  gap: 9px;
+  position: relative;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+}
+
+.heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.closeBtn {
+  font-size: 15px;
+}
+
+/* 标题输入高 30，1.5px 强调色描边 */
+.titleInput {
+  width: 100%;
+  height: 30px;
+  padding: 0 9px;
+  border: 1.5px solid var(--c-accent);
+  flex: 0 0 auto;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  color: var(--c-muted);
+}
+
+/* 下拉型字段，高 28 */
+.select {
+  height: 28px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  cursor: pointer;
+  background: var(--c-surface);
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+.select:hover {
+  background: var(--c-bg);
+}
+.select[data-open='true'] {
+  border: 1.5px solid var(--c-accent);
+}
+
+.selectText {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.allDay {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+}
+
+.allDayLabel {
+  font-size: 12px;
+  color: var(--c-text);
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.dateField {
+  flex: 1;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeField {
+  position: relative;
+  width: 88px;
+  flex: 0 0 auto;
+}
+
+.timeBtn {
+  font-variant-numeric: tabular-nums;
+}
+
+.locationInput {
+  width: 100%;
+  height: 28px;
+  padding: 0 9px;
+}
+
+.reminderField {
+  width: 132px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.notes {
+  width: 100%;
+  height: 36px;
+  padding: 6px 9px;
+  line-height: 14px;
+  resize: none;
+}
+
+.repeatBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.repeatRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.repeatLabel {
+  font-size: 12px;
+  color: var(--c-text);
+  flex: 1;
+}
+
+.weeksBox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
+.weeksInput {
+  width: 46px;
+  height: 26px;
+  padding: 0 8px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.repeatNote {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--c-faint);
+}
+
+.foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+}
+
+.footLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cancelBtn {
+  height: 28px;
+  padding: 0 14px;
+}
+
+.saveBtn {
+  height: 28px;
+  padding: 0 16px;
+}
+
+/* 新增分组区 */
+.newGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 2px 3px;
+}
+
+.newGroupInput {
+  width: 100%;
+  height: 24px;
+  padding: 0 7px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.swatchRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border: 0;
+  padding: 0;
+}
+
+.addGroupBtn {
+  height: 22px;
+  padding: 0 9px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.groupPop {
+  top: 54px;
+  left: 0;
+  width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(43, 37, 33, 0.14);
+  z-index: 8;
+}

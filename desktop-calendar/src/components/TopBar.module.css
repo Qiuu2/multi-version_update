@@ -1,0 +1,218 @@
+/* 顶栏高 48px，内边距 0 16px，底部 1px 分隔线 */
+.bar {
+  height: 48px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border);
+  gap: 16px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.monthLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text);
+  padding: 0 2px;
+  white-space: nowrap;
+}
+
+.today {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--c-accent);
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+}
+.today:hover {
+  opacity: 0.7;
+}
+
+/* 中部居中的分组图例 */
+.legend {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+}
+
+.legendText {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 搜索框 200 × 28，左侧放大镜 */
+.searchWrap {
+  position: relative;
+  width: 200px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 9px;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 200px;
+  height: 28px;
+  padding: 0 10px 0 27px;
+}
+.searchInput[data-focused='true'] {
+  border: 1.5px solid var(--c-accent);
+}
+
+.searchPop {
+  top: 32px;
+  left: 0;
+  width: 264px;
+  border-radius: 7px;
+  box-shadow: 0 10px 26px rgba(43, 37, 33, 0.16);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 11;
+}
+
+.searchRow {
+  padding: 5px 7px;
+  border-radius: 5px;
+  gap: 7px;
+}
+
+.searchTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--c-text);
+}
+
+.searchDate {
+  font-size: 11px;
+  color: var(--c-muted);
+  flex: 0 0 auto;
+}
+
+.searchEmpty {
+  padding: 8px 7px;
+  font-size: 11px;
+  color: var(--c-faint);
+}
+
+.searchFoot {
+  border-top: 1px solid var(--c-border);
+  margin-top: 3px;
+  padding: 5px 7px 2px;
+  font-size: 11px;
+  color: var(--c-faint);
+}
+
+.newBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.menuHost {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.themePop {
+  top: 32px;
+  right: 0;
+  width: 126px;
+  z-index: 11;
+}
+
+.themeSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px var(--c-border);
+}
+
+.closeBtn {
+  font-size: 16px;
+  line-height: 1;
+}
+.closeBtn:hover {
+  color: var(--c-text);
+}
+
+/* 设置菜单 */
+.settingsPop {
+  position: absolute;
+  top: 42px;
+  right: 46px;
+  width: 180px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(43, 37, 33, 0.14);
+  padding: 6px;
+  box-sizing: border-box;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--c-text);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.settingsRow:hover {
+  background: var(--c-bg);
+}
+
+.mark {
+  color: var(--c-accent);
+}

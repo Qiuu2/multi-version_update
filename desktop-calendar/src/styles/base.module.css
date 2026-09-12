@@ -1,0 +1,243 @@
+/* 跨组件复用的基础件 —— 控件高度 / 圆角 / hover 反馈来自文档「尺寸与间距」 */
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divider {
+  height: 1px;
+  background: var(--c-border);
+  flex: 0 0 auto;
+}
+
+/* 28 × 28 图标按钮，悬停底色 --c-panel */
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--c-muted);
+  flex: 0 0 auto;
+}
+.iconBtn:hover {
+  background: var(--c-panel);
+}
+.iconBtn[data-active='true'] {
+  background: var(--c-panel);
+}
+
+/* 24 × 24 月份翻页箭头 */
+.navBtn {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--c-muted);
+  cursor: pointer;
+}
+.navBtn:hover {
+  background: var(--c-panel);
+}
+
+/* 浮卡内 22 × 22 小按钮 */
+.miniBtn {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--c-muted);
+  flex: 0 0 auto;
+}
+.miniBtn:hover {
+  background: var(--c-bg);
+}
+
+.textInput {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--c-text);
+  background: var(--c-surface);
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+}
+
+.btnPrimary {
+  border: 0;
+  background: var(--c-accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+.btnGhost {
+  border: 1px solid var(--c-border);
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--c-text);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.btnGhost:hover {
+  background: var(--c-bg);
+}
+
+.btnDanger {
+  border: 1px solid var(--c-border);
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--c-danger);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.btnDanger:hover {
+  background: var(--c-danger-soft);
+}
+
+.linkDanger {
+  font-size: 12px;
+  color: var(--c-danger);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+}
+.linkDanger:hover {
+  opacity: 0.7;
+}
+
+/* 下拉 / 浮层容器 */
+.popover {
+  position: absolute;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 7px;
+  box-shadow: var(--shadow-dropdown);
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 下拉项 4–5px 圆角 */
+.popoverItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--c-text);
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+.popoverItem:hover {
+  background: var(--c-bg);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* 34 × 20 胶囊开关 */
+.pillToggle {
+  width: 34px;
+  height: 20px;
+  border: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex: 0 0 auto;
+  background: var(--c-border);
+  justify-content: flex-start;
+}
+.pillToggle[data-on='true'] {
+  background: var(--c-accent);
+  justify-content: flex-end;
+}
+.pillToggle > span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  box-shadow: 0 1px 2px rgba(43, 37, 33, 0.22);
+}
+
+/* 方形复选框，选中填充分组色 + 白勾 */
+.checkbox {
+  flex: 0 0 auto;
+  border-radius: 3px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--c-muted);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: #ffffff;
+  font-size: 9px;
+  line-height: 1;
+}

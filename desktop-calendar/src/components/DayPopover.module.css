@@ -1,0 +1,120 @@
+/* 宽 248，最高 292，圆角 10px，无遮罩 */
+.card {
+  position: absolute;
+  width: 248px;
+  max-height: 292px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-popover);
+  display: flex;
+  flex-direction: column;
+  padding: 11px 12px;
+  box-sizing: border-box;
+  gap: 8px;
+  z-index: 9;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.count {
+  font-size: 11px;
+  color: var(--c-muted);
+}
+
+.headBtns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.addBtn {
+  font-size: 15px;
+  color: var(--c-accent);
+}
+
+.closeBtn {
+  font-size: 14px;
+}
+
+.list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+.row:hover {
+  background: var(--c-bg);
+}
+
+.checkbox {
+  width: 13px;
+  height: 13px;
+}
+
+.swatch {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+}
+
+.time {
+  font-size: 11px;
+  flex: 0 0 auto;
+  width: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--c-text);
+}
+
+.empty {
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--c-faint);
+}
