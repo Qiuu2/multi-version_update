@@ -47,13 +47,16 @@ Tauri 的安装包必须在目标系统上编译（Windows 要 MSVC 链接器）
 | `本地日历-linux` | `.deb` 与 `.AppImage` |
 | `本地日历-单文件HTML` | 上面那个单文件，顺手一起出 |
 
-两点提醒：
+Windows 那份解压后有两个文件，任选一个：
 
-- 安装包没有做代码签名。Windows 可能弹 SmartScreen（「更多信息」→「仍要运行」），
-  macOS 会被 Gatekeeper 拦（右键 →「打开」，或 `xattr -d com.apple.quarantine`）。
-- **这是 Tauri 外壳的第一次真实编译** —— 本地开发容器缺 webkit2gtk，我只验证了
-  Rust 语法与依赖图。前端部分已经实跑核对过，所以万一 CI 在 Rust 那步失败，
-  失败信息只会关于外壳，不影响界面代码。
+- `LocalCalendar_0.1.0_x64-setup.exe` —— NSIS 安装程序，装完开始菜单和桌面都有快捷方式
+- `LocalCalendar_0.1.0_x64_en-US.msi` —— MSI 包，适合走组策略批量部署
+
+安装包**没有做代码签名**，所以 Windows 会弹 SmartScreen（「更多信息」→「仍要运行」），
+macOS 会被 Gatekeeper 拦（右键 →「打开」，或 `xattr -d com.apple.quarantine <路径>`）。
+要消掉得自备签名证书。
+
+产物保留 90 天。
 
 ## 目录
 
@@ -131,8 +134,17 @@ src-tauri/            Rust 外壳，两个命令：load_state / save_state
 - 焦点在输入框里、或鼠标移出面板时，←/→ 都不翻月；移回面板内才翻
 - 无 console 报错
 
-**`src-tauri/` 没有在本次环境里编译过** —— 容器缺 Tauri 需要的系统 webview（webkit2gtk /
-gdk-3.0），`cargo check` 停在系统库这一步。已经确认的是 Rust 源码语法无误（`rustfmt` 通过）、
-Cargo 依赖图可解析。首次在你机器上跑 `npm run tauri dev` 时如果卡在外壳上，
-用 `npm create tauri-app` 生成一份同版本脚手架对一下 `tauri.conf.json` 即可，
-前端部分不受影响。
+单文件版在 `file://` 下另测过一轮：渲染正常、localStorage 可读写、新建的条目与
+切换的主题在刷新后都还在。
+
+`src-tauri/` 无法在开发容器里编译（缺 webkit2gtk / gdk-3.0），改由 CI 验证，
+三个平台全部构建成功：
+
+| 平台 | 产物 |
+|---|---|
+| windows-latest | `LocalCalendar_0.1.0_x64_en-US.msi`、`LocalCalendar_0.1.0_x64-setup.exe` |
+| macos-latest | `.dmg`（Apple Silicon） |
+| ubuntu-22.04 | `.deb`、`.AppImage` |
+
+也就是说 Rust 代码、`tauri.conf.json` 与图标格式都已被真实打包链验证。
+（首轮构建曾因图标清单里缺 `.ico` / `.icns` 而需要修复，现已补齐。）

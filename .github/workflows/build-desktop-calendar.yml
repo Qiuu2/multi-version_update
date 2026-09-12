@@ -13,6 +13,8 @@ on:
     paths:
       - 'desktop-calendar/**'
       - '.github/workflows/build-desktop-calendar.yml'
+      # 只动文档不必重建
+      - '!desktop-calendar/**/*.md'
 
 jobs:
   build:
