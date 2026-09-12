@@ -21,6 +21,40 @@ npm run tauri build  # 打安装包
 浏览器模式下数据存 `localStorage`；Tauri 模式下存应用数据目录里的 `calendar.json`
 （Windows 是 `%APPDATA%\com.local.calendar\calendar.json`）。
 
+## 拿一个能直接运行的版本
+
+### 路线一：单文件 HTML（最快，零安装）
+
+```bash
+npm run build:single     # 产出 dist-single/index.html，约 220 KB
+```
+
+JS 与 CSS 全部内联进这一个文件，改个名字双击就能用浏览器打开，不联网也能跑，
+数据存在浏览器的 localStorage 里（`file://` 下已验证可读写、刷新后不丢）。
+适合快速试功能。代价是它是一个浏览器标签页，不是独立窗口，也没有系统通知。
+
+### 路线二：真正的安装包（GitHub Actions）
+
+Tauri 的安装包必须在目标系统上编译（Windows 要 MSVC 链接器），所以走 CI：
+
+仓库 → **Actions** → **Build desktop calendar** → **Run workflow**，
+跑完在该次运行的 **Artifacts** 里下载：
+
+| 产物 | 内容 |
+|---|---|
+| `本地日历-windows` | `.msi` 与 `-setup.exe` 安装包 |
+| `本地日历-macos-apple-silicon` | `.dmg`（Apple Silicon） |
+| `本地日历-linux` | `.deb` 与 `.AppImage` |
+| `本地日历-单文件HTML` | 上面那个单文件，顺手一起出 |
+
+两点提醒：
+
+- 安装包没有做代码签名。Windows 可能弹 SmartScreen（「更多信息」→「仍要运行」），
+  macOS 会被 Gatekeeper 拦（右键 →「打开」，或 `xattr -d com.apple.quarantine`）。
+- **这是 Tauri 外壳的第一次真实编译** —— 本地开发容器缺 webkit2gtk，我只验证了
+  Rust 语法与依赖图。前端部分已经实跑核对过，所以万一 CI 在 Rust 那步失败，
+  失败信息只会关于外壳，不影响界面代码。
+
 ## 目录
 
 ```
