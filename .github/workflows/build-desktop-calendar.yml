@@ -16,18 +16,22 @@ on:
       # 只动文档不必重建
       - '!desktop-calendar/**/*.md'
 
+# 连续推送时取消上一轮，避免几个只差一两个提交的构建同时跑
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    # 只出 Windows 包。要加回其他平台，在这里补一行即可
+    # （- os: macos-latest / name: macos-apple-silicon，或 ubuntu-22.04 / linux），
+    # 下面的 Linux 系统依赖步骤带 if 判断，加回来就会自动生效。
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
             name: windows
-          - os: macos-latest
-            name: macos-apple-silicon
-          - os: ubuntu-22.04
-            name: linux
 
     runs-on: ${{ matrix.os }}
 
