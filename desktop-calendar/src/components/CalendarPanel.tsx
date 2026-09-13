@@ -7,6 +7,7 @@ import { useCalendar, useDispatch } from '../store/context';
 import base from '../styles/base.module.css';
 import { ContextMenu } from './ContextMenu';
 import { DayPopover } from './DayPopover';
+import { GroupEditor } from './GroupEditor';
 import { ItemModal } from './ItemModal';
 import { MonthGrid } from './MonthGrid';
 import { PanelContext } from './PanelContext';
@@ -97,6 +98,7 @@ export function CalendarPanel() {
 
             {/* 浮层挂在面板上，坐标都是相对面板左上角 */}
             <DayPopover />
+            <GroupEditor />
             <SelectionChip />
             <RangeActionBar />
             <ContextMenu />

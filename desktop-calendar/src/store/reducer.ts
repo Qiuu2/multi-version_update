@@ -1,10 +1,17 @@
-import { DEFAULT_SCALE, HISTORY_LIMIT, NEW_GROUP_COLORS, SCALE_STEPS } from '../constants';
+import {
+  DEFAULT_GROUPS,
+  DEFAULT_SCALE,
+  HISTORY_LIMIT,
+  NEW_GROUP_COLORS,
+  SCALE_STEPS,
+} from '../constants';
 import { daysBetween, fmtShort, nextMonday, shiftDate, todayIso } from '../lib/date';
 import { stripTime, timeOf } from '../lib/item';
 import type {
   Anchor,
   ContextMenuState,
-  CustomGroup,
+  Group,
+  GroupEditorState,
   Item,
   ItemType,
   ModalDraft,
@@ -18,7 +25,7 @@ interface Snapshot {
   items: Item[];
   nextId: number;
   hidden: Record<string, boolean>;
-  customGroups: CustomGroup[];
+  groups: Group[];
 }
 
 export interface CalendarState {
@@ -29,7 +36,7 @@ export interface CalendarState {
   items: Item[];
   nextId: number;
   hidden: Record<string, boolean>;
-  customGroups: CustomGroup[];
+  groups: Group[];
   showDone: boolean;
   showOther: boolean;
   theme: Theme;
@@ -57,6 +64,7 @@ export interface CalendarState {
   rangeGroupsOpen: boolean;
 
   ctx: ContextMenuState | null;
+  groupEditor: GroupEditorState | null;
   modal: ModalDraft | null;
   toast: string | null;
 
@@ -75,7 +83,7 @@ export type Persisted = Pick<
   | 'items'
   | 'nextId'
   | 'hidden'
-  | 'customGroups'
+  | 'groups'
   | 'showDone'
   | 'showOther'
   | 'theme'
@@ -88,7 +96,7 @@ export function pickPersisted(s: CalendarState): Persisted {
     items: s.items,
     nextId: s.nextId,
     hidden: s.hidden,
-    customGroups: s.customGroups,
+    groups: s.groups,
     showDone: s.showDone,
     showOther: s.showOther,
     theme: s.theme,
@@ -105,7 +113,7 @@ export function initialState(): CalendarState {
     items: seedItems(),
     nextId: SEED_NEXT_ID,
     hidden: { ...SEED_HIDDEN },
-    customGroups: [],
+    groups: DEFAULT_GROUPS.map((g) => ({ ...g })),
     showDone: true,
     showOther: true,
     theme: 'light',
@@ -125,6 +133,7 @@ export function initialState(): CalendarState {
     rangeTitle: '',
     rangeGroupsOpen: false,
     ctx: null,
+    groupEditor: null,
     modal: null,
     toast: null,
     newGroupName: '',
@@ -136,7 +145,7 @@ export function initialState(): CalendarState {
 }
 
 export type Action =
-  | { type: 'hydrate'; data: Partial<Persisted> }
+  | { type: 'hydrate'; data: Partial<Persisted> & { customGroups?: Group[] } }
   | { type: 'prevMonth' }
   | { type: 'nextMonth' }
   | { type: 'goToday' }
@@ -166,6 +175,12 @@ export type Action =
   | { type: 'setNewGroupName'; value: string }
   | { type: 'setNewGroupColor'; value: string }
   | { type: 'addGroup' }
+  | { type: 'openGroupEditor'; editor: GroupEditorState }
+  | { type: 'patchGroupEditor'; patch: Partial<GroupEditorState> }
+  | { type: 'closeGroupEditor' }
+  | { type: 'commitGroupEditor' }
+  | { type: 'deleteGroupByName'; name: string }
+  | { type: 'soloGroup'; name: string }
   | { type: 'toggleItemDone'; id: number }
   | { type: 'selStart'; key: string; anchor: Anchor | null }
   | { type: 'selMove'; key: string; anchor: Anchor | null }
@@ -196,7 +211,7 @@ function snapshot(s: CalendarState): Snapshot {
     items: s.items.map((t) => ({ ...t })),
     nextId: s.nextId,
     hidden: { ...s.hidden },
-    customGroups: s.customGroups.map((g) => ({ ...g })),
+    groups: s.groups.map((g) => ({ ...g })),
   };
 }
 
@@ -210,7 +225,7 @@ function commit(s: CalendarState, patch: Partial<CalendarState>): CalendarState 
 }
 
 function groupNames(s: CalendarState): string[] {
-  return ['学业', '中信实习', '中控项目', '求职'].concat(s.customGroups.map((g) => g.name));
+  return s.groups.map((g) => g.name);
 }
 
 function draftFrom(item: Item): ModalDraft {
@@ -308,8 +323,13 @@ function selectionDays(s: CalendarState): string[] {
 
 export function reducer(s: CalendarState, a: Action): CalendarState {
   switch (a.type) {
-    case 'hydrate':
-      return { ...s, ...a.data };
+    case 'hydrate': {
+      const { customGroups, ...rest } = a.data;
+      // 旧版存的是「四个内置分组 + customGroups」，迁移成统一的 groups
+      const groups =
+        rest.groups ?? (customGroups ? DEFAULT_GROUPS.concat(customGroups) : s.groups);
+      return { ...s, ...rest, groups };
+    }
 
     case 'prevMonth':
       return s.month === 1 ? { ...s, year: s.year - 1, month: 12 } : { ...s, month: s.month - 1 };
@@ -471,14 +491,83 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
     case 'addGroup': {
       const name = s.newGroupName.trim();
       if (!name || groupNames(s).includes(name)) return s;
-      const color =
-        s.newGroupColor || NEW_GROUP_COLORS[s.customGroups.length % NEW_GROUP_COLORS.length];
-      return {
-        ...s,
-        customGroups: s.customGroups.concat([{ name, color }]),
+      const color = s.newGroupColor || NEW_GROUP_COLORS[s.groups.length % NEW_GROUP_COLORS.length];
+      return commit(s, {
+        groups: s.groups.concat([{ name, color }]),
         newGroupName: '',
         modal: s.modal ? { ...s.modal, group: name, groupListOpen: false } : s.modal,
-      };
+      });
+    }
+
+    case 'openGroupEditor':
+      return { ...s, groupEditor: a.editor, settingsOpen: false, themeMenuOpen: false, ctx: null };
+    case 'patchGroupEditor':
+      return s.groupEditor ? { ...s, groupEditor: { ...s.groupEditor, ...a.patch } } : s;
+    case 'closeGroupEditor':
+      return { ...s, groupEditor: null };
+
+    case 'commitGroupEditor': {
+      const ed = s.groupEditor;
+      if (!ed) return s;
+      const name = ed.name.trim();
+      // 空名或与别的分组重名都当作放弃
+      if (!name || s.groups.some((g) => g.name === name && g.name !== ed.original)) {
+        return { ...s, groupEditor: null };
+      }
+
+      if (ed.mode === 'create') {
+        return commit(s, {
+          groups: s.groups.concat([{ name, color: ed.color }]),
+          groupEditor: null,
+          toast: `已新建分组「${name}」`,
+        });
+      }
+
+      const renamed = name !== ed.original;
+      const groups = s.groups.map((g) =>
+        g.name === ed.original ? { name, color: ed.color } : g,
+      );
+      // 改名要同步条目上的分组字段和显隐记录，否则条目会变成孤儿
+      const items = renamed
+        ? s.items.map((t) => (t.group === ed.original ? { ...t, group: name } : t))
+        : s.items;
+      const hidden = { ...s.hidden };
+      if (renamed && ed.original in hidden) {
+        hidden[name] = hidden[ed.original];
+        delete hidden[ed.original];
+      }
+      return commit(s, {
+        groups,
+        items,
+        hidden,
+        groupEditor: null,
+        toast: renamed ? `已改名为「${name}」` : `已更新分组「${name}」`,
+      });
+    }
+
+    case 'deleteGroupByName': {
+      const n = s.items.filter((t) => t.group === a.name).length;
+      const hidden = { ...s.hidden };
+      delete hidden[a.name];
+      // 条目改为未分组而不是一起删掉 —— 删分组不该顺手毁掉日程，且可撤销
+      return commit(s, {
+        groups: s.groups.filter((g) => g.name !== a.name),
+        items: s.items.map((t) => (t.group === a.name ? { ...t, group: '' } : t)),
+        hidden,
+        groupEditor: null,
+        toast: n
+          ? `已删除分组「${a.name}」，${n} 项改为未分组`
+          : `已删除分组「${a.name}」`,
+      });
+    }
+
+    case 'soloGroup': {
+      const others = s.groups.filter((g) => g.name !== a.name);
+      // 已经是只看这组了就恢复全部显示
+      const isSolo = others.every((g) => s.hidden[g.name]) && !s.hidden[a.name];
+      const hidden: Record<string, boolean> = {};
+      if (!isSolo) others.forEach((g) => (hidden[g.name] = true));
+      return commit(s, { hidden, groupEditor: null });
     }
 
     case 'toggleItemDone':
@@ -660,7 +749,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
         items: snap.items,
         nextId: snap.nextId,
         hidden: snap.hidden,
-        customGroups: snap.customGroups,
+        groups: snap.groups,
         history,
         toast: a.type === 'undoFromToast' ? null : s.toast,
       };

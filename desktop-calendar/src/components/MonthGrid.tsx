@@ -95,6 +95,7 @@ export function MonthGrid() {
                 dispatch({ type: 'dropOn', key });
               }}
             >
+              {isToday && <div className={styles.todayCell} />}
               {selected && (
                 <div
                   className={styles.selOverlay}

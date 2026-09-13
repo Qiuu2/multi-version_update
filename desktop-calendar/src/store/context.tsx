@@ -34,7 +34,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     state.items,
     state.nextId,
     state.hidden,
-    state.customGroups,
+    state.groups,
     state.showDone,
     state.showOther,
     state.theme,

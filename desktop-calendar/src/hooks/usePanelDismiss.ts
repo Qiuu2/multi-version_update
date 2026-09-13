@@ -17,6 +17,7 @@ export function usePanelDismiss() {
       const inCell = !!t?.closest?.('[data-daycell]');
 
       if (s.ctx && !inPopover) dispatch({ type: 'closeCtx' });
+      if (s.groupEditor && !inPopover) dispatch({ type: 'closeGroupEditor' });
       if (s.selActive && !inPopover && !inCell) dispatch({ type: 'selClear' });
       if (s.dayOpen && !inPopover && !inCell) dispatch({ type: 'closeDay' });
       if ((s.settingsOpen || s.themeMenuOpen || s.undatedOpen) && !t?.closest?.('[data-menu]')) {
@@ -27,5 +28,14 @@ export function usePanelDismiss() {
     };
     window.addEventListener('mousedown', onDown, true);
     return () => window.removeEventListener('mousedown', onDown, true);
-  }, [s.ctx, s.selActive, s.dayOpen, s.settingsOpen, s.themeMenuOpen, s.undatedOpen, dispatch]);
+  }, [
+    s.ctx,
+    s.groupEditor,
+    s.selActive,
+    s.dayOpen,
+    s.settingsOpen,
+    s.themeMenuOpen,
+    s.undatedOpen,
+    dispatch,
+  ]);
 }

@@ -1,4 +1,4 @@
-import type { Theme } from './types';
+import type { Group, Theme } from './types';
 
 /** 面板固定尺寸，浮层的夹取边界都按这两个数算 */
 export const PANEL_W = 980;
@@ -10,15 +10,16 @@ export const MONTH_RIGHT = 604;
 export const DAY_POPOVER_W = 248;
 export const DAY_POPOVER_MAX_H = 292;
 
-/** 内置分组识别色，不随主题变化 */
-export const BUILTIN_GROUPS = ['学业', '中信实习', '中控项目', '求职'] as const;
-
-export const BUILTIN_GROUP_COLORS: Record<string, string> = {
-  学业: '#4E7A8C',
-  中信实习: '#C25B3A',
-  中控项目: '#7A8B4A',
-  求职: '#9A6B8C',
-};
+/**
+ * 首次运行时的默认分组。识别色不随主题变化。
+ * 这些只是初始数据 —— 和用户后来新建的分组一样可以改名、改色、删除。
+ */
+export const DEFAULT_GROUPS: Group[] = [
+  { name: '学业', color: '#4E7A8C' },
+  { name: '中信实习', color: '#C25B3A' },
+  { name: '中控项目', color: '#7A8B4A' },
+  { name: '求职', color: '#9A6B8C' },
+];
 
 /** 新建分组的 8 个可选配色 */
 export const NEW_GROUP_COLORS = [

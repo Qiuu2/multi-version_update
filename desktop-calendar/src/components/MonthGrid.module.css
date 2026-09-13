@@ -48,6 +48,18 @@
   cursor: pointer;
 }
 
+/* 今天：整格淡强调底 + 四周虚线框。
+   用绝对定位层画，避免 border 撑变格子尺寸、破坏 1px 网格线。 */
+.todayCell {
+  position: absolute;
+  inset: 0;
+  background: var(--c-accent-soft);
+  border: 1.5px dashed var(--c-accent);
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* 框选染色层：上下满描边，首末格补侧边描边与圆角 */
 .selOverlay {
   position: absolute;

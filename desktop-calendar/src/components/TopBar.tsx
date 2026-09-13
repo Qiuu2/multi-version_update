@@ -1,7 +1,8 @@
-import { SCALE_STEPS, THEME_OPTIONS } from '../constants';
+import { NEW_GROUP_COLORS, SCALE_STEPS, THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
 import { hideToTray, isTauri, snapCorner } from '../lib/platform';
+import { usePanel } from './PanelContext';
 import { useCalendar, useDispatch } from '../store/context';
 import { allGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
 import base from '../styles/base.module.css';
@@ -11,6 +12,7 @@ import styles from './TopBar.module.css';
 export function TopBar() {
   const s = useCalendar();
   const dispatch = useDispatch();
+  const { anchorOf } = usePanel();
   const colors = groupColors(s);
   const matches = searchMatches(s);
   const searchOpen = s.searchFocused && !!s.search.trim();
@@ -41,7 +43,23 @@ export function TopBar() {
               key={name}
               type="button"
               className={styles.legendItem}
+              title={`${name} · 点击切换显隐，右键编辑分组`}
               onClick={() => dispatch({ type: 'toggleGroupHidden', name })}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const a = anchorOf(e.currentTarget);
+                dispatch({
+                  type: 'openGroupEditor',
+                  editor: {
+                    mode: 'edit',
+                    original: name,
+                    name,
+                    color: colors[name],
+                    left: a ? a.left + a.w / 2 : 480,
+                  },
+                });
+              }}
             >
               <span
                 className={base.dot}
@@ -59,6 +77,26 @@ export function TopBar() {
             </button>
           );
         })}
+        <button
+          type="button"
+          className={styles.legendAdd}
+          title="新建分组"
+          onClick={(e) => {
+            const a = anchorOf(e.currentTarget);
+            dispatch({
+              type: 'openGroupEditor',
+              editor: {
+                mode: 'create',
+                original: '',
+                name: '',
+                color: NEW_GROUP_COLORS[s.groups.length % NEW_GROUP_COLORS.length],
+                left: a ? a.left + a.w / 2 : 480,
+              },
+            });
+          }}
+        >
+          +
+        </button>
       </div>
 
       <div className={styles.right}>

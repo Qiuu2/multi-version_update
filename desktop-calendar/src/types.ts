@@ -46,9 +46,21 @@ export interface Item {
   subtasks?: Subtask[];
 }
 
-export interface CustomGroup {
+/** 一个日历分组（用户口中的「项目」） */
+export interface Group {
   name: string;
   color: string;
+}
+
+/** 图例上的新建 / 编辑分组浮层 */
+export interface GroupEditorState {
+  mode: 'create' | 'edit';
+  /** 编辑前的名字，重命名时用来定位原分组 */
+  original: string;
+  name: string;
+  color: string;
+  /** 浮层锚点，相对面板左上角 */
+  left: number;
 }
 
 /** 编辑弹窗的草稿，含各互斥浮层的开关 */

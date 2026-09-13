@@ -1,20 +1,19 @@
-import { BUILTIN_GROUPS, BUILTIN_GROUP_COLORS } from '../constants';
 import { diffDays } from '../lib/date';
 import { timeOf } from '../lib/item';
 import type { Item } from '../types';
 import type { CalendarState } from './reducer';
 
-/** 分组名 → 识别色，含用户新增的分组 */
+/** 分组名 → 识别色 */
 export function groupColors(s: CalendarState): Record<string, string> {
-  const out: Record<string, string> = { ...BUILTIN_GROUP_COLORS };
-  s.customGroups.forEach((g) => {
+  const out: Record<string, string> = {};
+  s.groups.forEach((g) => {
     out[g.name] = g.color;
   });
   return out;
 }
 
 export function allGroups(s: CalendarState): string[] {
-  return (BUILTIN_GROUPS as readonly string[]).concat(s.customGroups.map((g) => g.name));
+  return s.groups.map((g) => g.name);
 }
 
 /** 未分组的色点用 --c-dot-empty，条目色块用 --c-faint（原型如此） */
