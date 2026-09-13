@@ -1,6 +1,7 @@
 import { THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
+import { closeWindow, isTauri } from '../lib/platform';
 import { useCalendar, useDispatch } from '../store/context';
 import { allGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
 import base from '../styles/base.module.css';
@@ -15,7 +16,7 @@ export function TopBar() {
   const searchOpen = s.searchFocused && !!s.search.trim();
 
   return (
-    <div className={styles.bar}>
+    <div className={styles.bar} data-tauri-drag-region>
       <div className={styles.left}>
         <button type="button" className={base.navBtn} title="上一月" onClick={() => dispatch({ type: 'prevMonth' })}>
           ‹
@@ -32,7 +33,7 @@ export function TopBar() {
       </div>
 
       {/* 点色点切换该分组在月视图与右侧栏的显隐；隐藏时色点变空心 */}
-      <div className={styles.legend}>
+      <div className={styles.legend} data-tauri-drag-region>
         {allGroups(s).map((name) => {
           const off = !!s.hidden[name];
           return (
@@ -165,7 +166,11 @@ export function TopBar() {
           type="button"
           title="关闭"
           className={`${base.iconBtn} ${styles.closeBtn}`}
-          onClick={() => dispatch({ type: 'closePanel' })}
+          onClick={() => {
+            void closeWindow().then((closed) => {
+              if (!closed) dispatch({ type: 'closePanel' });
+            });
+          }}
         >
           ×
         </button>
@@ -181,6 +186,17 @@ export function TopBar() {
             <span>显示非本月日期</span>
             <span className={styles.mark}>{s.showOther ? '✓' : ''}</span>
           </button>
+          {isTauri() && (
+            <button
+              type="button"
+              className={styles.settingsRow}
+              title="贴在桌面上，压在其他窗口之下，并从任务栏隐去"
+              onClick={() => dispatch({ type: 'setDesktopMode', value: !s.desktopMode })}
+            >
+              <span>桌面模式</span>
+              <span className={styles.mark}>{s.desktopMode ? '✓' : ''}</span>
+            </button>
+          )}
         </div>
       )}
     </div>

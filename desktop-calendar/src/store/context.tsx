@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react';
+import { setDesktopMode } from '../lib/platform';
 import { storage } from './persistence';
 import { initialState, pickPersisted, reducer, type Action, type CalendarState } from './reducer';
 
@@ -37,7 +38,13 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     state.showDone,
     state.showOther,
     state.theme,
+    state.desktopMode,
   ]);
+
+  // 把桌面模式同步到真实窗口（浏览器下是空操作）
+  useEffect(() => {
+    void setDesktopMode(state.desktopMode);
+  }, [state.desktopMode]);
 
   return (
     <StateCtx.Provider value={state}>

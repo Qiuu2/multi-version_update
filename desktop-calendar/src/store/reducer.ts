@@ -33,6 +33,8 @@ export interface CalendarState {
   showDone: boolean;
   showOther: boolean;
   theme: Theme;
+  /** 桌面模式：窗口压到底层、从任务栏隐去（仅 Tauri 下有效） */
+  desktopMode: boolean;
 
   search: string;
   searchFocused: boolean;
@@ -68,7 +70,14 @@ export interface CalendarState {
 /** 持久化的字段；UI 瞬时状态不落盘 */
 export type Persisted = Pick<
   CalendarState,
-  'items' | 'nextId' | 'hidden' | 'customGroups' | 'showDone' | 'showOther' | 'theme'
+  | 'items'
+  | 'nextId'
+  | 'hidden'
+  | 'customGroups'
+  | 'showDone'
+  | 'showOther'
+  | 'theme'
+  | 'desktopMode'
 >;
 
 export function pickPersisted(s: CalendarState): Persisted {
@@ -80,6 +89,7 @@ export function pickPersisted(s: CalendarState): Persisted {
     showDone: s.showDone,
     showOther: s.showOther,
     theme: s.theme,
+    desktopMode: s.desktopMode,
   };
 }
 
@@ -95,6 +105,7 @@ export function initialState(): CalendarState {
     showDone: true,
     showOther: true,
     theme: 'light',
+    desktopMode: false,
     search: '',
     searchFocused: false,
     settingsOpen: false,
@@ -130,6 +141,7 @@ export type Action =
   | { type: 'toggleSettings' }
   | { type: 'toggleShowDone' }
   | { type: 'toggleShowOther' }
+  | { type: 'setDesktopMode'; value: boolean }
   | { type: 'toggleUndated' }
   | { type: 'closePanel' }
   | { type: 'reopenPanel' }
@@ -314,6 +326,8 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return { ...s, showDone: !s.showDone };
     case 'toggleShowOther':
       return { ...s, showOther: !s.showOther };
+    case 'setDesktopMode':
+      return { ...s, desktopMode: a.value };
     case 'toggleUndated':
       return { ...s, undatedOpen: !s.undatedOpen, settingsOpen: false, themeMenuOpen: false };
 

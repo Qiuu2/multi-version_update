@@ -17,13 +17,20 @@
         "height": 622,
         "resizable": false,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "maximizable": false,
+        "alwaysOnBottom": false,
+        "skipTaskbar": false
       }
     ],
     "security": {
       "csp": null
     },
-    "withGlobalTauri": true
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,

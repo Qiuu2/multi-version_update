@@ -34,10 +34,34 @@ fn save_state(app: tauri::AppHandle, contents: String) -> Result<(), String> {
     fs::rename(&tmp, &path).map_err(|e| format!("落盘失败: {e}"))
 }
 
+/// 桌面模式：把窗口压到所有窗口之下、并从任务栏和 Alt+Tab 里隐去，
+/// 让它像桌面小组件一样贴在桌面上，而不是一个会挡住工作的浮窗。
+#[tauri::command]
+fn set_desktop_mode(window: tauri::Window, enabled: bool) -> Result<(), String> {
+    window
+        .set_always_on_bottom(enabled)
+        .map_err(|e| format!("设置窗口层级失败: {e}"))?;
+    window
+        .set_skip_taskbar(enabled)
+        .map_err(|e| format!("设置任务栏显示失败: {e}"))?;
+    Ok(())
+}
+
+/// 窗口是无边框的，没有系统标题栏，关闭要由面板自己的按钮触发
+#[tauri::command]
+fn close_window(window: tauri::Window) -> Result<(), String> {
+    window.close().map_err(|e| format!("关闭窗口失败: {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![load_state, save_state])
+        .invoke_handler(tauri::generate_handler![
+            load_state,
+            save_state,
+            set_desktop_mode,
+            close_window
+        ])
         .run(tauri::generate_context!())
         .expect("启动失败");
 }

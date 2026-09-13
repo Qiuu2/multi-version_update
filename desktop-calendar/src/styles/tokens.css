@@ -90,6 +90,12 @@ body {
   justify-content: center;
 }
 
+/* 无边框透明窗口：页面本身不能有底色，面板的圆角外必须是真透明 */
+[data-shell='tauri'],
+[data-shell='tauri'] body {
+  background: transparent;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
