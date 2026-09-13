@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use tauri::menu::{Menu, MenuItem};
@@ -12,9 +13,21 @@ const PANEL_H: f64 = 622.0;
 
 const MAIN_WINDOW: &str = "main";
 
-/// 窗口最近一次的位置，随拖动更新，在关闭 / 收进托盘时落盘
+/// 窗口边距，吸附和夹回屏内时都用它
+const MARGIN: f64 = 16.0;
+
 #[derive(Default)]
-struct LastPosition(Mutex<Option<(i32, i32)>>);
+struct AppState {
+    /// 窗口最近一次的位置，随拖动更新，关闭 / 收起 / 退出时落盘
+    last_position: Mutex<Option<(i32, i32)>>,
+    /// 桌面模式是否开启。失焦后要据此决定是否把窗口放回底层，
+    /// 所以 Rust 侧也要留一份，不能只存在前端。
+    desktop_mode: AtomicBool,
+    /// 窗口当前是否已处于底层。
+    /// set_skip_taskbar 在 Windows 上会改窗口扩展样式，可能再引发一次失焦；
+    /// 记住已应用的状态，重复调用直接跳过，避免失焦 -> 下沉 -> 再失焦的抖动。
+    sunk: AtomicBool,
+}
 
 fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app
@@ -25,18 +38,14 @@ fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// 日程数据文件，例如 Windows 下的
-/// %APPDATA%\com.local.calendar\calendar.json
 fn state_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(data_dir(app)?.join("calendar.json"))
 }
 
-/// 窗口位置单独存，免得和日程数据互相干扰
 fn window_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(data_dir(app)?.join("window.json"))
 }
 
-/// 读状态；文件不存在时返回 None，前端会退回种子数据
 #[tauri::command]
 fn load_state(app: tauri::AppHandle) -> Result<Option<String>, String> {
     let path = state_path(&app)?;
@@ -57,43 +66,98 @@ fn save_state(app: tauri::AppHandle, contents: String) -> Result<(), String> {
     fs::rename(&tmp, &path).map_err(|e| format!("落盘失败: {e}"))
 }
 
-/// 桌面模式：压到所有窗口之下，像桌面小组件一样待在桌面上。
-/// 任务栏按钮一直是关掉的（改由托盘图标进入），所以这里只管层级。
-#[tauri::command]
-fn set_desktop_mode(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
-    window
-        .set_always_on_bottom(enabled)
-        .map_err(|e| format!("设置窗口层级失败: {e}"))
+// ---------- 窗口层级 ----------
+
+/// 应用窗口层级。状态没变就不动手，避免多余的样式改动引发抖动。
+fn apply_layer(app: &tauri::AppHandle, window: &tauri::WebviewWindow, on_bottom: bool) {
+    let state = app.state::<AppState>();
+    if state.sunk.swap(on_bottom, Ordering::Relaxed) == on_bottom {
+        return;
+    }
+    // 桌面模式下压到底层、并从任务栏隐去（改由托盘图标进出）
+    let _ = window.set_always_on_bottom(on_bottom);
+    let _ = window.set_skip_taskbar(on_bottom);
 }
 
-/// 缩放变化时把窗口调成 设计尺寸 × 缩放
+#[tauri::command]
+fn set_desktop_mode(
+    app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
+    enabled: bool,
+) -> Result<(), String> {
+    app.state::<AppState>()
+        .desktop_mode
+        .store(enabled, Ordering::Relaxed);
+    apply_layer(&app, &window, enabled);
+    Ok(())
+}
+
 #[tauri::command]
 fn set_window_scale(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
     let k = scale.clamp(0.5, 2.0);
     window
         .set_size(LogicalSize::new(PANEL_W * k, PANEL_H * k))
-        .map_err(|e| format!("调整窗口大小失败: {e}"))
+        .map_err(|e| format!("调整窗口大小失败: {e}"))?;
+    // 放大后可能超出屏幕，顺手夹回来
+    ensure_on_screen(&window);
+    Ok(())
 }
 
-/// 吸附到屏幕某个角。用 work_area 而不是整块屏幕，这样不会被任务栏压住。
-#[tauri::command]
-fn snap_corner(window: tauri::WebviewWindow, corner: String) -> Result<(), String> {
+/// 取窗口所在显示器的可用区（排除任务栏）；窗口整个跑到屏外时退回主显示器
+fn work_area(window: &tauri::WebviewWindow) -> Option<(i32, i32, i32, i32, f64)> {
     let monitor = window
         .current_monitor()
-        .map_err(|e| format!("取显示器信息失败: {e}"))?
-        .ok_or_else(|| "找不到当前显示器".to_string())?;
+        .ok()
+        .flatten()
+        .or_else(|| window.primary_monitor().ok().flatten())?;
+    let a = monitor.work_area();
+    Some((
+        a.position.x,
+        a.position.y,
+        a.size.width as i32,
+        a.size.height as i32,
+        monitor.scale_factor(),
+    ))
+}
 
-    let area = monitor.work_area();
+/// 把窗口夹回可用区内。
+/// 换显示器、改分辨率、或存下的坐标已失效时，窗口会整个落在屏幕外，
+/// 那时它既看不见也点不到 —— 这里保证它永远至少有一部分在屏内。
+fn ensure_on_screen(window: &tauri::WebviewWindow) {
+    let (Some((ax, ay, aw, ah, sf)), Ok(size), Ok(pos)) = (
+        work_area(window),
+        window.outer_size(),
+        window.outer_position(),
+    ) else {
+        return;
+    };
+    let m = (MARGIN * sf).round() as i32;
+    let w = size.width as i32;
+    let h = size.height as i32;
+
+    // 窗口比可用区还大时贴左上，否则夹在 [边距, 可用区右/下边 - 窗口尺寸 - 边距]
+    let max_x = (ax + aw - w - m).max(ax + m);
+    let max_y = (ay + ah - h - m).max(ay + m);
+    let x = pos.x.clamp(ax + m, max_x);
+    let y = pos.y.clamp(ay + m, max_y);
+
+    if x != pos.x || y != pos.y {
+        let _ = window.set_position(PhysicalPosition::new(x, y));
+    }
+}
+
+#[tauri::command]
+fn snap_corner(window: tauri::WebviewWindow, corner: String) -> Result<(), String> {
+    let (ax, ay, aw, ah, sf) = work_area(&window).ok_or("找不到当前显示器")?;
     let size = window
         .outer_size()
         .map_err(|e| format!("取窗口尺寸失败: {e}"))?;
 
-    // 留一点边距，别顶死屏幕边缘
-    let margin = (16.0 * monitor.scale_factor()).round() as i32;
-    let left = area.position.x + margin;
-    let top = area.position.y + margin;
-    let right = area.position.x + area.size.width as i32 - size.width as i32 - margin;
-    let bottom = area.position.y + area.size.height as i32 - size.height as i32 - margin;
+    let m = (MARGIN * sf).round() as i32;
+    let left = ax + m;
+    let top = ay + m;
+    let right = ax + aw - size.width as i32 - m;
+    let bottom = ay + ah - size.height as i32 - m;
 
     let (x, y) = match corner.as_str() {
         "tl" => (left, top),
@@ -107,56 +171,124 @@ fn snap_corner(window: tauri::WebviewWindow, corner: String) -> Result<(), Strin
         .map_err(|e| format!("移动窗口失败: {e}"))
 }
 
-/// 收进托盘。窗口是无边框的，面板右上角的 × 走这里，
-/// 真正退出要用托盘菜单，免得关掉之后只能回开始菜单找。
-#[tauri::command]
-fn hide_to_tray(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
-    persist_position(&app);
-    window.hide().map_err(|e| format!("隐藏窗口失败: {e}"))
+/// 把窗口切实带到用户眼前。
+/// 托盘左键、托盘菜单「显示」都走这里，且**不做任何 toggle 判断** ——
+/// is_visible() 只表示「没被 hide」，桌面模式下窗口永远是 visible 但压在最底层，
+/// 用它来回切会让人永远看不到窗口。
+fn bring_to_front(app: &tauri::AppHandle) {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
+        return;
+    };
+    let _ = window.unminimize();
+    let _ = window.show();
+    // 先脱离底层，否则 show 完立刻沉下去，只留一次抢焦点（表现为输入法被切走）
+    apply_layer(app, &window, false);
+    ensure_on_screen(&window);
+    let _ = window.set_focus();
 }
 
+/// 失焦后放回桌面层：用户点别处时它自己沉下去，不挡事
+fn sink_if_desktop(app: &tauri::AppHandle) {
+    if !app.state::<AppState>().desktop_mode.load(Ordering::Relaxed) {
+        return;
+    }
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+        apply_layer(app, &window, true);
+    }
+}
+
+fn hide_window(app: &tauri::AppHandle) {
+    persist_position(app);
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+        let _ = window.hide();
+    }
+}
+
+#[tauri::command]
+fn hide_to_tray(app: tauri::AppHandle) -> Result<(), String> {
+    hide_window(&app);
+    Ok(())
+}
+
+/// 卡住时的退路：清掉记住的位置、关掉桌面模式（含写回 calendar.json，
+/// 否则下次启动又会沉下去）、吸附到右下角并拿到前台。
+fn reset_window(app: &tauri::AppHandle) {
+    if let Ok(path) = window_path(app) {
+        let _ = fs::remove_file(path);
+    }
+    if let Ok(mut guard) = app.state::<AppState>().last_position.lock() {
+        *guard = None;
+    }
+    app.state::<AppState>()
+        .desktop_mode
+        .store(false, Ordering::Relaxed);
+
+    if let Ok(path) = state_path(app) {
+        if let Ok(raw) = fs::read_to_string(&path) {
+            if let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&raw) {
+                if let Some(obj) = v.as_object_mut() {
+                    obj.insert("desktopMode".into(), serde_json::Value::Bool(false));
+                    if let Ok(out) = serde_json::to_string_pretty(&v) {
+                        let _ = fs::write(&path, out);
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
+        apply_layer(app, &window, false);
+        let _ = snap_corner(window, "br".into());
+    }
+    bring_to_front(app);
+}
+
+// ---------- 位置记忆 ----------
+
 fn persist_position(app: &tauri::AppHandle) {
-    let pos = app.state::<LastPosition>().0.lock().ok().and_then(|g| *g);
+    let pos = app
+        .state::<AppState>()
+        .last_position
+        .lock()
+        .ok()
+        .and_then(|g| *g);
     if let (Some((x, y)), Ok(path)) = (pos, window_path(app)) {
         let _ = fs::write(path, format!("{{\"x\":{x},\"y\":{y}}}"));
     }
 }
 
-fn restore_position(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
+/// 返回 true 表示读到了存档位置；false 表示这是首次运行
+fn restore_position(app: &tauri::AppHandle, window: &tauri::WebviewWindow) -> bool {
     let Ok(path) = window_path(app) else {
-        return;
+        return false;
     };
     let Ok(raw) = fs::read_to_string(path) else {
-        return;
+        return false;
     };
     let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
-        return;
+        return false;
     };
-    if let (Some(x), Some(y)) = (
+    match (
         v.get("x").and_then(serde_json::Value::as_i64),
         v.get("y").and_then(serde_json::Value::as_i64),
     ) {
-        let _ = window.set_position(PhysicalPosition::new(x as i32, y as i32));
-    }
-}
-
-fn toggle_window(app: &tauri::AppHandle) {
-    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
-        return;
-    };
-    if window.is_visible().unwrap_or(false) {
-        persist_position(app);
-        let _ = window.hide();
-    } else {
-        let _ = window.show();
-        let _ = window.set_focus();
+        (Some(x), Some(y)) => {
+            let _ = window.set_position(PhysicalPosition::new(x as i32, y as i32));
+            ensure_on_screen(window);
+            true
+        }
+        _ => false,
     }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(LastPosition::default())
+        // 单实例：再次启动只把已有窗口带到前面，不再开一个看不见的新进程
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            bring_to_front(app);
+        }))
+        .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             load_state,
             save_state,
@@ -168,23 +300,28 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // 托盘：任务栏里不占位置，从通知区域进出
-            let toggle = MenuItem::with_id(app, "toggle", "显示 / 隐藏", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, "show", "显示日历", true, None::<&str>)?;
+            let hide = MenuItem::with_id(app, "hide", "隐藏到托盘", true, None::<&str>)?;
             let snap = MenuItem::with_id(app, "snap_br", "吸附到右下角", true, None::<&str>)?;
+            let reset =
+                MenuItem::with_id(app, "reset", "重置窗口（找不到时用）", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&toggle, &snap, &quit])?;
+            let menu = Menu::with_items(app, &[&show, &hide, &snap, &reset, &quit])?;
 
             let mut tray = TrayIconBuilder::with_id("main-tray")
-                .tooltip("本地日历")
+                .tooltip("本地日历（左键点出窗口）")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "toggle" => toggle_window(app),
+                    "show" => bring_to_front(app),
+                    "hide" => hide_window(app),
                     "snap_br" => {
                         if let Some(w) = app.get_webview_window(MAIN_WINDOW) {
                             let _ = snap_corner(w, "br".into());
                         }
+                        bring_to_front(app);
                     }
+                    "reset" => reset_window(app),
                     "quit" => {
                         persist_position(app);
                         app.exit(0);
@@ -192,14 +329,14 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    // 左键单击切换显示，右键留给菜单
+                    // 左键只负责「把窗口拿到眼前」，隐藏交给菜单，避免盲目 toggle
                     if let TrayIconEvent::Click {
                         button: MouseButton::Left,
                         button_state: MouseButtonState::Up,
                         ..
                     } = event
                     {
-                        toggle_window(tray.app_handle());
+                        bring_to_front(tray.app_handle());
                     }
                 });
             if let Some(icon) = app.default_window_icon() {
@@ -208,17 +345,22 @@ pub fn run() {
             tray.build(app)?;
 
             if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
-                restore_position(&handle, &window);
+                // 首次运行直接摆到右下角，而不是屏幕正中
+                if !restore_position(&handle, &window) {
+                    let _ = snap_corner(window.clone(), "br".into());
+                }
 
-                let moved_handle = handle.clone();
+                let ev_handle = handle.clone();
                 window.on_window_event(move |event| match event {
                     WindowEvent::Moved(pos) => {
-                        if let Ok(mut guard) = moved_handle.state::<LastPosition>().0.lock() {
+                        if let Ok(mut guard) = ev_handle.state::<AppState>().last_position.lock() {
                             *guard = Some((pos.x, pos.y));
                         }
                     }
+                    // 用户点到别处就放回桌面层
+                    WindowEvent::Focused(false) => sink_if_desktop(&ev_handle),
                     WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => {
-                        persist_position(&moved_handle);
+                        persist_position(&ev_handle);
                     }
                     _ => {}
                 });

@@ -23,7 +23,7 @@
         "shadow": false,
         "maximizable": false,
         "alwaysOnBottom": false,
-        "skipTaskbar": true,
+        "skipTaskbar": false,
         "label": "main"
       }
     ],
