@@ -60,7 +60,7 @@ fn save_state(app: tauri::AppHandle, contents: String) -> Result<(), String> {
 /// 桌面模式：压到所有窗口之下，像桌面小组件一样待在桌面上。
 /// 任务栏按钮一直是关掉的（改由托盘图标进入），所以这里只管层级。
 #[tauri::command]
-fn set_desktop_mode(window: tauri::Window, enabled: bool) -> Result<(), String> {
+fn set_desktop_mode(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
     window
         .set_always_on_bottom(enabled)
         .map_err(|e| format!("设置窗口层级失败: {e}"))
@@ -68,7 +68,7 @@ fn set_desktop_mode(window: tauri::Window, enabled: bool) -> Result<(), String> 
 
 /// 缩放变化时把窗口调成 设计尺寸 × 缩放
 #[tauri::command]
-fn set_window_scale(window: tauri::Window, scale: f64) -> Result<(), String> {
+fn set_window_scale(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
     let k = scale.clamp(0.5, 2.0);
     window
         .set_size(LogicalSize::new(PANEL_W * k, PANEL_H * k))
@@ -77,7 +77,7 @@ fn set_window_scale(window: tauri::Window, scale: f64) -> Result<(), String> {
 
 /// 吸附到屏幕某个角。用 work_area 而不是整块屏幕，这样不会被任务栏压住。
 #[tauri::command]
-fn snap_corner(window: tauri::Window, corner: String) -> Result<(), String> {
+fn snap_corner(window: tauri::WebviewWindow, corner: String) -> Result<(), String> {
     let monitor = window
         .current_monitor()
         .map_err(|e| format!("取显示器信息失败: {e}"))?
@@ -110,7 +110,7 @@ fn snap_corner(window: tauri::Window, corner: String) -> Result<(), String> {
 /// 收进托盘。窗口是无边框的，面板右上角的 × 走这里，
 /// 真正退出要用托盘菜单，免得关掉之后只能回开始菜单找。
 #[tauri::command]
-fn hide_to_tray(app: tauri::AppHandle, window: tauri::Window) -> Result<(), String> {
+fn hide_to_tray(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
     persist_position(&app);
     window.hide().map_err(|e| format!("隐藏窗口失败: {e}"))
 }
@@ -122,7 +122,7 @@ fn persist_position(app: &tauri::AppHandle) {
     }
 }
 
-fn restore_position(app: &tauri::AppHandle, window: &tauri::Window) {
+fn restore_position(app: &tauri::AppHandle, window: &tauri::WebviewWindow) {
     let Ok(path) = window_path(app) else {
         return;
     };
@@ -141,7 +141,7 @@ fn restore_position(app: &tauri::AppHandle, window: &tauri::Window) {
 }
 
 fn toggle_window(app: &tauri::AppHandle) {
-    let Some(window) = app.get_window(MAIN_WINDOW) else {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
         return;
     };
     if window.is_visible().unwrap_or(false) {
@@ -181,7 +181,7 @@ pub fn run() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "toggle" => toggle_window(app),
                     "snap_br" => {
-                        if let Some(w) = app.get_window(MAIN_WINDOW) {
+                        if let Some(w) = app.get_webview_window(MAIN_WINDOW) {
                             let _ = snap_corner(w, "br".into());
                         }
                     }
@@ -207,7 +207,7 @@ pub fn run() {
             }
             tray.build(app)?;
 
-            if let Some(window) = app.get_window(MAIN_WINDOW) {
+            if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
                 restore_position(&handle, &window);
 
                 let moved_handle = handle.clone();
