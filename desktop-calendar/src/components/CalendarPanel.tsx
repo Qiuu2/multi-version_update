@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
+import { PANEL_H, PANEL_W } from '../constants';
 import { useGlobalKeys } from '../hooks/useGlobalKeys';
 import { usePanelDismiss } from '../hooks/usePanelDismiss';
 import { useToastTimer } from '../hooks/useToastTimer';
@@ -27,29 +28,44 @@ export function CalendarPanel() {
   usePanelDismiss();
   useToastTimer();
 
+  // 面板被 transform 缩放后，getBoundingClientRect 给的是缩放后的值，
+  // 而浮层用的是面板内部的 CSS 像素坐标，所以这里统一除回去。
   const anchorOf = useCallback((el: Element | null) => {
     const root = rootRef.current;
     if (!root || !el) return null;
-    const r = el.getBoundingClientRect();
     const rr = root.getBoundingClientRect();
-    return { left: r.left - rr.left, top: r.top - rr.top, w: r.width, h: r.height };
+    const k = rr.width / PANEL_W || 1;
+    const r = el.getBoundingClientRect();
+    return {
+      left: (r.left - rr.left) / k,
+      top: (r.top - rr.top) / k,
+      w: r.width / k,
+      h: r.height / k,
+    };
   }, []);
 
   const toPanel = useCallback((clientX: number, clientY: number) => {
     const root = rootRef.current;
     if (!root) return { x: clientX, y: clientY };
     const rr = root.getBoundingClientRect();
-    return { x: clientX - rr.left, y: clientY - rr.top };
+    const k = rr.width / PANEL_W || 1;
+    return { x: (clientX - rr.left) / k, y: (clientY - rr.top) / k };
   }, []);
 
   const api = useMemo(() => ({ anchorOf, toPanel }), [anchorOf, toPanel]);
 
   return (
     <PanelContext.Provider value={api}>
+      {/* 视口占掉缩放后的实际尺寸，面板本体在里面按 scale 绘制 */}
+      <div
+        className={styles.viewport}
+        style={{ width: PANEL_W * s.scale, height: PANEL_H * s.scale }}
+      >
       <div
         ref={rootRef}
         data-cal-theme={s.theme}
         className={styles.panel}
+        style={{ transform: `scale(${s.scale})`, transformOrigin: 'top left' }}
         onMouseEnter={() => {
           pointerIn.current = true;
         }}
@@ -88,6 +104,7 @@ export function CalendarPanel() {
             <ItemModal />
           </>
         )}
+      </div>
       </div>
     </PanelContext.Provider>
   );

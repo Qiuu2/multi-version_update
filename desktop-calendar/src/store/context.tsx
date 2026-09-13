@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react';
-import { setDesktopMode } from '../lib/platform';
+import { setDesktopMode, setWindowScale } from '../lib/platform';
 import { storage } from './persistence';
 import { initialState, pickPersisted, reducer, type Action, type CalendarState } from './reducer';
 
@@ -39,12 +39,17 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     state.showOther,
     state.theme,
     state.desktopMode,
+    state.scale,
   ]);
 
-  // 把桌面模式同步到真实窗口（浏览器下是空操作）
+  // 把桌面模式与缩放同步到真实窗口（浏览器下是空操作）
   useEffect(() => {
     void setDesktopMode(state.desktopMode);
   }, [state.desktopMode]);
+
+  useEffect(() => {
+    void setWindowScale(state.scale);
+  }, [state.scale]);
 
   return (
     <StateCtx.Provider value={state}>

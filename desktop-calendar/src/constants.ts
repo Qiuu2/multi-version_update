@@ -70,3 +70,7 @@ export const HISTORY_LIMIT = 20;
 export const TOAST_MS = 5000;
 /** 单元格内最多显示的条目数，超出走「+N 更多」 */
 export const MAX_CELL_ENTRIES = 3;
+
+/** 面板缩放的可选档位 */
+export const SCALE_STEPS = [0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2];
+export const DEFAULT_SCALE = 1;

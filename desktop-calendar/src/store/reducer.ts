@@ -1,4 +1,4 @@
-import { HISTORY_LIMIT, NEW_GROUP_COLORS } from '../constants';
+import { DEFAULT_SCALE, HISTORY_LIMIT, NEW_GROUP_COLORS, SCALE_STEPS } from '../constants';
 import { daysBetween, fmtShort, nextMonday, shiftDate, todayIso } from '../lib/date';
 import { stripTime, timeOf } from '../lib/item';
 import type {
@@ -33,8 +33,10 @@ export interface CalendarState {
   showDone: boolean;
   showOther: boolean;
   theme: Theme;
-  /** 桌面模式：窗口压到底层、从任务栏隐去（仅 Tauri 下有效） */
+  /** 桌面模式：窗口压到底层（仅 Tauri 下有效） */
   desktopMode: boolean;
+  /** 面板整体缩放，窗口大小随之变化 */
+  scale: number;
 
   search: string;
   searchFocused: boolean;
@@ -78,6 +80,7 @@ export type Persisted = Pick<
   | 'showOther'
   | 'theme'
   | 'desktopMode'
+  | 'scale'
 >;
 
 export function pickPersisted(s: CalendarState): Persisted {
@@ -90,6 +93,7 @@ export function pickPersisted(s: CalendarState): Persisted {
     showOther: s.showOther,
     theme: s.theme,
     desktopMode: s.desktopMode,
+    scale: s.scale,
   };
 }
 
@@ -106,6 +110,7 @@ export function initialState(): CalendarState {
     showOther: true,
     theme: 'light',
     desktopMode: false,
+    scale: DEFAULT_SCALE,
     search: '',
     searchFocused: false,
     settingsOpen: false,
@@ -142,6 +147,7 @@ export type Action =
   | { type: 'toggleShowDone' }
   | { type: 'toggleShowOther' }
   | { type: 'setDesktopMode'; value: boolean }
+  | { type: 'stepScale'; delta: number }
   | { type: 'toggleUndated' }
   | { type: 'closePanel' }
   | { type: 'reopenPanel' }
@@ -328,6 +334,13 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return { ...s, showOther: !s.showOther };
     case 'setDesktopMode':
       return { ...s, desktopMode: a.value };
+    case 'stepScale': {
+      // 在档位表里前后挪一格，夹在两端
+      const i = SCALE_STEPS.indexOf(s.scale);
+      const from = i === -1 ? SCALE_STEPS.indexOf(DEFAULT_SCALE) : i;
+      const next = Math.min(SCALE_STEPS.length - 1, Math.max(0, from + a.delta));
+      return s.scale === SCALE_STEPS[next] ? s : { ...s, scale: SCALE_STEPS[next] };
+    }
     case 'toggleUndated':
       return { ...s, undatedOpen: !s.undatedOpen, settingsOpen: false, themeMenuOpen: false };
 

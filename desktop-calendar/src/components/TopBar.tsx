@@ -1,7 +1,7 @@
-import { THEME_OPTIONS } from '../constants';
+import { SCALE_STEPS, THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
-import { closeWindow, isTauri } from '../lib/platform';
+import { hideToTray, isTauri, snapCorner } from '../lib/platform';
 import { useCalendar, useDispatch } from '../store/context';
 import { allGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
 import base from '../styles/base.module.css';
@@ -17,7 +17,7 @@ export function TopBar() {
 
   return (
     <div className={styles.bar} data-tauri-drag-region>
-      <div className={styles.left}>
+      <div className={styles.left} data-tauri-drag-region>
         <button type="button" className={base.navBtn} title="上一月" onClick={() => dispatch({ type: 'prevMonth' })}>
           ‹
         </button>
@@ -164,11 +164,11 @@ export function TopBar() {
 
         <button
           type="button"
-          title="关闭"
           className={`${base.iconBtn} ${styles.closeBtn}`}
+          title={isTauri() ? '收进托盘' : '关闭'}
           onClick={() => {
-            void closeWindow().then((closed) => {
-              if (!closed) dispatch({ type: 'closePanel' });
+            void hideToTray().then((hidden: boolean) => {
+              if (!hidden) dispatch({ type: 'closePanel' });
             });
           }}
         >
@@ -190,12 +190,61 @@ export function TopBar() {
             <button
               type="button"
               className={styles.settingsRow}
-              title="贴在桌面上，压在其他窗口之下，并从任务栏隐去"
+              title="贴在桌面上，压在其他窗口之下"
               onClick={() => dispatch({ type: 'setDesktopMode', value: !s.desktopMode })}
             >
               <span>桌面模式</span>
               <span className={styles.mark}>{s.desktopMode ? '✓' : ''}</span>
             </button>
+          )}
+
+          <div className={base.divider} style={{ margin: '4px 0' }} />
+
+          {/* 缩放：整块面板等比缩放，窗口大小跟着变 */}
+          <div className={styles.settingsRow} style={{ cursor: 'default' }}>
+            <span>面板大小</span>
+            <span className={styles.stepper}>
+              <button
+                type="button"
+                className={styles.stepBtn}
+                disabled={s.scale <= SCALE_STEPS[0]}
+                onClick={() => dispatch({ type: 'stepScale', delta: -1 })}
+              >
+                −
+              </button>
+              <span className={`${styles.scaleValue} ${base.tnum}`}>{Math.round(s.scale * 100)}%</span>
+              <button
+                type="button"
+                className={styles.stepBtn}
+                disabled={s.scale >= SCALE_STEPS[SCALE_STEPS.length - 1]}
+                onClick={() => dispatch({ type: 'stepScale', delta: 1 })}
+              >
+                +
+              </button>
+            </span>
+          </div>
+
+          {isTauri() && (
+            <div className={styles.settingsRow} style={{ cursor: 'default' }}>
+              <span>吸附到</span>
+              <span className={styles.corners}>
+                {([
+                  ['tl', '左上'],
+                  ['tr', '右上'],
+                  ['bl', '左下'],
+                  ['br', '右下'],
+                ] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={styles.cornerBtn}
+                    onClick={() => void snapCorner(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </span>
+            </div>
           )}
         </div>
       )}
