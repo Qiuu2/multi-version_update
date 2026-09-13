@@ -18,6 +18,8 @@ export function GroupEditor() {
 
   const isEdit = ed.mode === 'edit';
   const itemCount = isEdit ? s.items.filter((t) => t.group === ed.original).length : 0;
+  const others = s.groups.filter((g) => g.name !== ed.original);
+  const moveTarget = ed.moveTarget || others[0]?.name || '';
   // 浮层锚在触发它的图例项下方，靠边时收进面板内
   const left = Math.max(8, Math.min(ed.left - POP_W / 2, PANEL_W - POP_W - 8));
 
@@ -35,6 +37,7 @@ export function GroupEditor() {
         </button>
       </div>
 
+      {!ed.confirmDelete && (
       <input
         type="text"
         autoFocus
@@ -49,8 +52,10 @@ export function GroupEditor() {
           }
         }}
       />
+      )}
 
-      <span className={styles.label}>颜色</span>
+      {!ed.confirmDelete && <span className={styles.label}>颜色</span>}
+      {!ed.confirmDelete && (
       <div className={styles.swatches}>
         {NEW_GROUP_COLORS.map((c) => (
           <button
@@ -68,7 +73,9 @@ export function GroupEditor() {
           />
         ))}
       </div>
+      )}
 
+      {!ed.confirmDelete && (
       <div className={styles.actions}>
         {isEdit && (
           <button
@@ -90,23 +97,96 @@ export function GroupEditor() {
           </button>
         </div>
       </div>
+      )}
 
-      {isEdit && (
-        <>
-          <div className={styles.deleteRow}>
-            <button
-              type="button"
-              className={base.linkDanger}
-              style={{ fontSize: 11 }}
-              onClick={() => dispatch({ type: 'deleteGroupByName', name: ed.original })}
-            >
-              删除这个分组
-            </button>
-          </div>
-          <span className={styles.hint}>
-            {itemCount ? `该分组下 ${itemCount} 项会改为未分组，不会被删除` : '该分组下暂无条目'}
+      {isEdit && !ed.confirmDelete && (
+        <div className={styles.deleteRow}>
+          <button
+            type="button"
+            className={base.linkDanger}
+            style={{ fontSize: 11 }}
+            onClick={() => {
+              // 空分组没什么可处置的，直接删，不必多问一步
+              if (!itemCount) {
+                dispatch({ type: 'deleteGroupByName', name: ed.original, mode: 'orphan' });
+              } else {
+                dispatch({ type: 'patchGroupEditor', patch: { confirmDelete: true } });
+              }
+            }}
+          >
+            删除这个分组
+          </button>
+          <span className={styles.hint}>{itemCount ? `${itemCount} 项` : '暂无条目'}</span>
+        </div>
+      )}
+
+      {isEdit && ed.confirmDelete && (
+        <div className={styles.confirm}>
+          <span className={styles.confirmTitle}>
+            删除「{ed.original}」，这 {itemCount} 项怎么处理？
           </span>
-        </>
+
+          <button
+            type="button"
+            className={styles.choice}
+            onClick={() =>
+              dispatch({ type: 'deleteGroupByName', name: ed.original, mode: 'orphan' })
+            }
+          >
+            转为未分组
+          </button>
+
+          {others.length > 0 && (
+            <div className={styles.moveRow}>
+              <button
+                type="button"
+                className={styles.choice}
+                style={{ flex: 1 }}
+                onClick={() =>
+                  dispatch({
+                    type: 'deleteGroupByName',
+                    name: ed.original,
+                    mode: 'move',
+                    moveTo: moveTarget,
+                  })
+                }
+              >
+                移到
+              </button>
+              <select
+                className={styles.moveSelect}
+                value={moveTarget}
+                onChange={(e) =>
+                  dispatch({ type: 'patchGroupEditor', patch: { moveTarget: e.target.value } })
+                }
+              >
+                {others.map((g) => (
+                  <option key={g.name} value={g.name}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className={`${styles.choice} ${styles.choiceDanger}`}
+            onClick={() =>
+              dispatch({ type: 'deleteGroupByName', name: ed.original, mode: 'purge' })
+            }
+          >
+            连同这 {itemCount} 项一起删除
+          </button>
+
+          <button
+            type="button"
+            className={styles.cancelChoice}
+            onClick={() => dispatch({ type: 'patchGroupEditor', patch: { confirmDelete: false } })}
+          >
+            取消
+          </button>
+        </div>
       )}
     </div>
   );

@@ -96,3 +96,73 @@
   line-height: 13px;
   color: var(--c-faint);
 }
+
+/* 删除确认：让用户决定组内条目的去向 */
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirmTitle {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--c-text);
+}
+
+.choice {
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--c-text);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+.choice:hover {
+  background: var(--c-bg);
+}
+
+.choiceDanger {
+  color: var(--c-danger);
+}
+.choiceDanger:hover {
+  background: var(--c-danger-soft);
+}
+
+.moveRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.moveSelect {
+  height: 26px;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 11px;
+  font-family: inherit;
+  padding: 0 4px;
+  outline: none;
+}
+
+.cancelChoice {
+  height: 22px;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  color: var(--c-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+.cancelChoice:hover {
+  color: var(--c-text);
+}

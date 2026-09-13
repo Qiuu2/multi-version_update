@@ -10,6 +10,7 @@ import { stripTime, timeOf } from '../lib/item';
 import type {
   Anchor,
   ContextMenuState,
+  DeleteGroupMode,
   Group,
   GroupEditorState,
   Item,
@@ -179,7 +180,7 @@ export type Action =
   | { type: 'patchGroupEditor'; patch: Partial<GroupEditorState> }
   | { type: 'closeGroupEditor' }
   | { type: 'commitGroupEditor' }
-  | { type: 'deleteGroupByName'; name: string }
+  | { type: 'deleteGroupByName'; name: string; mode: DeleteGroupMode; moveTo?: string }
   | { type: 'soloGroup'; name: string }
   | { type: 'toggleItemDone'; id: number }
   | { type: 'selStart'; key: string; anchor: Anchor | null }
@@ -549,15 +550,31 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       const n = s.items.filter((t) => t.group === a.name).length;
       const hidden = { ...s.hidden };
       delete hidden[a.name];
-      // 条目改为未分组而不是一起删掉 —— 删分组不该顺手毁掉日程，且可撤销
+      const groups = s.groups.filter((g) => g.name !== a.name);
+
+      // 组内条目的三种处置：转为未分组 / 移到别的分组 / 一并删除。
+      // 全部走 commit，所以每一种都能撤销。
+      let items = s.items;
+      let tail = '';
+      if (n) {
+        if (a.mode === 'purge') {
+          items = s.items.filter((t) => t.group !== a.name);
+          tail = `，${n} 项已一并删除`;
+        } else if (a.mode === 'move' && a.moveTo && groups.some((g) => g.name === a.moveTo)) {
+          items = s.items.map((t) => (t.group === a.name ? { ...t, group: a.moveTo! } : t));
+          tail = `，${n} 项移到「${a.moveTo}」`;
+        } else {
+          items = s.items.map((t) => (t.group === a.name ? { ...t, group: '' } : t));
+          tail = `，${n} 项改为未分组`;
+        }
+      }
+
       return commit(s, {
-        groups: s.groups.filter((g) => g.name !== a.name),
-        items: s.items.map((t) => (t.group === a.name ? { ...t, group: '' } : t)),
+        groups,
+        items,
         hidden,
         groupEditor: null,
-        toast: n
-          ? `已删除分组「${a.name}」，${n} 项改为未分组`
-          : `已删除分组「${a.name}」`,
+        toast: `已删除分组「${a.name}」${tail}`,
       });
     }
 

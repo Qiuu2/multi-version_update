@@ -61,7 +61,14 @@ export interface GroupEditorState {
   color: string;
   /** 浮层锚点，相对面板左上角 */
   left: number;
+  /** 点了删除后进入确认态，让用户选条目怎么处理 */
+  confirmDelete: boolean;
+  /** 「移到另一个分组」选中的目标 */
+  moveTarget: string;
 }
+
+/** 删除分组时，组内条目的处置方式 */
+export type DeleteGroupMode = 'orphan' | 'move' | 'purge';
 
 /** 编辑弹窗的草稿，含各互斥浮层的开关 */
 export interface ModalDraft {

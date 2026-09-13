@@ -15,6 +15,8 @@ export function TopBar() {
   const { anchorOf } = usePanel();
   const colors = groupColors(s);
   const matches = searchMatches(s);
+  // 只有确实存在未分组条目时才占图例的位置
+  const hasUngrouped = s.items.some((t) => !t.group);
   const searchOpen = s.searchFocused && !!s.search.trim();
 
   return (
@@ -57,6 +59,8 @@ export function TopBar() {
                     name,
                     color: colors[name],
                     left: a ? a.left + a.w / 2 : 480,
+                    confirmDelete: false,
+                    moveTarget: '',
                   },
                 });
               }}
@@ -77,6 +81,28 @@ export function TopBar() {
             </button>
           );
         })}
+        {hasUngrouped && (
+          <button
+            type="button"
+            className={styles.legendItem}
+            title="未分组 · 点击切换显隐"
+            onClick={() => dispatch({ type: 'toggleGroupHidden', name: '' })}
+          >
+            <span
+              className={base.dot}
+              style={{
+                background: s.hidden[''] ? 'transparent' : 'var(--c-dot-empty)',
+                border: s.hidden[''] ? '1.5px solid var(--c-dot-empty)' : 'none',
+              }}
+            />
+            <span
+              className={styles.legendText}
+              style={{ color: s.hidden[''] ? 'var(--c-faint)' : 'var(--c-muted)' }}
+            >
+              未分组
+            </span>
+          </button>
+        )}
         <button
           type="button"
           className={styles.legendAdd}
@@ -91,6 +117,8 @@ export function TopBar() {
                 name: '',
                 color: NEW_GROUP_COLORS[s.groups.length % NEW_GROUP_COLORS.length],
                 left: a ? a.left + a.w / 2 : 480,
+                confirmDelete: false,
+                moveTarget: '',
               },
             });
           }}
