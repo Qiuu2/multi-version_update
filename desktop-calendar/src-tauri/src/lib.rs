@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{LogicalSize, Manager, PhysicalPosition, WindowEvent};
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 /// 面板的设计尺寸（含 1px 描边），窗口大小 = 设计尺寸 × 缩放
 const PANEL_W: f64 = 982.0;
@@ -64,6 +65,25 @@ fn save_state(app: tauri::AppHandle, contents: String) -> Result<(), String> {
     let tmp = path.with_extension("json.tmp");
     fs::write(&tmp, contents).map_err(|e| format!("写入失败: {e}"))?;
     fs::rename(&tmp, &path).map_err(|e| format!("落盘失败: {e}"))
+}
+
+// ---------- 开机自启 ----------
+
+/// 真实状态以系统注册表 / 启动项为准，不存在我们自己的 JSON 里，
+/// 免得用户在系统设置里改过之后两边对不上。
+#[tauri::command]
+fn get_autostart(app: tauri::AppHandle) -> bool {
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let m = app.autolaunch();
+    if enabled {
+        m.enable().map_err(|e| format!("开启开机自启失败: {e}"))
+    } else {
+        m.disable().map_err(|e| format!("关闭开机自启失败: {e}"))
+    }
 }
 
 // ---------- 窗口层级 ----------
@@ -288,6 +308,11 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             bring_to_front(app);
         }))
+        // 开机自启时带上标记，方便将来区分「用户点开的」和「系统拉起的」
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--autostart"]),
+        ))
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             load_state,
@@ -295,7 +320,9 @@ pub fn run() {
             set_desktop_mode,
             set_window_scale,
             snap_corner,
-            hide_to_tray
+            hide_to_tray,
+            get_autostart,
+            set_autostart
         ])
         .setup(|app| {
             let handle = app.handle().clone();

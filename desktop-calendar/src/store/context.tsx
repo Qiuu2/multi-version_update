@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react';
-import { setDesktopMode, setWindowScale } from '../lib/platform';
+import { getAutostart, setDesktopMode, setWindowScale } from '../lib/platform';
 import { storage } from './persistence';
 import { initialState, pickPersisted, reducer, type Action, type CalendarState } from './reducer';
 
@@ -12,12 +12,17 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
   const latest = useRef(state);
   latest.current = state;
 
-  // 启动读盘
+  // 启动读盘。读不到存档说明是头一回运行，顺手把使用说明展开
   useEffect(() => {
     let alive = true;
     void storage.load().then((data) => {
-      if (alive && data) dispatch({ type: 'hydrate', data });
+      if (!alive) return;
+      if (data) dispatch({ type: 'hydrate', data });
+      else dispatch({ type: 'setGuideOpen', value: true });
       hydrated.current = true;
+    });
+    void getAutostart().then((on) => {
+      if (alive) dispatch({ type: 'setAutostart', value: on });
     });
     return () => {
       alive = false;

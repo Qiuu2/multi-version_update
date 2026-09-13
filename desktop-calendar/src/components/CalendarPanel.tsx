@@ -8,6 +8,7 @@ import base from '../styles/base.module.css';
 import { ContextMenu } from './ContextMenu';
 import { DayPopover } from './DayPopover';
 import { GroupEditor } from './GroupEditor';
+import { Guide } from './Guide';
 import { ItemModal } from './ItemModal';
 import { MonthGrid } from './MonthGrid';
 import { PanelContext } from './PanelContext';
@@ -104,6 +105,7 @@ export function CalendarPanel() {
             <ContextMenu />
             <Toast />
             <ItemModal />
+            <Guide />
           </>
         )}
       </div>

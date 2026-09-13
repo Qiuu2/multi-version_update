@@ -45,6 +45,10 @@ export interface CalendarState {
   desktopMode: boolean;
   /** 面板整体缩放，窗口大小随之变化 */
   scale: number;
+  /** 开机自启。真实状态在系统里，不落我们的存档，启动时读一次 */
+  autostart: boolean;
+  /** 首次运行的使用说明是否展开 */
+  guideOpen: boolean;
 
   search: string;
   searchFocused: boolean;
@@ -120,6 +124,8 @@ export function initialState(): CalendarState {
     theme: 'light',
     desktopMode: false,
     scale: DEFAULT_SCALE,
+    autostart: false,
+    guideOpen: false,
     search: '',
     searchFocused: false,
     settingsOpen: false,
@@ -158,6 +164,8 @@ export type Action =
   | { type: 'toggleShowOther' }
   | { type: 'setDesktopMode'; value: boolean }
   | { type: 'stepScale'; delta: number }
+  | { type: 'setAutostart'; value: boolean }
+  | { type: 'setGuideOpen'; value: boolean }
   | { type: 'toggleUndated' }
   | { type: 'closePanel' }
   | { type: 'reopenPanel' }
@@ -355,6 +363,10 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return { ...s, showOther: !s.showOther };
     case 'setDesktopMode':
       return { ...s, desktopMode: a.value };
+    case 'setAutostart':
+      return { ...s, autostart: a.value };
+    case 'setGuideOpen':
+      return { ...s, guideOpen: a.value, settingsOpen: false };
     case 'stepScale': {
       // 在档位表里前后挪一格，夹在两端
       const i = SCALE_STEPS.indexOf(s.scale);

@@ -85,12 +85,14 @@ jobs:
         with:
           name: LocalCalendar-${{ matrix.name }}
           if-no-files-found: error
+          # 使用说明和安装包一起打进产物，转发给别人时是一份完整的东西
           path: |
             desktop-calendar/src-tauri/target/release/bundle/**/*.msi
             desktop-calendar/src-tauri/target/release/bundle/**/*-setup.exe
             desktop-calendar/src-tauri/target/release/bundle/**/*.dmg
             desktop-calendar/src-tauri/target/release/bundle/**/*.deb
             desktop-calendar/src-tauri/target/release/bundle/**/*.AppImage
+            desktop-calendar/docs/本地日历-使用说明.html
 
   # 单文件 HTML：不需要 Rust，几秒钟就能出，双击即可用
   single-file:

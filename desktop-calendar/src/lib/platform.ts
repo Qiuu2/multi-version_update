@@ -54,6 +54,27 @@ export async function snapCorner(corner: Corner): Promise<void> {
   }
 }
 
+/** 开机自启的真实状态在系统里，不在我们的存档里 */
+export async function getAutostart(): Promise<boolean> {
+  const c = core();
+  if (!c) return false;
+  try {
+    return await c.invoke<boolean>('get_autostart');
+  } catch {
+    return false;
+  }
+}
+
+export async function setAutostart(enabled: boolean): Promise<void> {
+  const c = core();
+  if (!c) return;
+  try {
+    await c.invoke('set_autostart', { enabled });
+  } catch {
+    /* 写系统启动项失败不该影响使用 */
+  }
+}
+
 /**
  * 面板右上角的 × ：收进托盘而不是退出。
  * 窗口没有任务栏按钮，真正退出走托盘菜单，免得关掉后找不回来。

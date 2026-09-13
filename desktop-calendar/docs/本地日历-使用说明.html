@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地日历 · 使用说明</title>
+<style>
+  :root{
+    --bg:#FAF6F1; --surface:#FFFFFF; --border:#E7DDD1; --text:#2B2521;
+    --muted:#8C8177; --faint:#A99C8E; --accent:#D2703A; --accent-soft:#FBEDE1;
+    --danger:#C0392B;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1C1A18; --surface:#262320; --border:#3A342E; --text:#F2ECE4;
+      --muted:#A79C90; --faint:#7E7468; --accent:#E08A4E; --accent-soft:#3A2A1E;
+      --danger:#E0685A;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Archivo','PingFang SC','Microsoft YaHei',sans-serif;
+    line-height:1.7; font-size:15px;
+  }
+  .wrap{max-width:820px; margin:0 auto; padding:48px 20px 64px}
+  header{border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:32px}
+  h1{font-size:26px; margin:0 0 6px; font-weight:600}
+  .lede{color:var(--muted); font-size:14px; margin:0}
+  h2{
+    font-size:17px; margin:36px 0 12px; font-weight:600;
+    padding-left:10px; border-left:3px solid var(--accent);
+  }
+  h3{font-size:14px; margin:20px 0 8px; font-weight:600; color:var(--muted)}
+  p{margin:10px 0}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
+  td:first-child{white-space:nowrap; font-weight:600; width:1%; padding-right:20px}
+  code{
+    background:var(--accent-soft); padding:1px 6px; border-radius:4px;
+    font-family:'SFMono-Regular',Consolas,monospace; font-size:13px;
+  }
+  .note{
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:12px 14px; margin:16px 0; font-size:14px;
+  }
+  .warn{border-left-color:var(--danger)}
+  ol,ul{padding-left:22px; margin:10px 0}
+  li{margin:5px 0}
+  footer{
+    margin-top:48px; padding-top:20px; border-top:1px solid var(--border);
+    color:var(--faint); font-size:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>本地日历 · 使用说明</h1>
+  <p class="lede">一个贴在桌面上的日历 / 待办面板。纯本地运行，不联网，不需要账号。</p>
+</header>
+
+<h2>安装</h2>
+<ol>
+  <li>解压下载到的压缩包，运行 <code>LocalCalendar_x.x.x_x64-setup.exe</code></li>
+  <li>Windows 会弹 SmartScreen 警告 —— 这是因为安装包没有购买代码签名证书，不是有问题。点「更多信息」→「仍要运行」</li>
+  <li>装完后从开始菜单启动，窗口会出现在屏幕右下角</li>
+</ol>
+<p>另一个 <code>.msi</code> 文件是给批量部署用的，个人使用装 <code>setup.exe</code> 就行。</p>
+
+<h2>第一眼看到什么</h2>
+<p>一个没有标题栏的面板：左边是月视图，右边是「未来 7 天」的待办清单，顶栏有月份导航、分组图例、搜索框和几个按钮，底栏是今日统计。</p>
+<p><strong>拖顶栏的空白处可以移动窗口。</strong></p>
+
+<h2>日程与任务</h2>
+<table>
+  <tr><th>操作</th><th>结果</th></tr>
+  <tr><td>点日期格</td><td>打开当天的详情浮卡，看这天所有安排</td></tr>
+  <tr><td>浮卡里的 +</td><td>在这天新建日程（默认 09:00，提前 10 分钟提醒）</td></tr>
+  <tr><td>顶栏橙色 +</td><td>新建任务，默认落在今天</td></tr>
+  <tr><td>点条目</td><td>打开编辑窗：标题、所属分组、全天开关、日期时间、地点、提醒、备注、每周重复</td></tr>
+  <tr><td>拖条目到别的格</td><td>改期，落点会显示虚线预览</td></tr>
+  <tr><td>右键日期格</td><td>新建日程 / 新建任务 / 清空这天</td></tr>
+  <tr><td>右键条目</td><td>改到明天 / 改到下周一 / 复制到明天 / 标记完成 / 编辑 / 删除</td></tr>
+</table>
+<p><strong>日程</strong>是整块填色的（会议、活动这类有具体时间的），<strong>任务</strong>是左边一条细色条加文字（待办事项）。任务前面有复选框，做完打勾。</p>
+
+<h3>每周重复</h3>
+<p>编辑窗底部打开「每周重复」，填周数，保存后会真的生成那么多条独立日程。之后在任意一条上点「删除整组」可以整批删掉。</p>
+
+<h2>批量操作</h2>
+<p>在月视图上<strong>按住左键横拖过几个日期格</strong>，松手后底部会浮出操作条：</p>
+<table>
+  <tr><td>每天各一条</td><td>在区间里每天各建一条同名任务</td></tr>
+  <tr><td>跨天日程</td><td>整段建成一条连续的日程</td></tr>
+  <tr><td>改分组</td><td>把区间内所有条目改到指定分组</td></tr>
+  <tr><td>删除 N 条</td><td>删掉区间内所有条目</td></tr>
+</table>
+
+<h2>分组（项目）</h2>
+<p>顶栏中间那排带色点的就是分组图例，也是管理入口：</p>
+<table>
+  <tr><td>左键分组</td><td>切换它在月视图和右侧栏的显隐（隐藏时色点变空心）</td></tr>
+  <tr><td>右键分组</td><td>打开编辑浮层：改名、换色、只看这组、删除</td></tr>
+  <tr><td>末尾虚线 +</td><td>新建分组</td></tr>
+</table>
+<p>预置的四个分组只是初始数据，和自己建的完全一样，可以随意改名、换色、删除。</p>
+<div class="note">
+  <strong>删除分组时会问你组内条目怎么办</strong>，三个选项：转为未分组 / 移到另一个分组 / 连同条目一起删除。选错了点提示条上的「撤销」就能回退。空分组会直接删除，不再多问。
+</div>
+
+<h2>贴在桌面上</h2>
+<p>点齿轮图标打开设置菜单：</p>
+<table>
+  <tr><td>桌面模式</td><td>窗口压到所有窗口之下、从任务栏隐去，像桌面小组件一样待着</td></tr>
+  <tr><td>面板大小</td><td>60% – 120% 调整整体尺寸，窗口跟着变</td></tr>
+  <tr><td>吸附到</td><td>一键归位到屏幕四角，不会被任务栏压住</td></tr>
+  <tr><td>开机自启</td><td>开机后自动运行</td></tr>
+  <tr><td>显示已完成 / 非本月日期</td><td>月视图的显示开关</td></tr>
+</table>
+<p>推荐用法：先调好面板大小 → 吸附到右下角 → 打开桌面模式。之后它就一直在那儿，不挡事。</p>
+<div class="note warn">
+  桌面模式是「压在最底层的窗口」，不是壁纸。按 <code>Win+D</code>「显示桌面」时它会跟着被收起，这是正常的。
+</div>
+
+<h2>托盘图标</h2>
+<p>程序常驻在任务栏右下角的通知区域（可能被折叠在 <code>^</code> 里面，可以拖出来常驻）。</p>
+<table>
+  <tr><td>左键单击</td><td>把窗口叫到眼前 —— 任何时候都有效</td></tr>
+  <tr><td>右键</td><td>显示日历 / 隐藏到托盘 / 吸附到右下角 / 重置窗口 / 退出</td></tr>
+</table>
+<div class="note">
+  <strong>面板右上角的 × 是「收进托盘」，不是退出。</strong> 真正退出请用托盘右键菜单里的「退出」。<br>
+  万一窗口怎么都找不到，右键托盘 →「<strong>重置窗口</strong>」，它会关掉桌面模式、清空记住的位置、把窗口吸到右下角并拿到前台。
+</div>
+
+<h2>其它好用的</h2>
+<table>
+  <tr><td>搜索框</td><td>实时匹配标题、分组、地点。回车打开第一条，点某条会跳到它所在的月份</td></tr>
+  <tr><td>撤销</td><td>顶栏的撤销按钮，或提示条上的「撤销」，可以退 20 步</td></tr>
+  <tr><td>← / →</td><td>翻月（鼠标在面板内时才生效，避免误触）</td></tr>
+  <tr><td>Esc</td><td>逐层关闭当前打开的浮层</td></tr>
+  <tr><td>底栏「无期限」</td><td>展开没有日期的条目</td></tr>
+  <tr><td>配色</td><td>顶栏那个半明半暗的圆，可切浅色 / 深色 / 蓝色</td></tr>
+</table>
+
+<h2>数据存在哪</h2>
+<p>所有日程存在这个文件里：</p>
+<p><code>%APPDATA%\com.local.calendar\calendar.json</code></p>
+<p>（在文件资源管理器地址栏粘贴 <code>%APPDATA%\com.local.calendar</code> 就能打开。）</p>
+<ul>
+  <li>纯本地文件，<strong>关机重启不会丢</strong></li>
+  <li>不联网、不上传、不需要账号</li>
+  <li>升级程序不影响它；卸载程序默认也不会删它</li>
+  <li>想备份或换电脑，把这个文件复制走，放到新电脑的同一位置即可</li>
+</ul>
+<div class="note warn">
+  <strong>目前没有自动备份。</strong> 如果这些日程对你重要，建议偶尔手动复制一份 <code>calendar.json</code>。
+</div>
+
+<h2>已知的限制</h2>
+<ul>
+  <li><strong>提醒暂时不会真的弹通知</strong> —— 提醒设置能存下来，但还没接系统通知</li>
+  <li>安装包没有代码签名，所以每次给新电脑装都会遇到 SmartScreen 提示</li>
+  <li>没有自动更新，升级需要重新下载安装包</li>
+  <li>没有手机端，也不能和手机日历同步</li>
+</ul>
+
+<footer>
+  本地日历 · 纯本地运行，数据不出本机。
+</footer>
+
+</div>
+</body>
+</html>

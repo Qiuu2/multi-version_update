@@ -1,7 +1,7 @@
 import { NEW_GROUP_COLORS, SCALE_STEPS, THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
-import { hideToTray, isTauri, snapCorner } from '../lib/platform';
+import { hideToTray, isTauri, setAutostart, snapCorner } from '../lib/platform';
 import { usePanel } from './PanelContext';
 import { useCalendar, useDispatch } from '../store/context';
 import { allGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
@@ -263,6 +263,31 @@ export function TopBar() {
               <span className={styles.mark}>{s.desktopMode ? '✓' : ''}</span>
             </button>
           )}
+
+          {isTauri() && (
+            <button
+              type="button"
+              className={styles.settingsRow}
+              title="开机后自动运行"
+              onClick={() => {
+                const next = !s.autostart;
+                dispatch({ type: 'setAutostart', value: next });
+                void setAutostart(next);
+              }}
+            >
+              <span>开机自启</span>
+              <span className={styles.mark}>{s.autostart ? '✓' : ''}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={styles.settingsRow}
+            onClick={() => dispatch({ type: 'setGuideOpen', value: true })}
+          >
+            <span>使用说明</span>
+            <span className={styles.mark}>›</span>
+          </button>
 
           <div className={base.divider} style={{ margin: '4px 0' }} />
 
