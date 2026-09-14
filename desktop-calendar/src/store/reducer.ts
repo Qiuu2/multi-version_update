@@ -232,6 +232,17 @@ function commit(s: CalendarState, patch: Partial<CalendarState>): CalendarState 
   };
 }
 
+/**
+ * 新建条目时，若它所属的分组当前被隐藏，就把该分组恢复显示。
+ * 否则用户刚建完的东西直接消失，看起来就是「新建没反应」。
+ */
+function revealGroup(hidden: Record<string, boolean>, group: string): Record<string, boolean> {
+  if (!hidden[group]) return hidden;
+  const next = { ...hidden };
+  delete next[group];
+  return next;
+}
+
 function groupNames(s: CalendarState): string[] {
   return s.groups.map((g) => g.name);
 }
@@ -435,16 +446,23 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
 
       if (d.mode === 'create') {
         const base = itemFromDraft({ ...d, title }, s.nextId);
+        const hidden = revealGroup(s.hidden, base.group);
         if (shouldExpand) {
           base.repeatId = `rp${s.nextId}`;
           const batch = expandRepeat(base, weeks, s.nextId + 1);
           return commit(s, {
             items: s.items.concat(batch),
             nextId: s.nextId + weeks,
+            hidden,
             modal: null,
           });
         }
-        return commit(s, { items: s.items.concat([base]), nextId: s.nextId + 1, modal: null });
+        return commit(s, {
+          items: s.items.concat([base]),
+          nextId: s.nextId + 1,
+          hidden,
+          modal: null,
+        });
       }
 
       // 编辑
@@ -600,6 +618,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return commit(s, {
         items: s.items.concat([{ id: s.nextId, type: 'task', group: '', title, date: '' }]),
         nextId: s.nextId + 1,
+        hidden: revealGroup(s.hidden, ''),
       });
     }
 
@@ -655,6 +674,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return commit(s, {
         items: s.items.concat(add),
         nextId: id,
+        hidden: revealGroup(s.hidden, ''),
         sel: null,
         selActive: false,
         rangeGroupsOpen: false,
@@ -683,6 +703,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return commit(s, {
         items: s.items.concat(add),
         nextId: id,
+        hidden: revealGroup(s.hidden, ''),
         sel: null,
         selActive: false,
         rangeGroupsOpen: false,
@@ -743,6 +764,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return commit(s, {
         items: s.items.concat([{ ...t, id: s.nextId, date: a.to }]),
         nextId: s.nextId + 1,
+        hidden: revealGroup(s.hidden, t.group),
         toast: `已复制一条到 ${fmtShort(a.to)}`,
       });
     }

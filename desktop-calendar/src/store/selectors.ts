@@ -52,8 +52,17 @@ export function searchMatches(s: CalendarState): Item[] {
     .sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
 }
 
+/**
+ * 收集箱里的条目。
+ * 刻意不套分组显隐 —— 它是暂存区不是视图，被图例过滤掉会让「新建了却看不见」，
+ * 分组筛选只管月视图和右侧栏。已完成仍然跟随「显示已完成」开关。
+ */
 export function undatedItems(s: CalendarState): Item[] {
-  return s.items.filter((t) => !t.date && isVisible(s, t));
+  return s.items
+    .filter((t) => !t.date && (s.showDone || !t.done))
+    // 未完成在前；同组内新建的排最上面 —— 刚敲完就能看见它，
+    // 不然列表一长，新条目掉到滚动区外面，看着就像「没建出来」
+    .sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0) || b.id - a.id);
 }
 
 /** 底栏统计：今日日程数 / 未来 7 天未完成待办数 */
