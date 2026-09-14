@@ -20,10 +20,9 @@ export function usePanelDismiss() {
       if (s.groupEditor && !inPopover) dispatch({ type: 'closeGroupEditor' });
       if (s.selActive && !inPopover && !inCell) dispatch({ type: 'selClear' });
       if (s.dayOpen && !inPopover && !inCell) dispatch({ type: 'closeDay' });
-      if ((s.settingsOpen || s.themeMenuOpen || s.undatedOpen) && !t?.closest?.('[data-menu]')) {
+      if ((s.settingsOpen || s.themeMenuOpen) && !t?.closest?.('[data-menu]')) {
         if (s.settingsOpen) dispatch({ type: 'toggleSettings' });
         if (s.themeMenuOpen) dispatch({ type: 'toggleThemeMenu' });
-        if (s.undatedOpen) dispatch({ type: 'toggleUndated' });
       }
     };
     window.addEventListener('mousedown', onDown, true);
@@ -35,7 +34,6 @@ export function usePanelDismiss() {
     s.dayOpen,
     s.settingsOpen,
     s.themeMenuOpen,
-    s.undatedOpen,
     dispatch,
   ]);
 }

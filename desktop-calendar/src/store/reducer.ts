@@ -54,7 +54,6 @@ export interface CalendarState {
   searchFocused: boolean;
 
   settingsOpen: boolean;
-  undatedOpen: boolean;
   themeMenuOpen: boolean;
   panelClosed: boolean;
 
@@ -129,7 +128,6 @@ export function initialState(): CalendarState {
     search: '',
     searchFocused: false,
     settingsOpen: false,
-    undatedOpen: false,
     themeMenuOpen: false,
     panelClosed: false,
     dayOpen: null,
@@ -166,7 +164,6 @@ export type Action =
   | { type: 'stepScale'; delta: number }
   | { type: 'setAutostart'; value: boolean }
   | { type: 'setGuideOpen'; value: boolean }
-  | { type: 'toggleUndated' }
   | { type: 'closePanel' }
   | { type: 'reopenPanel' }
   | { type: 'setSearch'; value: string }
@@ -191,6 +188,8 @@ export type Action =
   | { type: 'deleteGroupByName'; name: string; mode: DeleteGroupMode; moveTo?: string }
   | { type: 'soloGroup'; name: string }
   | { type: 'toggleItemDone'; id: number }
+  | { type: 'addInboxTask'; title: string }
+  | { type: 'dropToInbox' }
   | { type: 'selStart'; key: string; anchor: Anchor | null }
   | { type: 'selMove'; key: string; anchor: Anchor | null }
   | { type: 'selCommit' }
@@ -356,7 +355,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
     case 'toggleThemeMenu':
       return { ...s, themeMenuOpen: !s.themeMenuOpen, settingsOpen: false };
     case 'toggleSettings':
-      return { ...s, settingsOpen: !s.settingsOpen, undatedOpen: false, themeMenuOpen: false };
+      return { ...s, settingsOpen: !s.settingsOpen, themeMenuOpen: false };
     case 'toggleShowDone':
       return { ...s, showDone: !s.showDone };
     case 'toggleShowOther':
@@ -374,8 +373,6 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       const next = Math.min(SCALE_STEPS.length - 1, Math.max(0, from + a.delta));
       return s.scale === SCALE_STEPS[next] ? s : { ...s, scale: SCALE_STEPS[next] };
     }
-    case 'toggleUndated':
-      return { ...s, undatedOpen: !s.undatedOpen, settingsOpen: false, themeMenuOpen: false };
 
     case 'closePanel':
       return { ...s, panelClosed: true, modal: null };
@@ -396,7 +393,6 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
         dayOpen: a.key,
         dayAnchor: a.anchor,
         settingsOpen: false,
-        undatedOpen: false,
         themeMenuOpen: false,
       };
     case 'closeDay':
@@ -407,7 +403,6 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
         ...s,
         modal: emptyDraft(a.date, a.kind),
         settingsOpen: false,
-        undatedOpen: false,
         themeMenuOpen: false,
         dayOpen: null,
         dayAnchor: null,
@@ -419,7 +414,6 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
         ...s,
         modal: draftFrom(item),
         settingsOpen: false,
-        undatedOpen: false,
         themeMenuOpen: false,
       };
     }
@@ -597,6 +591,30 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       const hidden: Record<string, boolean> = {};
       if (!isSolo) others.forEach((g) => (hidden[g.name] = true));
       return commit(s, { hidden, groupEditor: null });
+    }
+
+    case 'addInboxTask': {
+      const title = a.title.trim();
+      if (!title) return s;
+      // 收集箱里的条目就是「无期限任务」，日期留空
+      return commit(s, {
+        items: s.items.concat([{ id: s.nextId, type: 'task', group: '', title, date: '' }]),
+        nextId: s.nextId + 1,
+      });
+    }
+
+    case 'dropToInbox': {
+      const id = s.dragId;
+      if (id == null) return { ...s, dragId: null, dragOver: null };
+      const t = s.items.find((x) => x.id === id);
+      // 已经没有日期的条目拖回来是空操作，不必污染撤销栈
+      if (!t || !t.date) return { ...s, dragId: null, dragOver: null };
+      return commit(s, {
+        items: s.items.map((x) => (x.id === id ? { ...x, date: '' } : x)),
+        dragId: null,
+        dragOver: null,
+        toast: `「${stripTime(t.title)}」已放回收集箱`,
+      });
     }
 
     case 'toggleItemDone':

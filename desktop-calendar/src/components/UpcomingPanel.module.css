@@ -1,9 +1,10 @@
-/* 右侧栏占剩余宽度，底色 --c-panel，内边距 14px */
+/* 「未来 7 天」区：占右侧栏上半，自己滚动，底部让位给收集箱 */
 .wrap {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px 14px 12px;
+  padding: 14px 14px 10px;
   box-sizing: border-box;
   overflow-y: auto;
   gap: 14px;

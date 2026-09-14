@@ -17,7 +17,7 @@ import { SelectionChip } from './SelectionChip';
 import { StatusBar } from './StatusBar';
 import { Toast } from './Toast';
 import { TopBar } from './TopBar';
-import { UpcomingPanel } from './UpcomingPanel';
+import { RightRail } from './RightRail';
 import styles from './CalendarPanel.module.css';
 
 export function CalendarPanel() {
@@ -92,7 +92,7 @@ export function CalendarPanel() {
               <TopBar />
               <div className={styles.body}>
                 <MonthGrid />
-                <UpcomingPanel />
+                <RightRail />
               </div>
               <StatusBar />
             </div>

@@ -41,7 +41,6 @@ export function useGlobalKeys(rootRef: RefObject<HTMLElement>, pointerIn: RefObj
       if (s.modal) return void dispatch({ type: 'closeModal' });
       if (s.dayOpen) return void dispatch({ type: 'closeDay' });
       if (s.settingsOpen) return void dispatch({ type: 'toggleSettings' });
-      if (s.undatedOpen) return void dispatch({ type: 'toggleUndated' });
       if (s.themeMenuOpen) return void dispatch({ type: 'toggleThemeMenu' });
       if (s.search) dispatch({ type: 'setSearch', value: '' });
     };
@@ -55,7 +54,6 @@ export function useGlobalKeys(rootRef: RefObject<HTMLElement>, pointerIn: RefObj
     s.groupEditor,
     s.selActive,
     s.settingsOpen,
-    s.undatedOpen,
     s.themeMenuOpen,
     s.search,
     dispatch,
