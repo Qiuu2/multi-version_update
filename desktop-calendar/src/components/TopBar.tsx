@@ -301,6 +301,41 @@ export function TopBar() {
 
           <div className={base.divider} style={{ margin: '4px 0' }} />
 
+          {/* 清空要二次确认；分组和各项设置不受影响，且可撤销 */}
+          {s.confirmClear ? (
+            <div className={styles.clearConfirm}>
+              <span className={styles.clearText}>清空全部 {s.items.length} 条？分组与设置保留</span>
+              <div className={styles.clearBtns}>
+                <button
+                  type="button"
+                  className={styles.clearCancel}
+                  onClick={() => dispatch({ type: 'setConfirmClear', value: false })}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className={styles.clearGo}
+                  onClick={() => dispatch({ type: 'clearAllItems' })}
+                >
+                  确定清空
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.settingsRow} ${styles.dangerRow}`}
+              title="删除全部日程与任务，分组和设置保留，可撤销"
+              onClick={() => dispatch({ type: 'setConfirmClear', value: true })}
+            >
+              <span>清空所有条目</span>
+              <span className={styles.mark}>{s.items.length}</span>
+            </button>
+          )}
+
+          <div className={base.divider} style={{ margin: '4px 0' }} />
+
           {/* 缩放：整块面板等比缩放，窗口大小跟着变 */}
           <div className={styles.settingsRow} style={{ cursor: 'default' }}>
             <span>面板大小</span>

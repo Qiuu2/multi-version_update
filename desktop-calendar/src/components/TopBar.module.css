@@ -299,3 +299,60 @@
   border-color: var(--c-accent);
   color: var(--c-accent);
 }
+
+/* 清空：危险操作，颜色和确认态都要明确 */
+.dangerRow {
+  color: var(--c-danger);
+}
+.dangerRow:hover {
+  background: var(--c-danger-soft);
+}
+
+.clearConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.clearText {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--c-text);
+}
+
+.clearBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clearCancel {
+  flex: 1;
+  height: 24px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--c-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.clearCancel:hover {
+  background: var(--c-bg);
+}
+
+.clearGo {
+  flex: 1;
+  height: 24px;
+  border: 0;
+  background: var(--c-danger);
+  border-radius: 5px;
+  font-size: 11px;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+}
+.clearGo:hover {
+  opacity: 0.9;
+}

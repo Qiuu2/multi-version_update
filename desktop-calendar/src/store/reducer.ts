@@ -71,6 +71,8 @@ export interface CalendarState {
   groupEditor: GroupEditorState | null;
   /** 已归档分组面板 */
   archivedOpen: boolean;
+  /** 清空数据的二次确认（设置菜单里就地展开） */
+  confirmClear: boolean;
   modal: ModalDraft | null;
   toast: string | null;
 
@@ -142,6 +144,7 @@ export function initialState(): CalendarState {
     ctx: null,
     groupEditor: null,
     archivedOpen: false,
+    confirmClear: false,
     modal: null,
     toast: null,
     newGroupName: '',
@@ -193,6 +196,8 @@ export type Action =
   | { type: 'archiveGroup'; name: string }
   | { type: 'unarchiveGroup'; name: string }
   | { type: 'toggleArchivedPanel' }
+  | { type: 'setConfirmClear'; value: boolean }
+  | { type: 'clearAllItems' }
   | { type: 'toggleItemDone'; id: number }
   | { type: 'addInboxTask'; title: string }
   | { type: 'dropToInbox' }
@@ -375,7 +380,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
     case 'toggleThemeMenu':
       return { ...s, themeMenuOpen: !s.themeMenuOpen, settingsOpen: false };
     case 'toggleSettings':
-      return { ...s, settingsOpen: !s.settingsOpen, themeMenuOpen: false };
+      return { ...s, settingsOpen: !s.settingsOpen, themeMenuOpen: false, confirmClear: false };
     case 'toggleShowDone':
       return { ...s, showDone: !s.showDone };
     case 'toggleShowOther':
@@ -632,6 +637,22 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
 
     case 'toggleArchivedPanel':
       return { ...s, archivedOpen: !s.archivedOpen, settingsOpen: false, themeMenuOpen: false };
+
+    case 'setConfirmClear':
+      return { ...s, confirmClear: a.value };
+
+    case 'clearAllItems': {
+      const n = s.items.length;
+      if (!n) return { ...s, confirmClear: false, settingsOpen: false };
+      // 走 commit，所以误点了还能撤销；分组与各项设置保留
+      return commit(s, {
+        items: [],
+        nextId: 1,
+        confirmClear: false,
+        settingsOpen: false,
+        toast: `已清空 ${n} 条，可撤销`,
+      });
+    }
 
     case 'soloGroup': {
       const others = s.groups.filter((g) => g.name !== a.name && !g.archived);
