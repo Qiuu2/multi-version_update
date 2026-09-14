@@ -1,4 +1,5 @@
 import { useEffect, type RefObject } from 'react';
+import { isComposing } from '../lib/keys';
 import { useCalendar, useDispatch } from '../store/context';
 
 /**
@@ -12,6 +13,9 @@ export function useGlobalKeys(rootRef: RefObject<HTMLElement>, pointerIn: RefObj
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // 输入法确认 / 取消候选词时也会送 keydown，这里一律放行，
+      // 否则中文输入按回车会用半截标题直接保存关窗
+      if (isComposing(e)) return;
       const tag = (e.target as HTMLElement | null)?.tagName || '';
       const typing = tag === 'INPUT' || tag === 'TEXTAREA';
 

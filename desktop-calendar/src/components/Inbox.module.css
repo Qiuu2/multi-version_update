@@ -35,17 +35,31 @@
   color: var(--c-muted);
 }
 
-.hint {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--c-faint);
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
 .input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 26px;
   padding: 0 9px;
-  flex: 0 0 auto;
+}
+
+.addBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+}
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.addBtn:disabled:hover {
+  opacity: 0.4;
 }
 
 .list {
@@ -94,8 +108,7 @@
 }
 
 .empty {
-  padding: 10px 2px;
+  padding: 6px 2px;
   font-size: 10px;
-  line-height: 15px;
   color: var(--c-faint);
 }

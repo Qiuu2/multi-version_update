@@ -1,6 +1,7 @@
 import { NEW_GROUP_COLORS, SCALE_STEPS, THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
+import { isSubmitEnter } from '../lib/keys';
 import { hideToTray, isTauri, setAutostart, snapCorner } from '../lib/platform';
 import { usePanel } from './PanelContext';
 import { useCalendar, useDispatch } from '../store/context';
@@ -141,7 +142,7 @@ export function TopBar() {
             // 结果项用 mousedown 阻止冒泡，blur 仍会在点击后触发，延后一拍让 click 先跑
             onBlur={() => window.setTimeout(() => dispatch({ type: 'setSearchFocused', value: false }), 120)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && matches.length) openResult(matches[0].id, matches[0].date);
+              if (isSubmitEnter(e) && matches.length) openResult(matches[0].id, matches[0].date);
               else if (e.key === 'Escape') dispatch({ type: 'setSearch', value: '' });
             }}
           />

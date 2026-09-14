@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { isSubmitEnter } from '../lib/keys';
 import { useCalendar, useDispatch } from '../store/context';
 import { colorOf, undatedItems } from '../store/selectors';
 import base from '../styles/base.module.css';
+import { PlusIcon } from './icons';
 import styles from './Inbox.module.css';
 
 /**
- * 收集箱 —— 就是原来藏在底栏抽屉里的「无期限」条目，挪到右侧栏底部常驻。
- * 想到什么先敲进来，之后拖到月视图的某一天；反过来把日历上的条目拖回来，
- * 就是取消它的日期、先放一放。
+ * 收集箱 —— 待安排的任务暂存在这里，之后拖到月视图的某一天。
+ * 反过来把日历上的条目拖回来，就是取消它的日期、先放一放。
  */
 export function Inbox() {
   const s = useCalendar();
@@ -19,6 +20,12 @@ export function Inbox() {
   // 只有从日历拖过来的（已有日期的）条目才算有效落点
   const dragged = s.dragId == null ? null : s.items.find((t) => t.id === s.dragId);
   const canDrop = !!dragged?.date;
+
+  const add = () => {
+    if (!draft.trim()) return;
+    dispatch({ type: 'addInboxTask', title: draft });
+    setDraft('');
+  };
 
   return (
     <div
@@ -39,29 +46,35 @@ export function Inbox() {
       <div className={styles.head}>
         <span className={styles.title}>收集箱</span>
         <span className={styles.count}>{items.length}</span>
-        <span className={styles.hint}>拖到日期上安排</span>
       </div>
 
-      <input
-        type="text"
-        placeholder="想到什么先记下来，回车新建"
-        className={`${base.textInput} ${styles.input}`}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter') return;
-          e.preventDefault();
-          dispatch({ type: 'addInboxTask', title: draft });
-          setDraft('');
-        }}
-      />
+      <div className={styles.addRow}>
+        <input
+          type="text"
+          placeholder="新建待安排的任务"
+          className={`${base.textInput} ${styles.input}`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          // isSubmitEnter 会避开输入法确认候选词时的那次回车
+          onKeyDown={(e) => {
+            if (!isSubmitEnter(e)) return;
+            e.preventDefault();
+            add();
+          }}
+        />
+        <button
+          type="button"
+          className={`${base.btnPrimary} ${styles.addBtn}`}
+          title="新建（也可以直接回车）"
+          disabled={!draft.trim()}
+          onClick={add}
+        >
+          <PlusIcon size={13} />
+        </button>
+      </div>
 
       {items.length === 0 ? (
-        <div className={styles.empty}>
-          还没有待安排的事。
-          <br />
-          也可以把日历上的条目拖进来，先放一放。
-        </div>
+        <div className={styles.empty}>新建后拖到左边的日期上即可安排</div>
       ) : (
         <div className={styles.list}>
           {items.map((t) => {
@@ -71,7 +84,9 @@ export function Inbox() {
                 key={t.id}
                 className={styles.row}
                 draggable
+                title="拖到日期上安排 · 双击编辑"
                 onDragStart={() => dispatch({ type: 'dragStart', id: t.id })}
+                onDoubleClick={() => dispatch({ type: 'openEdit', id: t.id })}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   dispatch({ type: 'openEdit', id: t.id });
@@ -92,8 +107,6 @@ export function Inbox() {
                 <span
                   className={`${styles.rowTitle} ${base.ellipsis}`}
                   style={{ textDecoration: t.done ? 'line-through' : 'none' }}
-                  onDoubleClick={() => dispatch({ type: 'openEdit', id: t.id })}
-                  title="拖到日期上安排 · 双击或右键编辑"
                 >
                   {t.title}
                 </span>

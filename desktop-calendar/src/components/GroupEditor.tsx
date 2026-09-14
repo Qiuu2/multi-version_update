@@ -1,4 +1,5 @@
 import { NEW_GROUP_COLORS, PANEL_W } from '../constants';
+import { isSubmitEnter } from '../lib/keys';
 import { useCalendar, useDispatch } from '../store/context';
 import base from '../styles/base.module.css';
 import styles from './GroupEditor.module.css';
@@ -46,7 +47,7 @@ export function GroupEditor() {
         value={ed.name}
         onChange={(e) => dispatch({ type: 'patchGroupEditor', patch: { name: e.target.value } })}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') {
+          if (isSubmitEnter(e)) {
             e.preventDefault();
             dispatch({ type: 'commitGroupEditor' });
           }

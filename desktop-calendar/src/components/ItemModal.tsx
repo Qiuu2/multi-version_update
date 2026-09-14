@@ -1,4 +1,5 @@
 import { NEW_GROUP_COLORS, REMINDER_OPTIONS } from '../constants';
+import { isSubmitEnter } from '../lib/keys';
 import { useCalendar, useDispatch } from '../store/context';
 import { allGroups, groupColors } from '../store/selectors';
 import base from '../styles/base.module.css';
@@ -103,7 +104,7 @@ export function ItemModal() {
                     value={s.newGroupName}
                     onChange={(e) => dispatch({ type: 'setNewGroupName', value: e.target.value })}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (isSubmitEnter(e)) {
                         e.preventDefault();
                         e.stopPropagation();
                         dispatch({ type: 'addGroup' });
