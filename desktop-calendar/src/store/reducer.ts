@@ -239,8 +239,11 @@ function commit(s: CalendarState, patch: Partial<CalendarState>): CalendarState 
 }
 
 /**
- * 新建条目时，若它所属的分组当前被隐藏，就把该分组恢复显示。
- * 否则用户刚建完的东西直接消失，看起来就是「新建没反应」。
+ * 把条目放到某处时，若它所属的分组正被隐藏，就恢复该分组的显示。
+ *
+ * 适用于所有「新建」和「移动」—— 刚放下去的东西必须看得见，
+ * 否则操作明明成功了（提示条都弹了），条目却当场被过滤掉，
+ * 看起来就是「没生效」。
  */
 function revealGroup(hidden: Record<string, boolean>, group: string): Record<string, boolean> {
   if (!hidden[group]) return hidden;
@@ -476,16 +479,18 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       const updated = s.items.map((t) =>
         t.id === d.id ? { ...t, ...itemFromDraft({ ...d, title, repeatId }, t.id) } : t,
       );
+      const editedHidden = revealGroup(s.hidden, d.group);
       if (shouldExpand) {
         const edited = updated.find((t) => t.id === d.id)!;
         const extra = expandRepeat(edited, weeks, s.nextId).slice(1);
         return commit(s, {
           items: updated.concat(extra),
           nextId: s.nextId + weeks - 1,
+          hidden: editedHidden,
           modal: null,
         });
       }
-      return commit(s, { items: updated, modal: null });
+      return commit(s, { items: updated, hidden: editedHidden, modal: null });
     }
 
     case 'deleteCurrent': {
@@ -744,6 +749,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       if (!hit.length) return { ...s, rangeGroupsOpen: false };
       return commit(s, {
         items: s.items.map((t) => (t.date && days.includes(t.date) ? { ...t, group: a.group } : t)),
+        hidden: revealGroup(s.hidden, a.group),
         rangeGroupsOpen: false,
         toast: `已把 ${hit.length} 条改到「${a.group}」`,
       });
@@ -780,6 +786,7 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       if (!t) return s;
       return commit(s, {
         items: s.items.map((x) => (x.id === a.id ? { ...x, date: a.to } : x)),
+        hidden: revealGroup(s.hidden, t.group),
         toast: `「${stripTime(t.title)}」已改到 ${fmtShort(a.to)}`,
       });
     }
@@ -821,11 +828,13 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       const id = s.dragId;
       if (id == null) return { ...s, dragId: null, dragOver: null };
       const t = s.items.find((x) => x.id === id);
+      if (!t) return { ...s, dragId: null, dragOver: null };
       return commit(s, {
         items: s.items.map((x) => (x.id === id ? { ...x, date: a.key } : x)),
+        hidden: revealGroup(s.hidden, t.group),
         dragId: null,
         dragOver: null,
-        toast: t ? `已改到 ${fmtShort(a.key)}` : s.toast,
+        toast: `已改到 ${fmtShort(a.key)}`,
       });
     }
 
