@@ -3,7 +3,7 @@ import { isSubmitEnter } from '../lib/keys';
 import { useCalendar, useDispatch } from '../store/context';
 import { colorOf, undatedItems } from '../store/selectors';
 import base from '../styles/base.module.css';
-import { PlusIcon } from './icons';
+import { PlusIcon, TrashIcon } from './icons';
 import styles from './Inbox.module.css';
 
 /**
@@ -110,6 +110,17 @@ export function Inbox() {
                 >
                   {t.title}
                 </span>
+                <button
+                  type="button"
+                  className={styles.del}
+                  title="删除（可撤销）"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dispatch({ type: 'deleteItem', id: t.id });
+                  }}
+                >
+                  <TrashIcon stroke="currentColor" />
+                </button>
               </div>
             );
           })}

@@ -24,7 +24,8 @@
         "maximizable": false,
         "alwaysOnBottom": false,
         "skipTaskbar": false,
-        "label": "main"
+        "label": "main",
+        "dragDropEnabled": false
       }
     ],
     "security": {

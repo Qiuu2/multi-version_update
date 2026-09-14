@@ -107,6 +107,30 @@
   cursor: grab;
 }
 
+/* 行尾的删除：平时很淡，悬停时才明确显出来 */
+.del {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  padding: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--c-faint);
+  opacity: 0.45;
+}
+.row:hover .del {
+  opacity: 1;
+}
+.del:hover {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+}
+
 .empty {
   padding: 6px 2px;
   font-size: 10px;
