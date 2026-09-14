@@ -18,6 +18,8 @@ export function usePanelDismiss() {
 
       if (s.ctx && !inPopover) dispatch({ type: 'closeCtx' });
       if (s.groupEditor && !inPopover) dispatch({ type: 'closeGroupEditor' });
+      if (s.archivedOpen && !inPopover && !t?.closest?.('[data-menu]'))
+        dispatch({ type: 'toggleArchivedPanel' });
       if (s.selActive && !inPopover && !inCell) dispatch({ type: 'selClear' });
       if (s.dayOpen && !inPopover && !inCell) dispatch({ type: 'closeDay' });
       if ((s.settingsOpen || s.themeMenuOpen) && !t?.closest?.('[data-menu]')) {
@@ -30,6 +32,7 @@ export function usePanelDismiss() {
   }, [
     s.ctx,
     s.groupEditor,
+    s.archivedOpen,
     s.selActive,
     s.dayOpen,
     s.settingsOpen,

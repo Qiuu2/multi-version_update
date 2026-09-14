@@ -69,6 +69,8 @@ export interface CalendarState {
 
   ctx: ContextMenuState | null;
   groupEditor: GroupEditorState | null;
+  /** 已归档分组面板 */
+  archivedOpen: boolean;
   modal: ModalDraft | null;
   toast: string | null;
 
@@ -139,6 +141,7 @@ export function initialState(): CalendarState {
     rangeGroupsOpen: false,
     ctx: null,
     groupEditor: null,
+    archivedOpen: false,
     modal: null,
     toast: null,
     newGroupName: '',
@@ -187,6 +190,9 @@ export type Action =
   | { type: 'commitGroupEditor' }
   | { type: 'deleteGroupByName'; name: string; mode: DeleteGroupMode; moveTo?: string }
   | { type: 'soloGroup'; name: string }
+  | { type: 'archiveGroup'; name: string }
+  | { type: 'unarchiveGroup'; name: string }
+  | { type: 'toggleArchivedPanel' }
   | { type: 'toggleItemDone'; id: number }
   | { type: 'addInboxTask'; title: string }
   | { type: 'dropToInbox' }
@@ -602,8 +608,28 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       });
     }
 
+    case 'archiveGroup': {
+      const n = s.items.filter((t) => t.group === a.name).length;
+      return commit(s, {
+        groups: s.groups.map((g) => (g.name === a.name ? { ...g, archived: true } : g)),
+        groupEditor: null,
+        toast: `已归档「${a.name}」${n ? `，${n} 项一并收起` : ''}`,
+      });
+    }
+
+    case 'unarchiveGroup':
+      return commit(s, {
+        groups: s.groups.map((g) => (g.name === a.name ? { ...g, archived: false } : g)),
+        // 归档期间可能被点成隐藏，恢复时一并放出来
+        hidden: revealGroup(s.hidden, a.name),
+        toast: `已恢复「${a.name}」`,
+      });
+
+    case 'toggleArchivedPanel':
+      return { ...s, archivedOpen: !s.archivedOpen, settingsOpen: false, themeMenuOpen: false };
+
     case 'soloGroup': {
-      const others = s.groups.filter((g) => g.name !== a.name);
+      const others = s.groups.filter((g) => g.name !== a.name && !g.archived);
       // 已经是只看这组了就恢复全部显示
       const isSolo = others.every((g) => s.hidden[g.name]) && !s.hidden[a.name];
       const hidden: Record<string, boolean> = {};

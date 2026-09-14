@@ -5,7 +5,7 @@ import { isSubmitEnter } from '../lib/keys';
 import { hideToTray, isTauri, setAutostart, snapCorner } from '../lib/platform';
 import { usePanel } from './PanelContext';
 import { useCalendar, useDispatch } from '../store/context';
-import { allGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
+import { allGroups, archivedGroups, colorOf, groupColors, searchMatches } from '../store/selectors';
 import base from '../styles/base.module.css';
 import { GearIcon, PlusIcon, SearchIcon, ThemeIcon, UndoIcon } from './icons';
 import styles from './TopBar.module.css';
@@ -280,6 +280,15 @@ export function TopBar() {
               <span className={styles.mark}>{s.autostart ? '✓' : ''}</span>
             </button>
           )}
+
+          <button
+            type="button"
+            className={styles.settingsRow}
+            onClick={() => dispatch({ type: 'toggleArchivedPanel' })}
+          >
+            <span>已归档分组</span>
+            <span className={styles.mark}>{archivedGroups(s).length || '›'}</span>
+          </button>
 
           <button
             type="button"

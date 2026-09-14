@@ -1,6 +1,6 @@
 import { diffDays } from '../lib/date';
 import { timeOf } from '../lib/item';
-import type { Item } from '../types';
+import type { Group, Item } from '../types';
 import type { CalendarState } from './reducer';
 
 /** 分组名 → 识别色 */
@@ -12,8 +12,17 @@ export function groupColors(s: CalendarState): Record<string, string> {
   return out;
 }
 
+/** 图例和各处下拉里能选的分组 —— 不含已归档 */
 export function allGroups(s: CalendarState): string[] {
-  return s.groups.map((g) => g.name);
+  return s.groups.filter((g) => !g.archived).map((g) => g.name);
+}
+
+export function archivedGroups(s: CalendarState): Group[] {
+  return s.groups.filter((g) => g.archived);
+}
+
+function isArchived(s: CalendarState, group: string): boolean {
+  return s.groups.some((g) => g.name === group && g.archived);
 }
 
 /** 未分组的色点用 --c-dot-empty，条目色块用 --c-faint（原型如此） */
@@ -23,6 +32,7 @@ export function colorOf(s: CalendarState, group: string): string {
 
 /** 分组显隐 + 「显示已完成」两个开关的过滤 */
 export function isVisible(s: CalendarState, t: Item): boolean {
+  if (t.group && isArchived(s, t.group)) return false;
   if (s.hidden[t.group]) return false;
   if (!s.showDone && t.done) return false;
   return true;

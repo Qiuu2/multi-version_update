@@ -40,6 +40,7 @@ export function useGlobalKeys(rootRef: RefObject<HTMLElement>, pointerIn: RefObj
       if (e.key !== 'Escape') return;
       if (s.guideOpen) return void dispatch({ type: 'setGuideOpen', value: false });
       if (s.ctx) return void dispatch({ type: 'closeCtx' });
+      if (s.archivedOpen) return void dispatch({ type: 'toggleArchivedPanel' });
       if (s.groupEditor) return void dispatch({ type: 'closeGroupEditor' });
       if (s.selActive) return void dispatch({ type: 'selClear' });
       if (s.modal) return void dispatch({ type: 'closeModal' });
@@ -56,6 +57,7 @@ export function useGlobalKeys(rootRef: RefObject<HTMLElement>, pointerIn: RefObj
     s.ctx,
     s.guideOpen,
     s.groupEditor,
+    s.archivedOpen,
     s.selActive,
     s.settingsOpen,
     s.themeMenuOpen,

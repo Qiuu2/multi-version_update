@@ -104,6 +104,14 @@ export function GroupEditor() {
         <div className={styles.deleteRow}>
           <button
             type="button"
+            className={styles.archiveBtn}
+            title="项目做完了：从图例移走，条目一并收起，随时可恢复"
+            onClick={() => dispatch({ type: 'archiveGroup', name: ed.original })}
+          >
+            归档
+          </button>
+          <button
+            type="button"
             className={base.linkDanger}
             style={{ fontSize: 11 }}
             onClick={() => {

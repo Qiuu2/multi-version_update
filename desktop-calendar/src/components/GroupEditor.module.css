@@ -166,3 +166,17 @@
 .cancelChoice:hover {
   color: var(--c-text);
 }
+
+/* 归档：比删除轻，放在删除左边 */
+.archiveBtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--c-accent);
+  cursor: pointer;
+  font-family: inherit;
+}
+.archiveBtn:hover {
+  opacity: 0.7;
+}

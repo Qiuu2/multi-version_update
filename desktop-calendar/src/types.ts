@@ -50,6 +50,11 @@ export interface Item {
 export interface Group {
   name: string;
   color: string;
+  /**
+   * 已归档：项目做完了，从图例移走、条目不再出现在月视图和右侧栏。
+   * 数据一条不少，随时可以恢复，搜索也仍然搜得到。
+   */
+  archived?: boolean;
 }
 
 /** 图例上的新建 / 编辑分组浮层 */

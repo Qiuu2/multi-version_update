@@ -5,6 +5,7 @@ import { usePanelDismiss } from '../hooks/usePanelDismiss';
 import { useToastTimer } from '../hooks/useToastTimer';
 import { useCalendar, useDispatch } from '../store/context';
 import base from '../styles/base.module.css';
+import { ArchivedPanel } from './ArchivedPanel';
 import { ContextMenu } from './ContextMenu';
 import { DayPopover } from './DayPopover';
 import { GroupEditor } from './GroupEditor';
@@ -100,6 +101,7 @@ export function CalendarPanel() {
             {/* 浮层挂在面板上，坐标都是相对面板左上角 */}
             <DayPopover />
             <GroupEditor />
+            <ArchivedPanel />
             <SelectionChip />
             <RangeActionBar />
             <ContextMenu />
