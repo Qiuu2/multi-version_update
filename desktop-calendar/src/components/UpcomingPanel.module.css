@@ -113,3 +113,10 @@
   white-space: nowrap;
   flex: 0 0 auto;
 }
+
+/* 日程在待办列表里带上时间，好跟任务区分开 */
+.rowTime {
+  color: var(--c-muted);
+  margin-right: 5px;
+  font-variant-numeric: tabular-nums;
+}

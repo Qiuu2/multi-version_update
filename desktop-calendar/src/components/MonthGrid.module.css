@@ -85,12 +85,42 @@
 }
 
 /* 日期数字 17px 圆形，今天带强调浅底 */
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  margin-bottom: 1px;
+  min-width: 0;
+}
+
+/* 法定节假日：放假用危险色（红），调休上班用中性灰 —— 跟纸质日历一个路数 */
+.holidayTag {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 9px;
+  line-height: 13px;
+  padding: 0 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.holidayTag[data-kind='off'] {
+  color: var(--c-danger);
+  background: var(--c-danger-soft);
+}
+
+.holidayTag[data-kind='work'] {
+  color: var(--c-muted);
+  background: var(--c-panel);
+}
+
 .dateChip {
   font-size: 11px;
   line-height: 13px;
-  margin-bottom: 1px;
   flex: 0 0 auto;
-  align-self: flex-start;
   min-width: 17px;
   height: 17px;
   border-radius: 50%;

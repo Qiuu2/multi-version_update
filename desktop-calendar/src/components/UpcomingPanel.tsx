@@ -1,6 +1,7 @@
 import { URGENCY_SECTIONS } from '../constants';
 import { diffDays, todayIso } from '../lib/date';
 import { tint } from '../lib/color';
+import { stripTime, timeOf } from '../lib/item';
 import { useCalendar, useDispatch } from '../store/context';
 import { colorOf, hasConflict, isVisible } from '../store/selectors';
 import base from '../styles/base.module.css';
@@ -16,11 +17,10 @@ export function UpcomingPanel() {
       <div className={styles.heading}>未来 7 天</div>
 
       {URGENCY_SECTIONS.map((section) => {
+        // 日程和任务都算「未来 7 天」要看的东西 ——
+        // 只列任务的话，用浮卡新建的日程会凭空消失，看着就像没建成功。
         const rows = s.items
-          .filter(
-            (t) =>
-              t.type === 'task' && t.date && isVisible(s, t) && section.test(diffDays(today, t.date)),
-          )
+          .filter((t) => t.date && isVisible(s, t) && section.test(diffDays(today, t.date)))
           .slice()
           // 已完成的排在各组末尾，再按日期
           .sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0) || a.date.localeCompare(b.date));
@@ -79,7 +79,14 @@ export function UpcomingPanel() {
                       className={`${styles.rowTitle} ${base.ellipsis}`}
                       style={{ textDecoration: t.done ? 'line-through' : 'none' }}
                     >
-                      {t.title}
+                      {t.type === 'event' && t.withTime ? (
+                        <>
+                          <span className={styles.rowTime}>{timeOf(t)}</span>
+                          {stripTime(t.title)}
+                        </>
+                      ) : (
+                        t.title
+                      )}
                     </div>
                   </div>
                   <span className={styles.badge} style={{ color: section.color, background: badgeBg }}>

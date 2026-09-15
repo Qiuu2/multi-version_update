@@ -39,6 +39,8 @@ export interface CalendarState {
   hidden: Record<string, boolean>;
   groups: Group[];
   showDone: boolean;
+  /** 月视图上标中国法定节假日与调休上班日 */
+  showHolidays: boolean;
   showOther: boolean;
   theme: Theme;
   /** 桌面模式：窗口压到底层（仅 Tauri 下有效） */
@@ -94,6 +96,7 @@ export type Persisted = Pick<
   | 'groups'
   | 'showDone'
   | 'showOther'
+  | 'showHolidays'
   | 'theme'
   | 'desktopMode'
   | 'scale'
@@ -107,6 +110,7 @@ export function pickPersisted(s: CalendarState): Persisted {
     groups: s.groups,
     showDone: s.showDone,
     showOther: s.showOther,
+    showHolidays: s.showHolidays,
     theme: s.theme,
     desktopMode: s.desktopMode,
     scale: s.scale,
@@ -124,6 +128,7 @@ export function initialState(): CalendarState {
     groups: DEFAULT_GROUPS.map((g) => ({ ...g })),
     showDone: true,
     showOther: true,
+    showHolidays: true,
     theme: 'light',
     desktopMode: false,
     scale: DEFAULT_SCALE,
@@ -166,6 +171,7 @@ export type Action =
   | { type: 'toggleSettings' }
   | { type: 'toggleShowDone' }
   | { type: 'toggleShowOther' }
+  | { type: 'toggleShowHolidays' }
   | { type: 'setDesktopMode'; value: boolean }
   | { type: 'stepScale'; delta: number }
   | { type: 'setAutostart'; value: boolean }
@@ -402,6 +408,8 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
       return { ...s, settingsOpen: !s.settingsOpen, themeMenuOpen: false, confirmClear: false };
     case 'toggleShowDone':
       return { ...s, showDone: !s.showDone };
+    case 'toggleShowHolidays':
+      return { ...s, showHolidays: !s.showHolidays };
     case 'toggleShowOther':
       return { ...s, showOther: !s.showOther };
     case 'setDesktopMode':

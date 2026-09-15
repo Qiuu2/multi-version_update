@@ -43,6 +43,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     state.groups,
     state.showDone,
     state.showOther,
+    state.showHolidays,
     state.theme,
     state.desktopMode,
     state.scale,

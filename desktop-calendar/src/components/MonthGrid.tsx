@@ -1,6 +1,7 @@
 import { MAX_CELL_ENTRIES, PANEL_H, PANEL_W, WEEKDAY_LABELS } from '../constants';
 import { useRangeSelect } from '../hooks/useRangeSelect';
 import { monthGrid, shiftDate, todayIso } from '../lib/date';
+import { markOf } from '../lib/holidays';
 import { tooltipOf } from '../lib/item';
 import { useCalendar, useDispatch } from '../store/context';
 import { colorOf, itemsOn, sortForDay } from '../store/selectors';
@@ -46,6 +47,8 @@ export function MonthGrid() {
           const isCurrent = y === s.year && m === s.month;
           const isToday = key === today;
           const isWeekend = i % 7 >= 5;
+          // 非本月的格子在「显示非本月日期」关掉时连日期都不写，自然也不标节假日
+          const holiday = s.showHolidays && (isCurrent || s.showOther) ? markOf(key) : null;
 
           const all = itemsOn(s, key).slice().sort(sortForDay);
           const shown = all.slice(0, MAX_CELL_ENTRIES);
@@ -114,16 +117,22 @@ export function MonthGrid() {
               )}
               {s.dragOver === key && s.dragId != null && <div className={styles.dropPreview} />}
 
-              <div
-                className={styles.dateChip}
-                style={{
-                  fontWeight: isToday ? 700 : 400,
-                  color: isToday ? 'var(--c-accent-deep)' : 'var(--c-text)',
-                  opacity: isCurrent ? 1 : 0.3,
-                  background: isToday ? 'var(--c-accent-soft)' : 'transparent',
-                }}
-              >
-                {!isCurrent && !s.showOther ? '' : day}
+              <div className={styles.dateRow} style={{ opacity: isCurrent ? 1 : 0.3 }}>
+                <div
+                  className={styles.dateChip}
+                  style={{
+                    fontWeight: isToday ? 700 : 400,
+                    color: isToday ? 'var(--c-accent-deep)' : 'var(--c-text)',
+                    background: isToday ? 'var(--c-accent-soft)' : 'transparent',
+                  }}
+                >
+                  {!isCurrent && !s.showOther ? '' : day}
+                </div>
+                {holiday && (
+                  <span className={styles.holidayTag} data-kind={holiday.kind} title={holiday.hint}>
+                    {holiday.label}
+                  </span>
+                )}
               </div>
 
               <div className={styles.entries}>

@@ -1,6 +1,7 @@
 import { NEW_GROUP_COLORS, SCALE_STEPS, THEME_OPTIONS } from '../constants';
 import { fmtShort, monthOf, todayIso, yearOf } from '../lib/date';
 import { stripTime } from '../lib/item';
+import { hasHolidayData } from '../lib/holidays';
 import { isSubmitEnter } from '../lib/keys';
 import { hideToTray, isTauri, setAutostart, snapCorner } from '../lib/platform';
 import { usePanel } from './PanelContext';
@@ -252,6 +253,19 @@ export function TopBar() {
           <button type="button" className={styles.settingsRow} onClick={() => dispatch({ type: 'toggleShowOther' })}>
             <span>显示非本月日期</span>
             <span className={styles.mark}>{s.showOther ? '✓' : ''}</span>
+          </button>
+          <button
+            type="button"
+            className={styles.settingsRow}
+            title={
+              hasHolidayData(s.year)
+                ? '按国务院办公厅的通知标出放假与调休上班日'
+                : `${s.year} 年的放假安排国务院还没发布，暂时标不了`
+            }
+            onClick={() => dispatch({ type: 'toggleShowHolidays' })}
+          >
+            <span>显示法定节假日</span>
+            <span className={styles.mark}>{s.showHolidays ? '✓' : ''}</span>
           </button>
           {isTauri() && (
             <button
