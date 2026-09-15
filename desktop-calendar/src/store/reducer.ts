@@ -223,7 +223,11 @@ export type Action =
   | { type: 'showToast'; text: string }
   | { type: 'dismissToast' }
   | { type: 'undo' }
-  | { type: 'undoFromToast' };
+  | { type: 'undoFromToast' }
+  // 外部 agent（Claude / MCP）经本地接口下达的读写，见 lib/agentOps.ts
+  | { type: 'agentAdd'; item: Item }
+  | { type: 'agentPatch'; id: number; patch: Partial<Item>; label: string }
+  | { type: 'agentDelete'; id: number; label: string };
 
 function snapshot(s: CalendarState): Snapshot {
   return {
@@ -259,6 +263,21 @@ function revealGroup(hidden: Record<string, boolean>, group: string): Record<str
 
 function groupNames(s: CalendarState): string[] {
   return s.groups.map((g) => g.name);
+}
+
+/**
+ * 确保分组存在且没被归档。
+ * 外部 agent 写进来的分组名可能是新的，或者是个早就归档的老项目 ——
+ * 两种情况都得让条目真的能在图例和月视图里看见，否则等于没添加。
+ */
+function ensureGroup(groups: Group[], name: string): Group[] {
+  if (!name) return groups;
+  const at = groups.findIndex((g) => g.name === name);
+  if (at < 0) {
+    return groups.concat([{ name, color: NEW_GROUP_COLORS[groups.length % NEW_GROUP_COLORS.length] }]);
+  }
+  if (!groups[at].archived) return groups;
+  return groups.map((g, i) => (i === at ? { ...g, archived: false } : g));
 }
 
 function draftFrom(item: Item): ModalDraft {
@@ -878,6 +897,37 @@ export function reducer(s: CalendarState, a: Action): CalendarState {
         history,
         toast: a.type === 'undoFromToast' ? null : s.toast,
       };
+    }
+
+    // ---------- 外部 agent ----------
+    // 一律走 commit：外部加错了东西，用提示条上的「撤销」或标题栏撤销按钮就能退回
+    case 'agentAdd':
+      return commit(s, {
+        items: s.items.concat([a.item]),
+        nextId: Math.max(s.nextId, a.item.id + 1),
+        groups: ensureGroup(s.groups, a.item.group),
+        hidden: revealGroup(s.hidden, a.item.group),
+        toast: `已添加「${stripTime(a.item.title)}」，可撤销`,
+      });
+
+    case 'agentPatch': {
+      const t = s.items.find((x) => x.id === a.id);
+      if (!t) return s;
+      const next: Item = { ...t, ...a.patch, id: t.id };
+      return commit(s, {
+        items: s.items.map((x) => (x.id === a.id ? next : x)),
+        groups: ensureGroup(s.groups, next.group),
+        hidden: revealGroup(s.hidden, next.group),
+        toast: `${a.label}，可撤销`,
+      });
+    }
+
+    case 'agentDelete': {
+      if (!s.items.some((x) => x.id === a.id)) return s;
+      return commit(s, {
+        items: s.items.filter((x) => x.id !== a.id),
+        toast: `${a.label}，可撤销`,
+      });
     }
 
     default:

@@ -1,3 +1,6 @@
+mod bridge;
+mod mcp;
+
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,7 +33,7 @@ struct AppState {
     sunk: AtomicBool,
 }
 
-fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
         .app_data_dir()
@@ -39,7 +42,7 @@ fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-fn state_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn state_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(data_dir(app)?.join("calendar.json"))
 }
 
@@ -303,6 +306,12 @@ fn restore_position(app: &tauri::AppHandle, window: &tauri::WebviewWindow) -> bo
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // `--mcp`：不开窗口，把自己当成 MCP 服务器跑在 stdio 上，
+    // 这样接 Claude / 别的 agent 不用另装运行时。
+    if std::env::args().skip(1).any(|a| a == "--mcp") {
+        std::process::exit(mcp::run());
+    }
+
     tauri::Builder::default()
         // 单实例：再次启动只把已有窗口带到前面，不再开一个看不见的新进程
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -314,7 +323,9 @@ pub fn run() {
             Some(vec!["--autostart"]),
         ))
         .manage(AppState::default())
+        .manage(bridge::Bridge::default())
         .invoke_handler(tauri::generate_handler![
+            bridge::agent_reply,
             load_state,
             save_state,
             set_desktop_mode,
@@ -326,6 +337,12 @@ pub fn run() {
         ])
         .setup(|app| {
             let handle = app.handle().clone();
+
+            // 本地 agent 接口。开不起来（端口被占死之类）只是少了这项能力，
+            // 日历本身照常用，所以不往上抛。
+            if let Err(e) = bridge::start(&handle) {
+                eprintln!("本地 agent 接口未启动: {e}");
+            }
 
             let show = MenuItem::with_id(app, "show", "显示日历", true, None::<&str>)?;
             let hide = MenuItem::with_id(app, "hide", "隐藏到托盘", true, None::<&str>)?;
@@ -395,6 +412,12 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("启动失败");
+        .build(tauri::generate_context!())
+        .expect("启动失败")
+        .run(|app, event| {
+            // 退出时抹掉 bridge.json，免得下次 MCP 照着一个死端口连
+            if let tauri::RunEvent::Exit = event {
+                bridge::cleanup(app);
+            }
+        });
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react';
+import { startAgentBridge } from '../lib/agentBridge';
 import { getAutostart, setDesktopMode, setWindowScale } from '../lib/platform';
 import { storage } from './persistence';
 import { initialState, pickPersisted, reducer, type Action, type CalendarState } from './reducer';
@@ -46,6 +47,9 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     state.desktopMode,
     state.scale,
   ]);
+
+  // 本地 agent 接口：Claude / MCP / curl 经 127.0.0.1 下达的读写都从这里进来
+  useEffect(() => startAgentBridge(() => latest.current, dispatch), []);
 
   // 把桌面模式与缩放同步到真实窗口（浏览器下是空操作）
   useEffect(() => {

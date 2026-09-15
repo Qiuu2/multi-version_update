@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地日历 · 接入 Claude 与其他 agent</title>
+<style>
+  :root{
+    --bg:#FAF6F1; --surface:#FFFFFF; --border:#E7DDD1; --text:#2B2521;
+    --muted:#8C8177; --faint:#A99C8E; --accent:#D2703A; --accent-soft:#FBEDE1;
+    --danger:#C0392B;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1C1A18; --surface:#262320; --border:#3A342E; --text:#F2ECE4;
+      --muted:#A79C90; --faint:#7E7468; --accent:#E08A4E; --accent-soft:#3A2A1E;
+      --danger:#E0685A;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Archivo','PingFang SC','Microsoft YaHei',sans-serif;
+    line-height:1.7; font-size:15px;
+  }
+  .wrap{max-width:820px; margin:0 auto; padding:48px 20px 64px}
+  header{border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:32px}
+  h1{font-size:26px; margin:0 0 6px; font-weight:600}
+  .lede{color:var(--muted); font-size:14px; margin:0}
+  h2{
+    font-size:17px; margin:36px 0 12px; font-weight:600;
+    padding-left:10px; border-left:3px solid var(--accent);
+  }
+  h3{font-size:14px; margin:20px 0 8px; font-weight:600; color:var(--muted)}
+  p{margin:10px 0}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px}
+  th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
+  td:first-child{white-space:nowrap; font-weight:600; width:1%; padding-right:20px}
+  code{
+    background:var(--accent-soft); padding:1px 6px; border-radius:4px;
+    font-family:'SFMono-Regular',Consolas,monospace; font-size:13px;
+  }
+  .note{
+    background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent); border-radius:6px;
+    padding:12px 14px; margin:16px 0; font-size:14px;
+  }
+  .warn{border-left-color:var(--danger)}
+  pre{
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    padding:12px 14px; overflow-x:auto; font-size:13px; line-height:1.55;
+    font-family:'SFMono-Regular',Consolas,monospace; margin:12px 0;
+  }
+  pre code{background:none; padding:0; font-size:inherit}
+  ol,ul{padding-left:22px; margin:10px 0}
+  li{margin:5px 0}
+  footer{
+    margin-top:48px; padding-top:20px; border-top:1px solid var(--border);
+    color:var(--faint); font-size:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>接入 Claude 与其他 agent</h1>
+  <p class="lede">让 Claude（或别的 AI 助手）直接往这个日历里加任务、查安排、标完成。全程只在你自己电脑上跑，不上传任何东西。</p>
+</header>
+
+<h2>它是怎么连上的</h2>
+<p>
+  日历自己就是 MCP 服务器 —— 不用另外装 Node、Python 或任何运行时，
+  <strong>装好的那个 exe 加一个 <code>--mcp</code> 参数</strong>就是。
+</p>
+<p>它会自己挑一条路走：</p>
+<table>
+  <tr><td>日历开着</td><td>走本机 127.0.0.1 上的接口，界面<strong>当场刷新</strong>，加错了还能在日历里点「撤销」</td></tr>
+  <tr><td>日历没开</td><td>直接写数据文件，你下次打开日历就能看到</td></tr>
+</table>
+<div class="note">
+  两条路都只在你这台电脑内部，没有任何数据出网。本机接口每次启动换一个随机口令，
+  口令存在数据目录的 <code>bridge.json</code> 里 —— 浏览器里的网页读不到它，所以网页打不通这个口。
+</div>
+
+<h2>配置（Claude Desktop）</h2>
+<ol>
+  <li>先确认日历装在哪。默认是 <code>C:\Program Files\LocalCalendar\LocalCalendar.exe</code></li>
+  <li>打开 Claude Desktop →「设置」→「开发者」→「编辑配置」，会打开 <code>claude_desktop_config.json</code></li>
+  <li>把下面这段并进去（已经有 <code>mcpServers</code> 就只加里面那一项）：</li>
+</ol>
+<pre><code>{
+  "mcpServers": {
+    "local-calendar": {
+      "command": "C:\\Program Files\\LocalCalendar\\LocalCalendar.exe",
+      "args": ["--mcp"]
+    }
+  }
+}</code></pre>
+<p>路径里的反斜杠要写两个，这是 JSON 的规矩。存盘后<strong>完全退出并重开 Claude Desktop</strong>，在输入框旁边就能看到多出来的工具。</p>
+
+<h3>Claude Code / 其他支持 MCP 的客户端</h3>
+<pre><code>claude mcp add local-calendar -- "C:\Program Files\LocalCalendar\LocalCalendar.exe" --mcp</code></pre>
+
+<h2>能让它做什么</h2>
+<table>
+  <tr><th>工具</th><th>作用</th></tr>
+  <tr><td>add_task</td><td>加一条任务或日程。不填日期就落进收集箱等待安排</td></tr>
+  <tr><td>list_tasks</td><td>按日期区间、项目、关键字查</td></tr>
+  <tr><td>update_task</td><td>改标题、日期、时间、项目、备注……只改传进去的那几项</td></tr>
+  <tr><td>complete_task</td><td>标记完成 / 取消完成</td></tr>
+  <tr><td>delete_task</td><td>删掉一条</td></tr>
+  <tr><td>list_groups</td><td>列出所有项目（分组）</td></tr>
+  <tr><td>calendar_status</td><td>看日历有没有在跑、数据在哪、一共多少条</td></tr>
+</table>
+<p>配好之后直接用大白话说就行：</p>
+<ul>
+  <li>「周四下午三点跟导师开组会，加到日历里，归到『学业』」</li>
+  <li>「我这周还有什么没做完的？」</li>
+  <li>「把『写周报』标成完成」</li>
+  <li>「下周一到周五每天早上九点提醒我跑步」</li>
+</ul>
+<div class="note">
+  新项目名会自动建；如果这个项目之前归过档，加进去会顺手把它重新启用 ——
+  免得「明明加成功了却看不见」。
+</div>
+
+<h2>接别的 agent（不走 MCP）</h2>
+<p>
+  不支持 MCP 的程序可以直接打本机接口。日历一启动就在数据目录写下
+  <code>bridge.json</code>，里面是端口和口令：
+</p>
+<pre><code>%APPDATA%\com.local.calendar\bridge.json
+{ "api": 1, "port": 51234, "token": "……", "state": "……\calendar.json" }</code></pre>
+<p>然后 <code>POST http://127.0.0.1:&lt;port&gt;/rpc</code>，请求头带 <code>X-Calendar-Token</code>：</p>
+<pre><code>curl -X POST http://127.0.0.1:51234/rpc ^
+  -H "X-Calendar-Token: &lt;token&gt;" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"op\":\"add\",\"title\":\"试一条\",\"date\":\"2026-01-20\"}"</code></pre>
+<p><code>op</code> 可以是 <code>health</code> / <code>list</code> / <code>add</code> / <code>update</code> / <code>delete</code> / <code>groups</code>，字段和上面那些工具一一对应。日期一律 <code>YYYY-MM-DD</code>，时间 <code>HH:MM</code>。</p>
+
+<h2>不太顺的时候</h2>
+<table>
+  <tr><td>Claude 里看不到工具</td><td>九成是路径写错或没重启。先在 cmd 里 <code>dir "C:\Program Files\LocalCalendar\LocalCalendar.exe"</code> 确认文件真在那儿，再确认 JSON 里的反斜杠写了两个，然后<strong>完全退出</strong> Claude Desktop（托盘里也要退）再打开。还不行就看 Claude 的「设置 → 开发者」，那里会列出这个服务器的连接状态和报错</td></tr>
+  <tr><td>手动试试它能不能跑</td><td>它是图形程序，双击或在 cmd 里直接敲不会有任何输出 —— 这是正常的，不代表坏了。它只在被 Claude 用管道拉起来时说话</td></tr>
+  <tr><td>加了但日历上没有</td><td>让 Claude 调一次 <code>calendar_status</code>：<code>mode</code> 是 <code>file</code> 就说明日历当时没在应答，改动写进文件了，重开日历就能看到</td></tr>
+  <tr><td>加错了想撤回</td><td>日历开着时，屏幕下方提示条上点「撤销」，或点顶栏的撤销按钮（可退 20 步）</td></tr>
+  <tr><td>不想让它连了</td><td>把 <code>claude_desktop_config.json</code> 里那一项删掉再重启 Claude。日历本身不受影响</td></tr>
+</table>
+
+<footer>
+  纯本地运行 · 数据只在你自己的电脑上 · 不需要账号，也不联网
+</footer>
+
+</div>
+</body>
+</html>
